@@ -4,6 +4,20 @@ Mọi bản phát hành của **viTek** sử dụng quy tắc phiên bản **`YY
 
 ---
 
+## `20261125.1.003` *(iOS `20261125.1.3`)*
+
+### Quản lý Clipboard & Đồng bộ iCloud mở rộng
+- **Clipboard Manager đa nền tảng (`ClipboardHistory`):** Lưu tới 25 mẫu ghim và 25 mục sao chép gần đây; tìm kiếm tiếng Việt không phân biệt dấu (`"viet nam"` → `"Việt Nam"`), tự động bỏ qua dữ liệu nhạy cảm từ trình quản lý mật khẩu trên macOS (`ConcealedType` / `TransientType`).
+- **Dán nhanh mọi nơi:** Bảng nổi Liquid Glass **`⌃⌥V`** trên macOS (nhấn phím `1–9` hoặc click để dán, giữ nguyên `Esc` đóng), tab **Clipboard** trong ứng dụng iOS và nút **`📋`** ngay trên thanh gợi ý bàn phím iOS/iPadOS.
+- **Đồng bộ iCloud mở rộng (`CloudSettingsSync`):** Tự động hợp nhất mẫu **Clipboard đã ghim**, tuỳ chọn **Clipboard gần đây** (mặc định tắt để giữ riêng tư) và **Từ vựng cá nhân đã học** giữa Mac, iPhone và iPad.
+
+### Tối ưu Luồng Gõ & Tiên đoán thông minh hơn
+- **Bộ nhớ ngữ cảnh 3 từ (Trigram) trong `PersonalFrequency`:** Xếp hạng gợi ý chính xác hơn dựa trên hai từ liền trước, đồng bộ top từ/cụm cá nhân qua iCloud.
+- **Gợi ý mở rộng Gõ tắt trực tiếp (`Shortcuts`):** Khi đang gõ chữ tắt trên macOS/iOS, cụm mở rộng xuất hiện ngay đầu thanh gợi ý.
+- **Chọn nhanh gợi ý bằng `⌥ Space` (macOS):** Bấm `⌥ Space` để chèn ngay từ gợi ý đầu tiên bên cạnh `⌥ 1–5`.
+
+---
+
 ## `20261125.1.002` *(iOS `20261125.1.2`)*
 
 ### Phân phối & Cập nhật macOS

@@ -73,6 +73,7 @@ final class VitekInputController: IMKInputController {
             Diagnostics.log("deactivate")
             callback.value.0.commit(to: callback.value.1)
             callback.value.0.hideSuggestions()
+            ClipboardPanel.hide()
             callback.value.0.activeClient = nil
             callback.value.0.typedContext = ""
         }
@@ -117,6 +118,7 @@ final class VitekInputController: IMKInputController {
         if event.type == .leftMouseDown || event.type == .rightMouseDown {
             commit(to: sender)
             hideSuggestions()
+            ClipboardPanel.hide()
             typedContext = ""
             return false
         }
@@ -138,6 +140,28 @@ final class VitekInputController: IMKInputController {
         }
         guard event.type == .keyDown else { return false }
         optionDownAlone = false
+        let mods = event.modifierFlags.intersection([.command, .control, .option, .shift])
+        if mods == [.control, .option], event.keyCode == 0x09 {
+            _ = document.handle(.boundary, client: adapter(client))
+            hideSuggestions()
+            typedContext = ""
+            ClipboardPanel.toggle(caret: clientCaretRect(client)) { [weak self] text in
+                self?.insertClipboardText(text)
+            }
+            return true
+        }
+        if ClipboardPanel.isVisible {
+            if event.keyCode == 0x35 {
+                ClipboardPanel.hide()
+                return true
+            }
+            let pasteDigits: [UInt16] = [0x12, 0x13, 0x14, 0x15, 0x17, 0x16, 0x1A, 0x1C, 0x19]
+            if mods.isEmpty, let digitIdx = pasteDigits.firstIndex(of: event.keyCode),
+               ClipboardPanel.pasteByNumber(digitIdx + 1) {
+                return true
+            }
+            ClipboardPanel.hide()
+        }
         // Ordinary text callbacks can lag behind the tap, even with renewed IMK
         // timestamps. They must not consume the next Command press.
         commandPress.recordKey(command: event.modifierFlags.contains(.command),
@@ -174,6 +198,12 @@ final class VitekInputController: IMKInputController {
         recordTypingEvidence(in: client)
         Diagnostics.log("edit \(output.commands.map(Self.describe)) pass=\(output.passThrough) "
                         + "transactionalInput=true caret=\(client.selectedRange()) \(document.debugDescription)")
+        if session.isVietnamese {
+            let (prev2, prev1) = Self.trailingTwoWords(in: typedContext)
+            for case .insert(let word) in output.commands {
+                settings.recordPersonalWord(word, after: prev1, beforeThat: prev2)
+            }
+        }
         remember(hostEvent, output)
         if case .boundary = hostEvent { hideSuggestions() }
         else { scheduleSuggestions() }
@@ -376,7 +406,15 @@ final class VitekInputController: IMKInputController {
         guard prefix.isEmpty ? context.last?.isWhitespace == true && context.count > 1 : !context.isEmpty
         else { return hideSuggestions() }
         let personal = settings.personalFrequency
-        let words = await WordCompletions.shared.words(context: context, prefix: prefix, personal: personal)
+        let shortcuts = settings.shortcutTable
+        let rawPrefix = session.engine.isComposing ? session.engine.rawKeys : nil
+        let words = await WordCompletions.shared.words(
+            context: context,
+            prefix: prefix,
+            personal: personal,
+            shortcuts: shortcuts,
+            rawPrefix: rawPrefix
+        )
         #if DEBUG
         await Diagnostics.delaySuggestionDelivery()
         #endif
@@ -438,14 +476,16 @@ final class VitekInputController: IMKInputController {
                      context: text?.utf16.count == count ? text : nil)
     }
 
-    /// Explicit shortcuts (`⌥1`–`⌥5`) or clicking the non-activating suggestion bar accept candidates;
-    /// Tab always belongs to the host application.
+    /// Explicit shortcuts (`⌥Space` for #1, `⌥1`–`⌥5` for 1–5) or clicking the non-activating
+    /// suggestion bar accept candidates; Tab always belongs to the host application.
     private func acceptSuggestion(for event: NSEvent, client: IMKTextInput) -> Bool {
         guard !suggestions.isEmpty, settings.effectiveShowSuggestions, session.isVietnamese else { return false }
         let flags = event.modifierFlags.intersection([.command, .control, .option, .shift])
         let digits: [UInt16] = [0x12, 0x13, 0x14, 0x15, 0x17]
         let index: Int
-        if flags == .option, let digit = digits.firstIndex(of: event.keyCode) {
+        if flags == .option, event.keyCode == 0x31 {
+            index = 0
+        } else if flags == .option, let digit = digits.firstIndex(of: event.keyCode) {
             index = digit
         } else {
             if event.keyCode == 0x35 { hideSuggestions() }
@@ -470,11 +510,27 @@ final class VitekInputController: IMKInputController {
             hideSuggestions()
             return false
         }
-        let prev = typedContext.split(whereSeparator: \.isWhitespace).last.map(String.init)
-        settings.recordPersonalWord(candidate.text, after: prev)
+        let (prev2, prev1) = Self.trailingTwoWords(in: typedContext)
+        settings.recordPersonalWord(candidate.text, after: prev1, beforeThat: prev2)
         typedContext += text
         scheduleSuggestions()
         return true
+    }
+
+    private func insertClipboardText(_ text: String) {
+        guard let targetClient = activeClient as? IMKTextInput else {
+            ClipboardMonitor.copyToPasteboard(text)
+            return
+        }
+        document.resetForFocusChange()
+        targetClient.insertText(text, replacementRange: NSRange(location: NSNotFound, length: 0))
+    }
+
+    private static func trailingTwoWords(in text: String) -> (prev2: String?, prev1: String?) {
+        let words = text.split(whereSeparator: { !$0.isLetter })
+        let prev1 = words.last.map(String.init)
+        let prev2 = words.count >= 2 ? String(words[words.count - 2]) : nil
+        return (prev2, prev1)
     }
 
     // MARK: Input menu
@@ -513,6 +569,20 @@ final class VitekInputController: IMKInputController {
             entry.target = self
             return entry
         }
+        let recent = Array(settings.clipboardHistory.items.prefix(5))
+        if !recent.isEmpty {
+            for item in recent {
+                let prefix = item.isPinned ? "📌 " : ""
+                let entry = NSMenuItem(title: prefix + item.preview, action: #selector(copyHistoryClipboardItem(_:)), keyEquivalent: "")
+                entry.representedObject = item.text
+                entry.target = self
+                submenu.addItem(entry)
+            }
+            submenu.addItem(.separator())
+        }
+        submenu.addItem(subItem("Mở dán nhanh Clipboard (⌃⌥V)", #selector(showClipboardQuickPopup(_:))))
+        submenu.addItem(subItem("Quản lý Clipboard…", #selector(showClipboardManager(_:))))
+        submenu.addItem(.separator())
         submenu.addItem(subItem("Tự động sửa lỗi font → Unicode", #selector(autoConvertClipboard(_:))))
         submenu.addItem(subItem("Chuẩn hoá Unicode dựng sẵn (NFC)", #selector(normalizeClipboardNFC(_:))))
         submenu.addItem(subItem("Bỏ dấu tiếng Việt", #selector(stripClipboardAccents(_:))))
@@ -526,6 +596,22 @@ final class VitekInputController: IMKInputController {
         let root = NSMenuItem(title: "Công cụ Clipboard", action: nil, keyEquivalent: "")
         root.submenu = submenu
         return root
+    }
+
+    @objc private func copyHistoryClipboardItem(_ sender: NSMenuItem) {
+        guard let text = sender.representedObject as? String else { return }
+        ClipboardMonitor.copyToPasteboard(text)
+    }
+
+    @objc private func showClipboardQuickPopup(_ sender: Any?) {
+        let rect = (activeClient as? IMKTextInput).map(clientCaretRect) ?? .zero
+        ClipboardPanel.show(caret: rect) { [weak self] text in
+            self?.insertClipboardText(text)
+        }
+    }
+
+    @objc private func showClipboardManager(_ sender: Any?) {
+        SettingsWindow.show(page: .clipboard)
     }
 
     private func transformClipboard(using mode: TextConverter.LegacyEncoding) {

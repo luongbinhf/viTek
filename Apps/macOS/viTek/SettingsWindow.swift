@@ -32,7 +32,7 @@ enum SettingsWindow {
 
 /// The pages of the settings window, in sidebar order.
 enum SettingsPage: String, CaseIterable, Identifiable {
-    case welcome, typing, habits, shortcuts, dictionary, about
+    case welcome, typing, habits, shortcuts, clipboard, dictionary, about
 
     var id: Self { self }
 
@@ -42,6 +42,7 @@ enum SettingsPage: String, CaseIterable, Identifiable {
         case .typing: "Kiểu gõ"
         case .habits: "Thói quen gõ"
         case .shortcuts: "Gõ tắt"
+        case .clipboard: "Clipboard"
         case .dictionary: "Từ điển"
         case .about: "Giới thiệu"
         }
@@ -53,6 +54,7 @@ enum SettingsPage: String, CaseIterable, Identifiable {
         case .typing: "Telex hoặc VNI, cách đặt dấu và kiểm tra chính tả."
         case .habits: "Học cách gõ riêng trong mỗi ứng dụng."
         case .shortcuts: "Gõ chữ tắt, viTek thay bằng cụm đầy đủ."
+        case .clipboard: "Lịch sử sao chép, mẫu ghim, chuyển mã và đồng bộ iCloud."
         case .dictionary: "Giữ nguyên các từ tiếng Anh thông dụng khi gõ Telex."
         case .about: "Phiên bản, mã nguồn mở MIT và chẩn đoán."
         }
@@ -64,6 +66,7 @@ enum SettingsPage: String, CaseIterable, Identifiable {
         case .typing: "keyboard"
         case .habits: "globe"
         case .shortcuts: "text.badge.plus"
+        case .clipboard: "doc.on.clipboard"
         case .dictionary: "character.book.closed"
         case .about: "info"
         }
@@ -75,6 +78,7 @@ enum SettingsPage: String, CaseIterable, Identifiable {
         case .typing: .blue
         case .habits: .green
         case .shortcuts: .orange
+        case .clipboard: .teal
         case .dictionary: .indigo
         case .about: .gray
         }
@@ -123,6 +127,7 @@ struct SettingsView: View {
         case .typing: TypingPage()
         case .habits: TypingHabitsPage()
         case .shortcuts: ShortcutsPage()
+        case .clipboard: ClipboardPage()
         case .dictionary: DictionaryPage()
         case .about: AboutPage()
         }

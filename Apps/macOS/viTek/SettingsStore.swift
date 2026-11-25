@@ -31,7 +31,9 @@ final class SettingsStore {
         case vietnameseEnabled, quickToggleOptionDoubleTap, showModeSwitchHUD
         case typingScores, iCloudSyncEnabled, customEnglishWords, excludedBundleIDs
         case focusPreferEnglish, focusHideSuggestions
-        case personalUnigrams, personalBigrams
+        case personalUnigrams, personalBigrams, personalTrigrams
+        case clipboardHistoryEnabled, syncClipboardPinnedICloud, syncClipboardRecentICloud
+        case syncPersonalVocabularyICloud, clipboardItems
     }
 
     var toneStyle: ToneStyle { didSet { save(toneStyle.rawValue, .toneStyle) } }
@@ -62,8 +64,13 @@ final class SettingsStore {
     var excludedBundleIDs: [String] { didSet { save(excludedBundleIDs, .excludedBundleIDs, syncCloud: false) } }
     var focusPreferEnglish: Bool { didSet { save(focusPreferEnglish, .focusPreferEnglish, syncCloud: false) } }
     var focusHideSuggestions: Bool { didSet { save(focusHideSuggestions, .focusHideSuggestions, syncCloud: false) } }
+    var clipboardHistoryEnabled: Bool { didSet { save(clipboardHistoryEnabled, .clipboardHistoryEnabled, syncCloud: false) } }
+    var syncClipboardPinnedICloud: Bool { didSet { save(syncClipboardPinnedICloud, .syncClipboardPinnedICloud, syncCloud: false) } }
+    var syncClipboardRecentICloud: Bool { didSet { save(syncClipboardRecentICloud, .syncClipboardRecentICloud, syncCloud: false) } }
+    var syncPersonalVocabularyICloud: Bool { didSet { save(syncPersonalVocabularyICloud, .syncPersonalVocabularyICloud, syncCloud: false) } }
     var effectiveShowSuggestions: Bool { showSuggestions && !focusHideSuggestions }
     private(set) var personalFrequency: PersonalFrequency
+    private(set) var clipboardHistory: ClipboardHistory
 
     private(set) var typingScores: [String: [String: Int]]
 
@@ -104,9 +111,16 @@ final class SettingsStore {
         excludedBundleIDs = defaults.stringArray(forKey: Key.excludedBundleIDs.rawValue) ?? Self.defaultExcludedBundleIDs
         focusPreferEnglish = bool(.focusPreferEnglish, false)
         focusHideSuggestions = bool(.focusHideSuggestions, false)
+        clipboardHistoryEnabled = bool(.clipboardHistoryEnabled, true)
+        syncClipboardPinnedICloud = bool(.syncClipboardPinnedICloud, true)
+        syncClipboardRecentICloud = bool(.syncClipboardRecentICloud, false)
+        syncPersonalVocabularyICloud = bool(.syncPersonalVocabularyICloud, true)
         let unigrams = defaults.dictionary(forKey: Key.personalUnigrams.rawValue) as? [String: Int] ?? [:]
         let bigrams = defaults.dictionary(forKey: Key.personalBigrams.rawValue) as? [String: Int] ?? [:]
-        personalFrequency = PersonalFrequency(unigrams: unigrams, bigrams: bigrams)
+        let trigrams = defaults.dictionary(forKey: Key.personalTrigrams.rawValue) as? [String: Int] ?? [:]
+        personalFrequency = PersonalFrequency(unigrams: unigrams, bigrams: bigrams, trigrams: trigrams)
+        let savedClipboard = defaults.array(forKey: Key.clipboardItems.rawValue) as? [[String: String]] ?? []
+        clipboardHistory = ClipboardHistory(serialized: savedClipboard)
     }
 
     var engineOptions: EngineOptions {
@@ -175,8 +189,8 @@ final class SettingsStore {
         defaults.removeObject(forKey: Key.typingScores.rawValue)
     }
 
-    func recordPersonalWord(_ word: String, after previous: String? = nil) {
-        personalFrequency.record(word: word, after: previous)
+    func recordPersonalWord(_ word: String, after previous: String? = nil, beforeThat: String? = nil) {
+        personalFrequency.record(word: word, after: previous, beforeThat: beforeThat)
         personalFlushTask?.cancel()
         personalFlushTask = Task { @MainActor [weak self] in
             try? await Task.sleep(for: .milliseconds(1500))
@@ -190,6 +204,10 @@ final class SettingsStore {
         personalFlushTask = nil
         defaults.set(personalFrequency.unigrams, forKey: Key.personalUnigrams.rawValue)
         defaults.set(personalFrequency.bigrams, forKey: Key.personalBigrams.rawValue)
+        defaults.set(personalFrequency.trigrams, forKey: Key.personalTrigrams.rawValue)
+        if iCloudSyncEnabled && syncPersonalVocabularyICloud {
+            CloudSettingsSync.shared.pushToCloud()
+        }
     }
 
     func forgetPersonalFrequency() {
@@ -198,6 +216,63 @@ final class SettingsStore {
         personalFrequency.reset()
         defaults.removeObject(forKey: Key.personalUnigrams.rawValue)
         defaults.removeObject(forKey: Key.personalBigrams.rawValue)
+        defaults.removeObject(forKey: Key.personalTrigrams.rawValue)
+    }
+
+    func mergePersonalFrequencyFromCloud(_ remote: PersonalFrequency) {
+        let before = personalFrequency
+        personalFrequency.merge(remote)
+        guard personalFrequency != before else { return }
+        defaults.set(personalFrequency.unigrams, forKey: Key.personalUnigrams.rawValue)
+        defaults.set(personalFrequency.bigrams, forKey: Key.personalBigrams.rawValue)
+        defaults.set(personalFrequency.trigrams, forKey: Key.personalTrigrams.rawValue)
+    }
+
+    // MARK: Clipboard
+
+    func recordClipboard(_ text: String, timestamp: Int = Int(Date().timeIntervalSince1970)) {
+        guard clipboardHistoryEnabled, clipboardHistory.record(text, timestamp: timestamp) else { return }
+        persistClipboard(syncCloud: iCloudSyncEnabled && syncClipboardRecentICloud)
+    }
+
+    func addPinnedClipboard(_ text: String, timestamp: Int = Int(Date().timeIntervalSince1970)) {
+        guard clipboardHistory.addPinned(text, timestamp: timestamp) else { return }
+        persistClipboard(syncCloud: iCloudSyncEnabled && syncClipboardPinnedICloud)
+    }
+
+    func togglePinClipboard(_ text: String) {
+        clipboardHistory.togglePin(text: text)
+        persistClipboard(syncCloud: iCloudSyncEnabled && (syncClipboardPinnedICloud || syncClipboardRecentICloud))
+    }
+
+    func removeClipboard(_ text: String) {
+        clipboardHistory.remove(text: text)
+        persistClipboard(syncCloud: false)
+    }
+
+    func clearUnpinnedClipboard() {
+        clipboardHistory.clearUnpinned()
+        persistClipboard(syncCloud: false)
+    }
+
+    func clearAllClipboard() {
+        clipboardHistory.clearAll()
+        persistClipboard(syncCloud: false)
+    }
+
+    func mergeClipboardFromCloud(pinned: [[String: String]], recent: [[String: String]]?) {
+        let before = clipboardHistory
+        clipboardHistory.mergeCloud(pinned: pinned, recent: recent)
+        guard clipboardHistory != before else { return }
+        defaults.set(clipboardHistory.serialized(), forKey: Key.clipboardItems.rawValue)
+    }
+
+    private func persistClipboard(syncCloud: Bool) {
+        defaults.set(clipboardHistory.serialized(), forKey: Key.clipboardItems.rawValue)
+        revision += 1
+        if syncCloud {
+            CloudSettingsSync.shared.pushToCloud()
+        }
     }
 
     // MARK: Shortcut files

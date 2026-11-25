@@ -9,6 +9,11 @@ Mỗi bản phát hành chính thức được gắn tag theo chuẩn [phiên b�
 - [x] Lõi **Swift 6 Native** dùng chung (`VitekEngine` + `VitekSession`), không cầu nối FFI, hỗ trợ Telex/VNI tự động, Smart Token Bypass, `DocumentSession` xác minh UTF-16, gõ tắt động, gợi ý từ/Emoji cục bộ, `TextConverter` và tích hợp Apple Intelligence / Widgets / Focus Filter.
 - [x] Thiết kế linh vật **Cú Lạc viTek**, biểu tượng ứng dụng macOS/iOS mới, khung cài đặt `.DMG` Retina kéo thả trực quan và làm mới giao diện macOS / iOS / iPadOS.
 
+### `20261125.1.003` — Quản lý Clipboard, Đồng bộ iCloud mở rộng & Tiên đoán 3-từ
+- [x] `ClipboardHistory` thuần Swift tìm kiếm không dấu, `ClipboardMonitor` bỏ qua mật khẩu, popup Liquid Glass **`⌃⌥V`** macOS, tab Clipboard + phím **`📋`** trên bàn phím iOS.
+- [x] Mở rộng `CloudSettingsSync`: đồng bộ mẫu Clipboard ghim, tuỳ chọn Clipboard gần đây và bộ nhớ từ vựng cá nhân `1–3` từ qua iCloud.
+- [x] Tiên đoán **Trigram 3 từ**, **gợi ý mở rộng gõ tắt trực tiếp** và phím chọn nhanh **`⌥ Space`** trên macOS.
+
 ### `20261125.1.002` — Phân phối, Trang chủ tương tác & Nâng cấp trải nghiệm gõ
 - [x] **Homebrew Cask** chính thức (`Casks/vitek.rb`) + tự động xuất bản tệp cask có `SHA-256` trên GitHub Releases.
 - [x] **Cập nhật 1 chạm xác minh `SHA-256`** ngay trong **Cài đặt viTek → Giới thiệu** (`UpdateChecker`).

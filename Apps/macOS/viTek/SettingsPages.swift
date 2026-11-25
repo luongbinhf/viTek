@@ -145,9 +145,12 @@ struct TypingPage: View {
             }
             Section {
                 Toggle("Gợi ý từ", isOn: $settings.showSuggestions)
-                HStack(spacing: 6) {
+                HStack(spacing: 10) {
+                    KeyCap("⌥ Space")
+                    Text("chọn gợi ý đầu")
+                    Text("·").foregroundStyle(.tertiary)
                     KeyCap("⌥ 1…5")
-                    Text("chọn từ bất kỳ")
+                    Text("chọn theo thứ tự")
                 }
                 .foregroundStyle(.secondary)
                 if settings.showSuggestions {
@@ -235,7 +238,7 @@ struct KeyGuide: View {
 // MARK: Thói quen gõ
 
 struct TypingHabitsPage: View {
-    private var settings = SettingsStore.shared
+    @Bindable private var settings = SettingsStore.shared
 
     var body: some View {
         Form {
@@ -245,10 +248,11 @@ struct TypingHabitsPage: View {
                 Button("Xóa thói quen của mọi ứng dụng", role: .destructive) { settings.forgetTypingHabits() }
                     .disabled(settings.typingScores.isEmpty)
                 LabeledContent("Từ/cụm cá nhân đã học", value: String(settings.personalFrequency.totalCount))
+                Toggle("Đồng bộ từ vựng cá nhân đã học qua iCloud", isOn: $settings.syncPersonalVocabularyICloud)
                 Button("Xóa từ đã học", role: .destructive) { settings.forgetPersonalFrequency() }
                     .disabled(settings.personalFrequency.isEmpty)
             } footer: {
-                Footnote("Điểm ưu tiên Telex và VNI của mỗi ứng dụng được lưu trên máy. Lịch sử từ đã gõ không được lưu vào hồ sơ.")
+                Footnote("Điểm ưu tiên Telex và VNI và bộ nhớ 1–3 từ cá nhân giúp xếp hạng gợi ý chính xác hơn theo ngữ cảnh của bạn.")
             }
 
             Section {
@@ -523,6 +527,132 @@ struct DictionaryPage: View {
             }
         }
         .settingsForm()
+    }
+}
+
+// MARK: Clipboard
+
+struct ClipboardPage: View {
+    @Bindable private var settings = SettingsStore.shared
+    @State private var newPinned = ""
+    @State private var query = ""
+
+    private var filteredItems: [ClipboardItem] {
+        settings.clipboardHistory.search(query)
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 16) {
+                Toggle("Lưu lịch sử Clipboard", isOn: $settings.clipboardHistoryEnabled)
+                Toggle("Ghim qua iCloud", isOn: $settings.syncClipboardPinnedICloud)
+                Toggle("Mục gần đây qua iCloud", isOn: $settings.syncClipboardRecentICloud)
+                Spacer()
+                HStack(spacing: 4) {
+                    KeyCap("⌃ ⌥ V")
+                    Text("mở dán nhanh")
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
+                }
+            }
+
+            HStack(spacing: 8) {
+                TextField("Thêm mẫu văn bản ghim cố định (vd: email, số tài khoản, chữ ký)…", text: $newPinned)
+                    .textFieldStyle(.roundedBorder)
+                Button("Ghim mẫu") {
+                    let text = newPinned.trimmingCharacters(in: .whitespacesAndNewlines)
+                    guard !text.isEmpty else { return }
+                    settings.addPinnedClipboard(text)
+                    newPinned = ""
+                }
+                .disabled(newPinned.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+            }
+
+            TextField("Tìm kiếm trong Clipboard (có dấu hoặc không dấu)…", text: $query)
+                .textFieldStyle(.roundedBorder)
+
+            let items = filteredItems
+            ScrollView {
+                LazyVStack(spacing: 0) {
+                    ForEach(items, id: \.text) { item in
+                        HStack(spacing: 10) {
+                            Image(systemName: item.isPinned ? "pin.fill" : "doc.on.clipboard")
+                                .foregroundStyle(item.isPinned ? Color.accentColor : .secondary)
+                                .frame(width: 18)
+                            Text(item.preview)
+                                .lineLimit(2)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                            Button("Chép") {
+                                ClipboardMonitor.copyToPasteboard(item.text)
+                            }
+                            .buttonStyle(.borderless)
+                            Menu("Chuyển mã") {
+                                Button("Sửa lỗi font → Unicode") {
+                                    ClipboardMonitor.copyToPasteboard(TextConverter.convert(item.text, mode: .autoToUnicode))
+                                }
+                                Button("Bỏ dấu tiếng Việt") {
+                                    ClipboardMonitor.copyToPasteboard(TextConverter.convert(item.text, mode: .stripAccents))
+                                }
+                                Button("CHỮ HOA") {
+                                    ClipboardMonitor.copyToPasteboard(TextConverter.convert(item.text, mode: .uppercase))
+                                }
+                                Button("Viết Hoa Đầu Từ") {
+                                    ClipboardMonitor.copyToPasteboard(TextConverter.convert(item.text, mode: .titleCase))
+                                }
+                            }
+                            .menuStyle(.borderlessButton)
+                            .fixedSize()
+                            Button {
+                                settings.togglePinClipboard(item.text)
+                            } label: {
+                                Image(systemName: item.isPinned ? "pin.slash" : "pin")
+                            }
+                            .buttonStyle(.borderless)
+                            .help(item.isPinned ? "Bỏ ghim" : "Ghim lên đầu")
+                            Button(role: .destructive) {
+                                settings.removeClipboard(item.text)
+                            } label: {
+                                Image(systemName: "trash")
+                            }
+                            .buttonStyle(.borderless)
+                        }
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 7)
+                        Divider()
+                    }
+                }
+            }
+            .frame(maxHeight: .infinity)
+            .background(Color(nsColor: .controlBackgroundColor))
+            .clipShape(RoundedRectangle(cornerRadius: 8))
+            .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(Color.secondary.opacity(0.25)))
+            .overlay {
+                if items.isEmpty {
+                    Text(settings.clipboardHistory.isEmpty
+                         ? "Chưa có mục Clipboard nào. Dữ liệu nhạy cảm từ trình quản lý mật khẩu luôn được bỏ qua."
+                         : "Không tìm thấy mục phù hợp.")
+                        .foregroundStyle(.secondary)
+                        .padding()
+                }
+            }
+
+            HStack {
+                Text("\(settings.clipboardHistory.pinnedItems.count) ghim · \(settings.clipboardHistory.unpinnedItems.count) gần đây")
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+                Spacer()
+                Button("Xoá mục chưa ghim") {
+                    settings.clearUnpinnedClipboard()
+                }
+                .disabled(settings.clipboardHistory.unpinnedItems.isEmpty)
+                Button("Xoá tất cả", role: .destructive) {
+                    settings.clearAllClipboard()
+                }
+                .disabled(settings.clipboardHistory.isEmpty)
+            }
+        }
+        .padding(.horizontal, 28)
+        .padding(.vertical, 20)
     }
 }
 

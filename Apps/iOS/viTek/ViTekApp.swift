@@ -11,6 +11,7 @@ struct ViTekApp: App {
             TabView(selection: $route.destination) {
                 Tab("Bàn phím", systemImage: "keyboard", value: WritingRoute.Destination.keyboard) { KeyboardGuide() }
                 Tab("Gợi ý viết", systemImage: "pencil", value: WritingRoute.Destination.writing) { WritingView() }
+                Tab("Clipboard", systemImage: "doc.on.clipboard", value: WritingRoute.Destination.clipboard) { IOSClipboardView() }
                 Tab("Cài đặt", systemImage: "gearshape", value: WritingRoute.Destination.settings) { KeyboardSettingsView() }
             }
             .onOpenURL { route.handle($0) }
@@ -152,13 +153,19 @@ private struct KeyboardSettingsView: View {
 
                 Section {
                     Toggle("Đồng bộ cài đặt & gõ tắt qua iCloud", isOn: $settings.iCloudSyncEnabled)
+                    Toggle("Đồng bộ mẫu Clipboard đã ghim qua iCloud", isOn: $settings.syncClipboardPinnedICloud)
+                        .disabled(!settings.iCloudSyncEnabled)
+                    Toggle("Đồng bộ Clipboard gần đây qua iCloud", isOn: $settings.syncClipboardRecentICloud)
+                        .disabled(!settings.iCloudSyncEnabled)
+                    Toggle("Đồng bộ từ vựng cá nhân đã học qua iCloud", isOn: $settings.syncPersonalVocabularyICloud)
+                        .disabled(!settings.iCloudSyncEnabled)
                     LabeledContent("Từ/cụm cá nhân đã học", value: "\(settings.personalFrequency.totalCount)")
                     Button("Xóa từ đã học", role: .destructive) { settings.forgetPersonalFrequency() }
                         .disabled(settings.personalFrequency.isEmpty)
                 } header: {
                     Text("iCloud")
                 } footer: {
-                    Text("Chỉ đồng bộ tuỳ chọn kiểu gõ và bảng gõ tắt giữa Mac, iPhone và iPad. Không đồng bộ văn bản đang gõ.")
+                    Text("Đồng bộ tuỳ chọn, gõ tắt, mẫu Clipboard ghim và từ vựng học cá nhân giữa Mac, iPhone và iPad. Không đồng bộ văn bản đang gõ.")
                 }
 
                 Section {
@@ -304,5 +311,127 @@ private struct IOSCustomWordsView: View {
             }
         }
         .navigationTitle("Từ ngoại lệ cá nhân")
+    }
+}
+
+private struct IOSClipboardView: View {
+    @Bindable private var settings = IOSKeyboardSettings.shared
+    @State private var newPinned = ""
+    @State private var query = ""
+    @State private var statusBanner: String?
+
+    private var items: [ClipboardItem] {
+        settings.clipboardHistory.search(query)
+    }
+
+    var body: some View {
+        NavigationStack {
+            List {
+                Section {
+                    Button {
+                        if let pasteText = UIPasteboard.general.string, !pasteText.isEmpty {
+                            settings.recordClipboard(pasteText)
+                            statusBanner = "Đã lưu từ Bộ nhớ tạm."
+                        } else {
+                            statusBanner = "Bộ nhớ tạm hiện chưa có văn bản."
+                        }
+                    } label: {
+                        Label("Lưu văn bản đang có trong Bộ nhớ tạm", systemImage: "doc.on.clipboard")
+                    }
+
+                    HStack {
+                        TextField("Thêm mẫu ghim (email, địa chỉ, chữ ký)…", text: $newPinned)
+                        Button("Ghim") {
+                            let text = newPinned.trimmingCharacters(in: .whitespacesAndNewlines)
+                            guard !text.isEmpty else { return }
+                            settings.addPinnedClipboard(text)
+                            newPinned = ""
+                            statusBanner = "Đã ghim mẫu mới."
+                        }
+                        .disabled(newPinned.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                    }
+                    if let statusBanner {
+                        Text(statusBanner)
+                            .font(.footnote)
+                            .foregroundStyle(.secondary)
+                    }
+                } header: {
+                    Text("Thêm vào Clipboard viTek")
+                } footer: {
+                    Text("Mẫu ghim được đồng bộ với macOS qua iCloud và sẵn dùng ngay trên phím 📋 của bàn phím viTek ngay cả khi tắt truy cập đầy đủ.")
+                }
+
+                Section("Danh sách (\(items.count))") {
+                    if items.isEmpty {
+                        Text(settings.clipboardHistory.isEmpty
+                             ? "Chưa có mẫu Clipboard nào."
+                             : "Không tìm thấy mẫu phù hợp.")
+                            .foregroundStyle(.secondary)
+                    } else {
+                        ForEach(items, id: \.text) { item in
+                            Button {
+                                UIPasteboard.general.string = item.text
+                                statusBanner = "Đã chép vào Bộ nhớ tạm."
+                            } label: {
+                                HStack(spacing: 10) {
+                                    Image(systemName: item.isPinned ? "pin.fill" : "doc.text")
+                                        .foregroundStyle(item.isPinned ? Color.accentColor : .secondary)
+                                    Text(item.preview)
+                                        .foregroundStyle(.primary)
+                                        .lineLimit(2)
+                                }
+                            }
+                            .swipeActions(edge: .leading) {
+                                Button {
+                                    settings.togglePinClipboard(item.text)
+                                } label: {
+                                    Label(item.isPinned ? "Bỏ ghim" : "Ghim",
+                                          systemImage: item.isPinned ? "pin.slash" : "pin")
+                                }
+                                .tint(.blue)
+                            }
+                            .swipeActions(edge: .trailing) {
+                                Button(role: .destructive) {
+                                    settings.removeClipboard(item.text)
+                                } label: {
+                                    Label("Xoá", systemImage: "trash")
+                                }
+                            }
+                            .contextMenu {
+                                Button("Chép") {
+                                    UIPasteboard.general.string = item.text
+                                }
+                                Button(item.isPinned ? "Bỏ ghim" : "Ghim lên đầu") {
+                                    settings.togglePinClipboard(item.text)
+                                }
+                                Button("Sửa lỗi font → Unicode") {
+                                    let converted = TextConverter.convert(item.text, mode: .autoToUnicode)
+                                    UIPasteboard.general.string = converted
+                                    settings.recordClipboard(converted)
+                                }
+                                Button("Bỏ dấu tiếng Việt") {
+                                    let stripped = TextConverter.convert(item.text, mode: .stripAccents)
+                                    UIPasteboard.general.string = stripped
+                                    settings.recordClipboard(stripped)
+                                }
+                                Button("Xoá", role: .destructive) {
+                                    settings.removeClipboard(item.text)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            .searchable(text: $query, prompt: "Tìm kiếm có dấu hoặc không dấu")
+            .navigationTitle("Clipboard")
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Xoá gần đây") {
+                        settings.clearUnpinnedClipboard()
+                    }
+                    .disabled(settings.clipboardHistory.unpinnedItems.isEmpty)
+                }
+            }
+        }
     }
 }

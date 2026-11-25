@@ -1,33 +1,36 @@
 import VitekEngine
 
-/// Bounded, on-device personal frequency memory for words and 2-word phrases.
-/// Pure Swift standard library: zero Foundation, O(1) indexed lookup by previous word and
+/// Bounded, on-device personal frequency memory for 1-word unigrams, 2-word bigrams, and 3-word trigrams.
+/// Pure Swift standard library: zero Foundation, O(1) indexed lookup by previous context and
 /// first folded ASCII letter, strictly capped in size for iOS keyboard extension memory limits.
 public struct PersonalFrequency: Sendable, Equatable {
     public static let maxEntries = 500
 
     public private(set) var unigrams: [String: Int]
     public private(set) var bigrams: [String: Int]
+    public private(set) var trigrams: [String: Int]
 
     private var bigramsByPrevious: [String: [String: Int]] = [:]
+    private var trigramsByPair: [String: [String: Int]] = [:]
     private var unigramsByBucket: [UInt8: [String]] = [:]
 
-    public init(unigrams: [String: Int] = [:], bigrams: [String: Int] = [:]) {
+    public init(unigrams: [String: Int] = [:], bigrams: [String: Int] = [:], trigrams: [String: Int] = [:]) {
         self.unigrams = unigrams
         self.bigrams = bigrams
+        self.trigrams = trigrams
         prune()
         rebuildIndexes()
     }
 
     public static func == (lhs: PersonalFrequency, rhs: PersonalFrequency) -> Bool {
-        lhs.unigrams == rhs.unigrams && lhs.bigrams == rhs.bigrams
+        lhs.unigrams == rhs.unigrams && lhs.bigrams == rhs.bigrams && lhs.trigrams == rhs.trigrams
     }
 
-    public var isEmpty: Bool { unigrams.isEmpty && bigrams.isEmpty }
-    public var totalCount: Int { unigrams.count + bigrams.count }
+    public var isEmpty: Bool { unigrams.isEmpty && bigrams.isEmpty && trigrams.isEmpty }
+    public var totalCount: Int { unigrams.count + bigrams.count + trigrams.count }
 
-    /// Records a committed word and (optionally) the immediately preceding word.
-    public mutating func record(word: String, after previous: String? = nil) {
+    /// Records a committed word and up to two preceding words (`beforeThat previous word`).
+    public mutating func record(word: String, after previous: String? = nil, beforeThat: String? = nil) {
         guard Self.isTrackable(word) else { return }
         let lower = word.lowercased()
         let isNewUnigram = unigrams[lower] == nil
@@ -41,8 +44,16 @@ public struct PersonalFrequency: Sendable, Equatable {
             let updated = (bigrams[pair] ?? 0) + 1
             bigrams[pair] = updated
             bigramsByPrevious[prevLower, default: [:]][lower] = updated
+
+            if let beforeThat, Self.isTrackable(beforeThat) {
+                let contextPair = beforeThat.lowercased() + " " + prevLower
+                let trigramKey = contextPair + " " + lower
+                let updatedTrigram = (trigrams[trigramKey] ?? 0) + 1
+                trigrams[trigramKey] = updatedTrigram
+                trigramsByPair[contextPair, default: [:]][lower] = updatedTrigram
+            }
         }
-        if unigrams.count > Self.maxEntries || bigrams.count > Self.maxEntries {
+        if unigrams.count > Self.maxEntries || bigrams.count > Self.maxEntries || trigrams.count > Self.maxEntries {
             prune()
             rebuildIndexes()
         }
@@ -51,14 +62,56 @@ public struct PersonalFrequency: Sendable, Equatable {
     public mutating func reset() {
         unigrams.removeAll()
         bigrams.removeAll()
+        trigrams.removeAll()
         bigramsByPrevious.removeAll()
+        trigramsByPair.removeAll()
         unigramsByBucket.removeAll()
     }
 
-    /// Returns personal candidates matching `before` and `prefix` using O(1) bucketed lookup.
+    /// Combines counts from another synced `PersonalFrequency` using `max(local, remote)` per entry.
+    public mutating func merge(_ other: PersonalFrequency) {
+        for (word, count) in other.unigrams {
+            unigrams[word] = max(unigrams[word] ?? 0, count)
+        }
+        for (pair, count) in other.bigrams {
+            bigrams[pair] = max(bigrams[pair] ?? 0, count)
+        }
+        for (triple, count) in other.trigrams {
+            trigrams[triple] = max(trigrams[triple] ?? 0, count)
+        }
+        prune()
+        rebuildIndexes()
+    }
+
+    /// Exports bounded top entries suitable for `NSUbiquitousKeyValueStore` sync.
+    public func cloudSnapshot(limit: Int = 180) -> (unigrams: [String: Int], bigrams: [String: Int], trigrams: [String: Int]) {
+        func top(_ dict: [String: Int]) -> [String: Int] {
+            guard limit > 0 else { return [:] }
+            let sorted = dict.sorted {
+                if $0.value != $1.value { return $0.value > $1.value }
+                return $0.key < $1.key
+            }
+            return Dictionary(uniqueKeysWithValues: sorted.prefix(limit).map { ($0.key, $0.value) })
+        }
+        return (top(unigrams), top(bigrams), top(trigrams))
+    }
+
+    /// Returns personal candidates matching 3-word (`before[n-2, n-1]`), 2-word (`before.last`), and 1-word prefix.
     public func matches(before: [String], prefix: String, limit: Int = 5) -> [WordCandidate] {
         guard limit > 0, !isEmpty else { return [] }
         var results: [WordCandidate] = []
+
+        if before.count >= 2 {
+            let contextPair = before[before.count - 2].lowercased() + " " + before[before.count - 1].lowercased()
+            if let followers = trigramsByPair[contextPair] {
+                for (next, count) in followers {
+                    guard prefix.isEmpty || Spelling.word(next, continues: prefix) else { continue }
+                    guard let formatted = Suggestions.prepare([next], prefix: prefix, limit: 1).first else { continue }
+                    let score = 1_400 + min(count * 50, 400)
+                    results.append(WordCandidate(text: formatted, source: .phrase, score: score, appendsSpace: true))
+                }
+            }
+        }
 
         if let previous = before.last, let followers = bigramsByPrevious[previous.lowercased()] {
             for (next, count) in followers {
@@ -82,18 +135,27 @@ public struct PersonalFrequency: Sendable, Equatable {
             if $0.score != $1.score { return $0.score > $1.score }
             return $0.text < $1.text
         }
-        return Array(results.prefix(limit))
+        var seen = Set<String>()
+        var unique: [WordCandidate] = []
+        for candidate in results where seen.insert(candidate.text.lowercased()).inserted {
+            unique.append(candidate)
+            if unique.count == limit { break }
+        }
+        return unique
     }
 
     private mutating func prune() {
-        if unigrams.count > Self.maxEntries {
-            let kept = unigrams.sorted { $0.value > $1.value }.prefix(Self.maxEntries)
-            unigrams = Dictionary(uniqueKeysWithValues: kept.map { ($0.key, $0.value) })
+        func clamp(_ dict: [String: Int]) -> [String: Int] {
+            guard dict.count > Self.maxEntries else { return dict }
+            let kept = dict.sorted {
+                if $0.value != $1.value { return $0.value > $1.value }
+                return $0.key < $1.key
+            }.prefix(Self.maxEntries)
+            return Dictionary(uniqueKeysWithValues: kept.map { ($0.key, $0.value) })
         }
-        if bigrams.count > Self.maxEntries {
-            let kept = bigrams.sorted { $0.value > $1.value }.prefix(Self.maxEntries)
-            bigrams = Dictionary(uniqueKeysWithValues: kept.map { ($0.key, $0.value) })
-        }
+        unigrams = clamp(unigrams)
+        bigrams = clamp(bigrams)
+        trigrams = clamp(trigrams)
     }
 
     private mutating func rebuildIndexes() {
@@ -109,6 +171,14 @@ public struct PersonalFrequency: Sendable, Equatable {
             let prev = String(pair[..<space])
             let next = String(pair[pair.index(after: space)...])
             bigramsByPrevious[prev, default: [:]][next] = count
+        }
+        trigramsByPair.removeAll(keepingCapacity: true)
+        for (triple, count) in trigrams {
+            let parts = triple.split(separator: " ", omittingEmptySubsequences: false)
+            guard parts.count == 3 else { continue }
+            let contextPair = String(parts[0]) + " " + String(parts[1])
+            let next = String(parts[2])
+            trigramsByPair[contextPair, default: [:]][next] = count
         }
     }
 

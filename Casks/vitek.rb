@@ -1,5 +1,5 @@
 cask "vitek" do
-  version "20261125.1.002"
+  version "20261125.1.003"
   sha256 :no_check
 
   url "https://github.com/luongbinhf/viTek/releases/download/#{version}/viTek-#{version}.dmg"

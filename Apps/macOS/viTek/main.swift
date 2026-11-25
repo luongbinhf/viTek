@@ -23,6 +23,7 @@ NSApplication.shared.delegate = writingDelegate
 let healthConnection = MainActor.assumeIsolated { InputMethodConnection.responder() }
 MainActor.assumeIsolated {
     CloudSettingsSync.shared.start()
+    ClipboardMonitor.shared.start()
     Task { @MainActor in await VitekFocusFilter.refreshCurrent() }
 }
 withExtendedLifetime((server, healthConnection, writingDelegate)) {

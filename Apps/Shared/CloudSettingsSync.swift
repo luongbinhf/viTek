@@ -2,10 +2,8 @@ import Foundation
 import VitekEngine
 import VitekSession
 
-/// Synchronizes typing options, shortcut tables, and personal exception words across macOS and iOS
-/// using Apple's `NSUbiquitousKeyValueStore`. Uses debounced writes to avoid blocking the main
-/// thread during rapid edits, and union-merges shortcuts/custom words on pull to prevent offline
-/// additions on another device from being overwritten.
+/// Synchronizes typing options, shortcut tables, exception words, pinned/recent clipboard snippets,
+/// and learned personal vocabulary across macOS and iOS via Apple's `NSUbiquitousKeyValueStore`.
 @MainActor
 final class CloudSettingsSync {
     static let shared = CloudSettingsSync()
@@ -22,6 +20,11 @@ final class CloudSettingsSync {
         static let shortcutsInEnglishMode = "viTek.sync.shortcutsInEnglishMode"
         static let shortcuts = "viTek.sync.shortcuts"
         static let customEnglishWords = "viTek.sync.customEnglishWords"
+        static let pinnedClipboard = "viTek.sync.pinnedClipboard"
+        static let recentClipboard = "viTek.sync.recentClipboard"
+        static let personalUnigrams = "viTek.sync.personalUnigrams"
+        static let personalBigrams = "viTek.sync.personalBigrams"
+        static let personalTrigrams = "viTek.sync.personalTrigrams"
     }
 
     private let store = NSUbiquitousKeyValueStore.default
@@ -66,7 +69,7 @@ final class CloudSettingsSync {
         pushToCloudImmediately()
     }
 
-    /// Debounces rapid setting edits (e.g. typing in shortcut fields) to keep the main thread snappy.
+    /// Debounces rapid edits to keep typing & UI snappy.
     func pushToCloud() {
         guard !isApplyingRemote else { return }
         pendingPushTask?.cancel()
@@ -81,22 +84,9 @@ final class CloudSettingsSync {
         guard !isApplyingRemote else { return }
         #if os(macOS)
         let settings = SettingsStore.shared
-        guard settings.iCloudSyncEnabled else { return }
-        let shortcuts = settings.shortcuts.map { ["abbreviation": $0.abbreviation, "expansion": $0.expansion] }
-        write(
-            toneStyle: settings.toneStyle,
-            spellCheck: settings.spellCheck,
-            restoreInvalidWords: settings.restoreInvalidWords,
-            quickStartConsonants: settings.quickStartConsonants,
-            quickEndConsonants: settings.quickEndConsonants,
-            keepEnglishWords: settings.keepEnglishWords,
-            shortcutsEnabled: settings.shortcutsEnabled,
-            shortcutsInEnglishMode: settings.shortcutsInEnglishMode,
-            shortcuts: shortcuts,
-            customEnglishWords: settings.customEnglishWords
-        )
         #elseif os(iOS)
         let settings = IOSKeyboardSettings.shared
+        #endif
         guard settings.iCloudSyncEnabled else { return }
         let shortcuts = settings.shortcuts.map { ["abbreviation": $0.abbreviation, "expansion": $0.expansion] }
         write(
@@ -109,9 +99,11 @@ final class CloudSettingsSync {
             shortcutsEnabled: settings.shortcutsEnabled,
             shortcutsInEnglishMode: settings.shortcutsInEnglishMode,
             shortcuts: shortcuts,
-            customEnglishWords: settings.customEnglishWords
+            customEnglishWords: settings.customEnglishWords,
+            pinnedClipboard: settings.syncClipboardPinnedICloud ? settings.clipboardHistory.cloudPinnedSerialized() : nil,
+            recentClipboard: settings.syncClipboardRecentICloud ? settings.clipboardHistory.cloudRecentSerialized(limit: 10) : nil,
+            personalVocabulary: settings.syncPersonalVocabularyICloud ? settings.personalFrequency.cloudSnapshot(limit: 180) : nil
         )
-        #endif
     }
 
     private func write(
@@ -124,7 +116,10 @@ final class CloudSettingsSync {
         shortcutsEnabled: Bool,
         shortcutsInEnglishMode: Bool,
         shortcuts: [[String: String]],
-        customEnglishWords: [String]
+        customEnglishWords: [String],
+        pinnedClipboard: [[String: String]]?,
+        recentClipboard: [[String: String]]?,
+        personalVocabulary: (unigrams: [String: Int], bigrams: [String: Int], trigrams: [String: Int])?
     ) {
         let now = Date().timeIntervalSince1970
         lastAppliedTimestamp = now
@@ -138,6 +133,17 @@ final class CloudSettingsSync {
         store.set(shortcutsInEnglishMode, forKey: CloudKey.shortcutsInEnglishMode)
         store.set(shortcuts, forKey: CloudKey.shortcuts)
         store.set(customEnglishWords, forKey: CloudKey.customEnglishWords)
+        if let pinnedClipboard {
+            store.set(pinnedClipboard, forKey: CloudKey.pinnedClipboard)
+        }
+        if let recentClipboard {
+            store.set(recentClipboard, forKey: CloudKey.recentClipboard)
+        }
+        if let personalVocabulary {
+            store.set(personalVocabulary.unigrams, forKey: CloudKey.personalUnigrams)
+            store.set(personalVocabulary.bigrams, forKey: CloudKey.personalBigrams)
+            store.set(personalVocabulary.trigrams, forKey: CloudKey.personalTrigrams)
+        }
         store.set(now, forKey: CloudKey.updatedAt)
         store.synchronize()
     }
@@ -148,50 +154,14 @@ final class CloudSettingsSync {
 
         #if os(macOS)
         let settings = SettingsStore.shared
-        guard settings.iCloudSyncEnabled else { return }
-        isApplyingRemote = true
-        defer { isApplyingRemote = false }
-        lastAppliedTimestamp = remoteTimestamp
-        if let rawTone = store.string(forKey: CloudKey.toneStyle), let tone = ToneStyle(rawValue: rawTone) {
-            settings.toneStyle = tone
-        }
-        if store.object(forKey: CloudKey.spellCheck) != nil {
-            settings.spellCheck = store.bool(forKey: CloudKey.spellCheck)
-        }
-        if store.object(forKey: CloudKey.restoreInvalidWords) != nil {
-            settings.restoreInvalidWords = store.bool(forKey: CloudKey.restoreInvalidWords)
-        }
-        if store.object(forKey: CloudKey.quickStartConsonants) != nil {
-            settings.quickStartConsonants = store.bool(forKey: CloudKey.quickStartConsonants)
-        }
-        if store.object(forKey: CloudKey.quickEndConsonants) != nil {
-            settings.quickEndConsonants = store.bool(forKey: CloudKey.quickEndConsonants)
-        }
-        if store.object(forKey: CloudKey.keepEnglishWords) != nil {
-            settings.keepEnglishWords = store.bool(forKey: CloudKey.keepEnglishWords)
-        }
-        if store.object(forKey: CloudKey.shortcutsEnabled) != nil {
-            settings.shortcutsEnabled = store.bool(forKey: CloudKey.shortcutsEnabled)
-        }
-        if store.object(forKey: CloudKey.shortcutsInEnglishMode) != nil {
-            settings.shortcutsInEnglishMode = store.bool(forKey: CloudKey.shortcutsInEnglishMode)
-        }
-        if let rawShortcuts = store.array(forKey: CloudKey.shortcuts) as? [[String: String]] {
-            let incoming = rawShortcuts.compactMap { entry -> ShortcutEntry? in
-                guard let abbreviation = entry["abbreviation"], let expansion = entry["expansion"] else { return nil }
-                return ShortcutEntry(abbreviation: abbreviation, expansion: expansion)
-            }
-            settings.importShortcuts(incoming)
-        }
-        if let customWords = store.array(forKey: CloudKey.customEnglishWords) as? [String] {
-            settings.customEnglishWords = Self.mergeWords(local: settings.customEnglishWords, remote: customWords)
-        }
         #elseif os(iOS)
         let settings = IOSKeyboardSettings.shared
+        #endif
         guard settings.iCloudSyncEnabled else { return }
         isApplyingRemote = true
         defer { isApplyingRemote = false }
         lastAppliedTimestamp = remoteTimestamp
+
         if let rawTone = store.string(forKey: CloudKey.toneStyle), let tone = ToneStyle(rawValue: rawTone) {
             settings.toneStyle = tone
         }
@@ -226,7 +196,25 @@ final class CloudSettingsSync {
         if let customWords = store.array(forKey: CloudKey.customEnglishWords) as? [String] {
             settings.customEnglishWords = Self.mergeWords(local: settings.customEnglishWords, remote: customWords)
         }
-        #endif
+
+        let remotePinned = settings.syncClipboardPinnedICloud
+            ? (store.array(forKey: CloudKey.pinnedClipboard) as? [[String: String]] ?? [])
+            : []
+        let remoteRecent = settings.syncClipboardRecentICloud
+            ? (store.array(forKey: CloudKey.recentClipboard) as? [[String: String]])
+            : nil
+        if !remotePinned.isEmpty || remoteRecent != nil {
+            settings.mergeClipboardFromCloud(pinned: remotePinned, recent: remoteRecent)
+        }
+
+        if settings.syncPersonalVocabularyICloud {
+            let u = store.dictionary(forKey: CloudKey.personalUnigrams) as? [String: Int] ?? [:]
+            let b = store.dictionary(forKey: CloudKey.personalBigrams) as? [String: Int] ?? [:]
+            let t = store.dictionary(forKey: CloudKey.personalTrigrams) as? [String: Int] ?? [:]
+            if !u.isEmpty || !b.isEmpty || !t.isEmpty {
+                settings.mergePersonalFrequencyFromCloud(PersonalFrequency(unigrams: u, bigrams: b, trigrams: t))
+            }
+        }
     }
 
     private static func mergeWords(local: [String], remote: [String]) -> [String] {

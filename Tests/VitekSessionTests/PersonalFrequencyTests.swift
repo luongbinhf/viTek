@@ -27,4 +27,29 @@ import VitekSession
         }
         #expect(memory.unigrams.count <= PersonalFrequency.maxEntries)
     }
+
+    @Test func trigramBeatsConflictingBigramAndMergesFromCloud() {
+        var memory = PersonalFrequency()
+        memory.record(word: "liệu", after: "dữ", beforeThat: "sở")
+        memory.record(word: "bảng", after: "dữ", beforeThat: "khác")
+        memory.record(word: "bảng", after: "dữ", beforeThat: "khác")
+
+        let afterSoDu = WordPrediction.suggest(context: "cơ sở dữ ", prefix: "", personal: memory)
+        #expect(afterSoDu.first?.text == "liệu")
+
+        var remote = PersonalFrequency()
+        remote.record(word: "sữa", after: "phê", beforeThat: "cà")
+        remote.record(word: "sữa", after: "phê", beforeThat: "cà")
+        memory.merge(remote)
+        let afterCaPhe = WordPrediction.suggest(context: "đang uống cà phê ", prefix: "", personal: memory)
+        #expect(afterCaPhe.first?.text == "sữa")
+    }
+
+    @Test func suggestsShortcutExpansionsLive() {
+        let shortcuts = Shortcuts(["ko": "không", "vn": "Việt Nam"])
+        let ko = WordPrediction.suggest(context: "Tôi ko", prefix: "ko", shortcuts: shortcuts)
+        #expect(ko.first?.text == "không")
+        let vn = WordPrediction.suggest(context: "người Vn", prefix: "Vn", shortcuts: shortcuts)
+        #expect(vn.first?.text == "Việt nam" || vn.first?.text == "Việt Nam")
+    }
 }

@@ -6,16 +6,35 @@ import VitekSession
 actor WordCompletions {
     static let shared = WordCompletions()
 
-    func words(context: String, prefix: String, personal: PersonalFrequency? = nil) -> [WordCandidate] {
+    func words(
+        context: String,
+        prefix: String,
+        personal: PersonalFrequency? = nil,
+        shortcuts: Shortcuts = Shortcuts(),
+        rawPrefix: String? = nil
+    ) -> [WordCandidate] {
         guard !Task.isCancelled,
               let partial = Terminology.prefixLength(context: context, prefix: prefix) else { return [] }
-        let local = WordPrediction.suggest(context: context, prefix: prefix, personal: personal)
+        let local = WordPrediction.suggest(
+            context: context,
+            prefix: prefix,
+            personal: personal,
+            shortcuts: shortcuts,
+            rawPrefix: rawPrefix
+        )
         guard WordPrediction.policy(context: context, prefix: prefix) == .prose,
               prefix.count >= 2, local.first?.source != .phrase, local.count < 5 else { return local }
         let range = NSRange(location: context.utf16.count - partial, length: partial)
         let raw = NSSpellChecker.shared.completions(forPartialWordRange: range, in: context,
                                                     language: "vi", inSpellDocumentWithTag: 0) ?? []
         guard !Task.isCancelled else { return [] }
-        return WordPrediction.suggest(context: context, prefix: prefix, personal: personal, systemCandidates: raw)
+        return WordPrediction.suggest(
+            context: context,
+            prefix: prefix,
+            personal: personal,
+            systemCandidates: raw,
+            shortcuts: shortcuts,
+            rawPrefix: rawPrefix
+        )
     }
 }

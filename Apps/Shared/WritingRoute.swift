@@ -4,7 +4,7 @@ import SwiftUI
 @available(macOS 26, iOS 26, *)
 @MainActor @Observable final class WritingRoute {
     static let shared = WritingRoute()
-    enum Destination: Hashable { case keyboard, writing, settings }
+    enum Destination: Hashable { case keyboard, writing, clipboard, settings }
     var destination: Destination = .keyboard
 
     func open() {

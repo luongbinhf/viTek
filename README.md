@@ -17,7 +17,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-0B66E4.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/Platform-macOS%2014%2B%20%7C%20iOS%20%26%20iPadOS%2026%2B-053A8F.svg)](#cài-đặt-nhanh)
 [![Swift](https://img.shields.io/badge/Swift-6.0%20Strict-F05138.svg)](Package.swift)
-[![Release](https://img.shields.io/badge/Release-20261125.1.002-F7B529.svg)](https://github.com/luongbinhf/viTek/releases)
+[![Release](https://img.shields.io/badge/Release-20261125.1.003-F7B529.svg)](https://github.com/luongbinhf/viTek/releases)
 [![Live Demo](https://img.shields.io/badge/GitHub%20Pages-Gõ%20thử%20trực%20tuyến-16A34A.svg)](https://luongbinhf.github.io/viTek/)
 
 </div>
@@ -42,8 +42,8 @@ Gõ thử chuỗi `vieetj vie65t reset server userName github.com ` → kết qu
 | Nhóm | Tính năng & Hành vi nổi bật |
 |---|---|
 | **1. Bộ gõ Song ngữ Thông minh** | Tự nhận **Telex & VNI** theo từng từ · Chuyển nhanh **`VI ↔ EN`** 0 ms (`⌥⌥` kèm **HUD Liquid Glass** trên macOS / phím `VI/EN` trên iOS) · Đặt dấu tự do, kiểu dấu mới (`hoà`) / cũ (`hòa`), tuỳ chọn gõ tắt phụ âm đầu/cuối · Sửa từ vừa chốt · Bấm **`Esc`** hoàn tác ngay về phím gốc · Tự tắt tiếng Việt theo app (Terminal, iTerm2, Warp, Ghostty, Alacritty, Kitty) & **Apple Focus Filter** |
-| **2. Gõ tắt, Gợi ý Từ/Emoji & iCloud** | Giữ kiểu chữ hoa (`ko` / `Ko` / `KO`), mẫu nhiều dòng, biến động **`{{date}}` / `{{time}}` / `{{datetime}}`**, gõ tắt cả khi tắt tiếng Việt, nhập **viTek / UniKey / OpenKey / CSV** · Kho gợi ý cục bộ + tìm kiếm **Emoji tiếng Việt có dấu / không dấu** + học tần suất cá nhân (`PersonalFrequency`) · Đồng bộ tuỳ chọn & gõ tắt macOS ↔ iOS qua iCloud |
-| **3. Công cụ Chuyển mã & Hệ sinh thái Apple** | `TextConverter` thuần Swift tự nhận diện & sửa lỗi font (**`VNI Windows` / `TCVN3` → `Unicode NFC`**), chuẩn hoá NFC, bỏ dấu, đổi **`CHỮ HOA` / `chữ thường` / `Viết Hoa Đầu Từ`** qua menu Clipboard macOS, nút **`Aa`** trên bàn phím iOS và **Apple Shortcuts** · Tích hợp **Apple Intelligence** (`FoundationModels`), Interactive Widgets & Control Center |
+| **2. Gõ tắt, Gợi ý 3-từ, Clipboard & iCloud** | Giữ kiểu chữ hoa (`ko` / `Ko` / `KO`), mẫu nhiều dòng, biến động **`{{date}}` / `{{time}}` / `{{datetime}}`**, gợi ý **mở rộng gõ tắt trực tiếp** khi đang gõ · Dự đoán **1–3 từ cá nhân (`Trigram`)**, chọn nhanh bằng **`⌥ Space` / `⌥ 1–5`**, tìm **Emoji tiếng Việt** · **Quản lý Clipboard** (`⌃⌥V` Liquid Glass macOS & nút **`📋`** trên bàn phím iOS, tìm kiếm không dấu, ghim mẫu, tự bỏ qua trình quản lý mật khẩu) · Đồng bộ tuỳ chọn, gõ tắt, mẫu ghim & từ vựng cá nhân qua **iCloud** |
+| **3. Công cụ Chuyển mã & Hệ sinh thái Apple** | `TextConverter` thuần Swift tự nhận diện & sửa lỗi font (**`VNI Windows` / `TCVN3` → `Unicode NFC`**), chuẩn hoá NFC, bỏ dấu, đổi **`CHỮ HOA` / `chữ thường` / `Viết Hoa Đầu Từ`** qua menu macOS, trang Clipboard, nút **`Aa`** trên bàn phím iOS và **Apple Shortcuts** · Tích hợp **Apple Intelligence** (`FoundationModels`), Interactive Widgets & Control Center |
 | **4. Bàn phím iOS & iPadOS Thích ứng** | Bố cục **gõ một tay (trái / phải)** khi cầm dọc · **Chia đôi bàn phím (Split Keyboard)** hai cụm ngón cái khi xoay ngang & trên iPad · **Vuốt xuống phím chữ** gõ nhanh số/ký hiệu · Hỗ trợ **bàn phím cứng / Magic Keyboard** (`pressesBegan`) · Tự tối ưu cho ô URL/Email, phím Return theo ngữ cảnh, giữ **`⌫`** xoá liên tục, kéo **Dấu cách** di chuyển con trỏ |
 
 > **Ghi chú quyền Trợ năng (macOS):** Gõ tiếng Việt, sửa từ vừa chốt và tự tắt tiếng Việt theo ứng dụng **không cần** quyền Trợ năng. Quyền này chỉ cần nếu bạn bật thanh gợi ý từ trong Chrome/Electron để đọc toạ độ con trỏ qua `AccessibilityCaret`.
@@ -59,13 +59,13 @@ Gõ thử chuỗi `vieetj vie65t reset server userName github.com ` → kết qu
   brew tap luongbinhf/vitek https://github.com/luongbinhf/viTek
   brew install --cask luongbinhf/vitek/vitek
   ```
-- **macOS (.DMG trực quan):** Tải `viTek-20261125.1.002.dmg` tại [GitHub Releases](https://github.com/luongbinhf/viTek/releases), kéo **Cài viTek** vào `Applications` rồi mở một lần để bật nguồn nhập **viTek** (`🌐` hoặc `⌃ Space`). Xem thêm [hướng dẫn macOS](docs/INSTALL.md).
+- **macOS (.DMG trực quan):** Tải `viTek-20261125.1.003.dmg` tại [GitHub Releases](https://github.com/luongbinhf/viTek/releases), kéo **Cài viTek** vào `Applications` rồi mở một lần để bật nguồn nhập **viTek** (`🌐` hoặc `⌃ Space`). Xem thêm [hướng dẫn macOS](docs/INSTALL.md).
 - **Build từ mã nguồn (macOS):** `CONFIGURATION=Release scripts/install_dev.sh` (yêu cầu Apple Silicon, Xcode SDK macOS 26+ và XcodeGen).
 - **iPhone & iPad:** Tạo project Xcode bằng `xcodegen generate --spec Apps/iOS/project.yml`, build lên thiết bị hoặc xem [hướng dẫn App Store / TestFlight](docs/APPSTORE.md), sau đó bật **viTek** trong **Cài đặt → Cài đặt chung → Bàn phím → Bàn phím**.
 
 ## Quy tắc phiên bản (`YYYYMMDD.X.YYY`) & Hiệu năng
 
-- **Định dạng phát hành:** `YYYYMMDD` (ngày phát hành) · `X` (đợt phát hành trong ngày) · `YYY` (số build 3 chữ số trên macOS/GitHub Releases, vd. **`20261125.1.002`**; tự động bỏ số `0` đệm đầu trên iOS App Store Connect: **`20261125.1.2`**).
+- **Định dạng phát hành:** `YYYYMMDD` (ngày phát hành) · `X` (đợt phát hành trong ngày) · `YYY` (số build 3 chữ số trên macOS/GitHub Releases, vd. **`20261125.1.003`**; tự động bỏ số `0` đệm đầu trên iOS App Store Connect: **`20261125.1.3`**).
 
 ```sh
 scripts/version.sh check                  # Kiểm tra đồng bộ macOS, iOS và Casks/vitek.rb

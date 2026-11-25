@@ -86,7 +86,44 @@ public struct Shortcuts: Sendable, Equatable {
 
     public func expansion(of word: String) -> String? {
         guard !word.isEmpty, let rawExpansion = table[word.lowercased()] else { return nil }
-        let resolved = resolveMacros(in: rawExpansion)
+        return applyCase(resolveMacros(in: rawExpansion), matching: word)
+    }
+
+    /// Returns candidate shortcut expansions whose abbreviation matches `prefix` or `rawPrefix` (at least 2 chars).
+    public func candidateExpansions(forPrefix prefix: String, rawPrefix: String? = nil, limit: Int = 2) -> [String] {
+        guard limit > 0, !table.isEmpty else { return [] }
+        var queries: [String] = []
+        if prefix.count >= 2 { queries.append(prefix) }
+        if let rawPrefix, rawPrefix.count >= 2, rawPrefix != prefix { queries.append(rawPrefix) }
+        guard !queries.isEmpty else { return [] }
+
+        var results: [String] = []
+        var seen = Set<String>()
+        for query in queries {
+            let qLower = query.lowercased()
+            guard prefixes.contains(qLower) else { continue }
+            let matched = table.filter { $0.key.hasPrefix(qLower) }.sorted { lhs, rhs in
+                let lhsExact = lhs.key == qLower
+                let rhsExact = rhs.key == qLower
+                if lhsExact != rhsExact { return lhsExact && !rhsExact }
+                if lhs.key.count != rhs.key.count { return lhs.key.count < rhs.key.count }
+                return lhs.key < rhs.key
+            }
+            for (_, rawExpansion) in matched {
+                let formatted = applyCase(resolveMacros(in: rawExpansion), matching: prefix)
+                guard formatted.count <= 60,
+                      !formatted.contains("\n"), !formatted.contains("\r"),
+                      formatted != prefix else { continue }
+                if seen.insert(formatted.lowercased()).inserted {
+                    results.append(formatted)
+                    if results.count == limit { return results }
+                }
+            }
+        }
+        return results
+    }
+
+    private func applyCase(_ resolved: String, matching word: String) -> String {
         if word == word.lowercased() { return resolved }
         if word.count > 1, word == word.uppercased() { return resolved.uppercased() }
         if let first = word.first, first.isUppercase {

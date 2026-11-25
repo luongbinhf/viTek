@@ -10,8 +10,8 @@
 2. **Xử lý 100% trên thiết bị:** Mọi thao tác gõ tiếng Việt (Telex/VNI), kiểm tra chính tả, mở rộng gõ tắt, chuyển mã văn bản, gợi ý từ/Emoji và Apple Intelligence đều chạy hoàn toàn cục bộ trên thiết bị của bạn.
 3. **Không cần "Cho phép truy cập đầy đủ" trên iOS/iPadOS:** Phần mở rộng bàn phím `viTekKeyboard` khai báo `RequestsOpenAccess = false` và không có quyền truy cập mạng.
 4. **Lưu trữ cục bộ & Đồng bộ iCloud tuỳ chọn:**
-   - Tuỳ chọn kiểu gõ, bảng gõ tắt, danh sách từ ngoại lệ và bộ nhớ tần suất từ cục bộ (giới hạn 500 mục, có thể xoá bất cứ lúc nào trong Cài đặt) chỉ được lưu trong `UserDefaults` / App Group trên thiết bị.
-   - Nếu bạn bật **Đồng bộ iCloud**, chỉ các tuỳ chọn kiểu gõ, bảng gõ tắt và danh sách từ ngoại lệ cá nhân được đồng bộ qua tài khoản Apple iCloud riêng của bạn (`NSUbiquitousKeyValueStore`). Văn bản đang gõ không bao giờ được đồng bộ.
+   - Tuỳ chọn kiểu gõ, bảng gõ tắt, danh sách từ ngoại lệ, bộ nhớ tần suất từ cá nhân (1–3 từ, tối đa 500 mục/nhóm) và lịch sử Clipboard (tối đa 25 mục ghim + 25 mục gần đây; bỏ qua dữ liệu nhạy cảm từ trình quản lý mật khẩu trên macOS) chỉ lưu cục bộ trên thiết bị và có thể xoá bất cứ lúc nào.
+   - Nếu bạn bật **Đồng bộ iCloud**, viTek đồng bộ tuỳ chọn kiểu gõ, bảng gõ tắt, từ ngoại lệ, mẫu Clipboard đã ghim và từ vựng cá nhân đã học (đồng bộ Clipboard gần đây mặc định tắt và chỉ bật khi bạn chọn) qua tài khoản Apple iCloud riêng (`NSUbiquitousKeyValueStore`). Văn bản đang gõ không bao giờ được đồng bộ.
 5. **Không theo dõi (No Tracking):** viTek không tích hợp SDK quảng cáo hay phân tích của bên thứ ba (`NSPrivacyTracking = false`).
 6. **Liên hệ:** Mọi thắc mắc về quyền riêng tư vui lòng gửi qua [GitHub Issues](https://github.com/luongbinhf/viTek/issues).
 
@@ -25,7 +25,7 @@
 2. **100% On-Device Processing:** All Vietnamese typing (Telex/VNI), spell-checking, shortcut expansion, text conversion, word/emoji suggestions, and Apple Intelligence writing features run entirely on your device.
 3. **No Full Access Required on iOS/iPadOS:** The `viTekKeyboard` extension declares `RequestsOpenAccess = false` and has no network access.
 4. **Local Storage & Optional iCloud Sync:**
-   - Typing preferences, shortcuts, personal exception words, and on-device personal frequency counts (capped at 500 entries, clearable anytime in Settings) are stored solely in local `UserDefaults` / App Group storage.
-   - If you enable **iCloud Sync**, only your typing settings, shortcuts, and exception words sync through your private Apple iCloud account (`NSUbiquitousKeyValueStore`). Typed text is never synced.
+   - Typing preferences, shortcuts, personal exception words, on-device personal 1–3 word frequency counts (capped at 500 entries per tier), and Clipboard History (up to 25 pinned + 25 recent items; automatically skipping concealed password-manager pasteboard types on macOS) are stored locally and clearable anytime.
+   - If you enable **iCloud Sync**, viTek syncs typing settings, shortcuts, exception words, pinned Clipboard snippets, and learned personal vocabulary (recent unpinned Clipboard sync is opt-in and off by default) via your private Apple iCloud account (`NSUbiquitousKeyValueStore`). Typed text is never synced.
 5. **No Tracking:** viTek includes no third-party analytics or advertising SDKs (`NSPrivacyTracking = false`).
 6. **Contact:** For privacy questions, please open an issue at [GitHub Issues](https://github.com/luongbinhf/viTek/issues).

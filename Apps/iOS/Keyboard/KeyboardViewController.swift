@@ -9,7 +9,7 @@ private final class AudioFeedbackInputView: UIInputView, UIInputViewAudioFeedbac
 /// Keep unfinished words as ordinary text so UIKit can move the caret without cancelling them.
 final class KeyboardViewController: UIInputViewController {
     private enum ShiftState { case off, once, locked }
-    private enum LayoutPage { case letters, numbers, symbols, emoji }
+    private enum LayoutPage { case letters, numbers, symbols, emoji, clipboard }
     private enum KeyRole { case character, modifier, prominent }
 
     private static let accentVariants: [Character: [String]] = [
@@ -51,6 +51,7 @@ final class KeyboardViewController: UIInputViewController {
     private let rootStack = UIStackView()
     private let topBar = UIStackView()
     private let suggestionBar = UIStackView()
+    private let clipboardButton = UIButton(type: .system)
     private let textToolsButton = UIButton(type: .system)
     private let rows = UIStackView()
     private var shiftState: ShiftState = .off
@@ -132,6 +133,7 @@ final class KeyboardViewController: UIInputViewController {
         suggestionBar.translatesAutoresizingMaskIntoConstraints = false
         suggestionBar.setContentHuggingPriority(.defaultLow, for: .horizontal)
 
+        configureClipboardButton()
         configureTextToolsButton()
 
         rows.axis = .vertical
@@ -140,6 +142,7 @@ final class KeyboardViewController: UIInputViewController {
         rows.translatesAutoresizingMaskIntoConstraints = false
 
         topBar.addArrangedSubview(suggestionBar)
+        topBar.addArrangedSubview(clipboardButton)
         topBar.addArrangedSubview(textToolsButton)
         rootStack.addArrangedSubview(topBar)
         rootStack.addArrangedSubview(rows)
@@ -237,7 +240,7 @@ final class KeyboardViewController: UIInputViewController {
     }
 
     private var effectiveOneHandedMode: IOSKeyboardSettings.OneHandedMode {
-        guard !isPadLayout, !isLandscapeLayout, page != .emoji else { return .full }
+        guard !isPadLayout, !isLandscapeLayout, page != .emoji, page != .clipboard else { return .full }
         return settings.oneHandedMode
     }
 
@@ -245,6 +248,7 @@ final class KeyboardViewController: UIInputViewController {
         (isLandscapeLayout || isPadLayout)
             && settings.splitLandscapeKeyboard
             && page != .emoji
+            && page != .clipboard
     }
 
     private var preferredKeysHeight: CGFloat {
@@ -357,10 +361,28 @@ final class KeyboardViewController: UIInputViewController {
         let showBar = settings.effectiveShowSuggestions
         topBar.isHidden = !showBar
         suggestionBar.isHidden = !showBar
+        clipboardButton.isHidden = !showBar || (page == .emoji && emojiSearching)
         textToolsButton.isHidden = !showBar || (page == .emoji && emojiSearching)
         suggestionHeightConstraint?.constant = showBar ? 34 : 0
         keysHeightConstraint?.constant = preferredKeysHeight
         updateDockStripVisibility()
+    }
+
+    private func configureClipboardButton() {
+        clipboardButton.setTitle("📋", for: .normal)
+        clipboardButton.titleLabel?.font = .systemFont(ofSize: 15)
+        clipboardButton.backgroundColor = .secondarySystemFill
+        clipboardButton.layer.cornerRadius = 6
+        clipboardButton.accessibilityLabel = "Clipboard"
+        clipboardButton.accessibilityIdentifier = "keyboard.clipboard"
+        clipboardButton.translatesAutoresizingMaskIntoConstraints = false
+        clipboardButton.widthAnchor.constraint(equalToConstant: 36).isActive = true
+        clipboardButton.addAction(UIAction { [weak self] _ in
+            guard let self else { return }
+            self.triggerFeedback()
+            self.page = (self.page == .clipboard) ? .letters : .clipboard
+            self.renderKeys()
+        }, for: .touchUpInside)
     }
 
     private func configureTextToolsButton() {
@@ -568,11 +590,11 @@ final class KeyboardViewController: UIInputViewController {
                 replaceDisplayed(with: word, in: proxy)
                 displayed = word
             case .insert(let word):
-                let prev = previousWord(before: proxy.documentContextBeforeInput, excluding: displayed)
+                let (prev2, prev1) = previousTwoWords(before: proxy.documentContextBeforeInput, excluding: displayed)
                 replaceDisplayed(with: word, in: proxy)
                 displayed = ""
                 if session.isVietnamese {
-                    settings.recordPersonalWord(word, after: prev)
+                    settings.recordPersonalWord(word, after: prev1, beforeThat: prev2)
                 }
             }
         }
@@ -599,17 +621,25 @@ final class KeyboardViewController: UIInputViewController {
         guard settings.effectiveShowSuggestions, session.isVietnamese else { return clearSuggestions() }
         let context = textDocumentProxy.documentContextBeforeInput ?? ""
         let prefix = displayed
-        let next = Array(WordPrediction.suggest(context: context, prefix: prefix, personal: settings.personalFrequency).prefix(3))
+        let rawPrefix = session.engine.isComposing ? session.engine.rawKeys : nil
+        let next = Array(WordPrediction.suggest(
+            context: context,
+            prefix: prefix,
+            personal: settings.personalFrequency,
+            shortcuts: settings.shortcutTable,
+            rawPrefix: rawPrefix
+        ).prefix(3))
         candidates = next
         renderSuggestions()
     }
 
-    private func previousWord(before context: String?, excluding current: String) -> String? {
-        guard let context else { return nil }
+    private func previousTwoWords(before context: String?, excluding current: String) -> (prev2: String?, prev1: String?) {
+        guard let context else { return (nil, nil) }
         let trimmed = context.hasSuffix(current) ? context.dropLast(current.count) : context[...]
-        let stripped = trimmed.reversed().drop(while: \.isWhitespace)
-        let word = String(stripped.prefix(while: \.isLetter).reversed())
-        return word.isEmpty ? nil : word
+        let words = trimmed.split(whereSeparator: { !$0.isLetter })
+        let prev1 = words.last.map(String.init)
+        let prev2 = words.count >= 2 ? String(words[words.count - 2]) : nil
+        return (prev2, prev1)
     }
 
     private func clearSuggestions() {
@@ -639,14 +669,14 @@ final class KeyboardViewController: UIInputViewController {
     private func acceptSuggestion(_ candidate: WordCandidate) {
         triggerFeedback()
         let proxy = textDocumentProxy
-        let prev = previousWord(before: proxy.documentContextBeforeInput, excluding: displayed)
+        let (prev2, prev1) = previousTwoWords(before: proxy.documentContextBeforeInput, excluding: displayed)
         let replacement = candidate.appendsSpace ? candidate.text + " " : candidate.text
         if !displayed.isEmpty {
             replaceDisplayed(with: replacement, in: proxy)
         } else {
             proxy.insertText(replacement)
         }
-        settings.recordPersonalWord(candidate.text, after: prev)
+        settings.recordPersonalWord(candidate.text, after: prev1, beforeThat: prev2)
         session.discard()
         displayed = ""
         updateSuggestions()
@@ -792,8 +822,13 @@ final class KeyboardViewController: UIInputViewController {
 
         let spacing: CGFloat = isPadLayout ? 6 : 4
 
+        clipboardButton.backgroundColor = (page == .clipboard) ? .systemBlue : .secondarySystemFill
         if page == .emoji {
             renderEmojiPicker(spacing: spacing)
+            return
+        }
+        if page == .clipboard {
+            renderClipboardPicker(spacing: spacing)
             return
         }
 
@@ -817,7 +852,7 @@ final class KeyboardViewController: UIInputViewController {
         case .letters: ["qwertyuiop", "asdfghjkl", "zxcvbnm"]
         case .numbers: ["1234567890", "-/:;()$&@", ".,?!'"]
         case .symbols: ["[]{}#%^*+=", "_\\|~<>€£¥•", ".,?!'"]
-        case .emoji: []
+        case .emoji, .clipboard: []
         }
 
         for (index, letters) in layout.enumerated() {
@@ -918,7 +953,7 @@ final class KeyboardViewController: UIInputViewController {
         case .letters: [("qwert", "yuiop"), ("asdfg", "hjkl"), ("zxcv", "bnm")]
         case .numbers: [("12345", "67890"), ("-/:;(", ")$&@\""), (".,?", "!'")]
         case .symbols: [("[]{}#", "%^*+="), ("_\\|~<", ">€£¥•"), (".,?", "!'")]
-        case .emoji: []
+        case .emoji, .clipboard: []
         }
 
         for (index, (leftLetters, rightLetters)) in pairs.enumerated() {
@@ -1062,7 +1097,7 @@ final class KeyboardViewController: UIInputViewController {
                 keyboard.page = .symbols
                 keyboard.renderKeys()
             }
-        case .symbols, .emoji:
+        case .symbols, .emoji, .clipboard:
             return makeButton("123", label: "Số", role: .modifier) { keyboard in
                 keyboard.triggerFeedback()
                 keyboard.page = .numbers
@@ -1193,6 +1228,7 @@ final class KeyboardViewController: UIInputViewController {
         let showBar = settings.effectiveShowSuggestions
         topBar.isHidden = !showBar
         suggestionBar.isHidden = !showBar
+        clipboardButton.isHidden = !showBar
         textToolsButton.isHidden = !showBar
         suggestionHeightConstraint?.constant = showBar ? 34 : 0
 
@@ -1253,6 +1289,7 @@ final class KeyboardViewController: UIInputViewController {
     private func renderEmojiSearchKeyboard(spacing: CGFloat) {
         topBar.isHidden = false
         suggestionBar.isHidden = false
+        clipboardButton.isHidden = true
         textToolsButton.isHidden = true
         suggestionHeightConstraint?.constant = 34
 
@@ -1324,6 +1361,96 @@ final class KeyboardViewController: UIInputViewController {
         }
 
         refreshEmojiSearchUI()
+    }
+
+    // MARK: - Inline Clipboard Picker (📋)
+
+    private func renderClipboardPicker(spacing: CGFloat) {
+        let showBar = settings.effectiveShowSuggestions
+        topBar.isHidden = !showBar
+        suggestionBar.isHidden = !showBar
+        clipboardButton.isHidden = !showBar
+        textToolsButton.isHidden = !showBar
+        suggestionHeightConstraint?.constant = showBar ? 34 : 0
+
+        let header = addRow(spacing: spacing)
+        header.distribution = .fill
+        let backBtn = addKey("ABC", label: "Quay lại bàn phím", role: .modifier, to: header) { keyboard in
+            keyboard.triggerFeedback()
+            keyboard.page = .letters
+            keyboard.renderKeys()
+        }
+        backBtn.widthAnchor.constraint(equalToConstant: 56).isActive = true
+
+        let pasteBtn = addKey("📋 Dán bộ nhớ tạm", label: "Dán từ Bộ nhớ tạm", role: .prominent, to: header) { keyboard in
+            keyboard.triggerFeedback()
+            if let pasteText = UIPasteboard.general.string, !pasteText.isEmpty {
+                keyboard.discardComposition()
+                keyboard.textDocumentProxy.insertText(pasteText)
+                keyboard.settings.recordClipboard(pasteText)
+                keyboard.page = .letters
+                keyboard.renderKeys()
+                keyboard.updateSuggestions()
+            }
+        }
+        pasteBtn.titleLabel?.font = .systemFont(ofSize: 14, weight: .semibold)
+        pasteBtn.accessibilityIdentifier = "clipboard.pasteSystem"
+
+        if !settings.clipboardHistory.unpinnedItems.isEmpty {
+            let clearBtn = addKey("Xoá", label: "Xoá mục chưa ghim", role: .modifier, to: header) { keyboard in
+                keyboard.triggerFeedback()
+                keyboard.settings.clearUnpinnedClipboard()
+                keyboard.renderKeys()
+            }
+            clearBtn.widthAnchor.constraint(equalToConstant: 56).isActive = true
+        }
+
+        let items = Array(settings.clipboardHistory.items.prefix(4))
+        if items.isEmpty {
+            let hintBtn = UIButton(type: .system)
+            hintBtn.setTitle("Ghim mẫu văn bản trong app viTek hoặc đồng bộ từ Mac qua iCloud", for: .normal)
+            hintBtn.titleLabel?.font = .systemFont(ofSize: 13)
+            hintBtn.titleLabel?.numberOfLines = 2
+            hintBtn.titleLabel?.textAlignment = .center
+            hintBtn.setTitleColor(.secondaryLabel, for: .normal)
+            hintBtn.isUserInteractionEnabled = false
+            rows.addArrangedSubview(hintBtn)
+        } else {
+            for (idx, item) in items.enumerated() {
+                let row = addRow(spacing: spacing)
+                row.distribution = .fill
+                let insertTitle = (item.isPinned ? "📌 " : "") + item.preview
+                let insertBtn = UIButton(type: .system)
+                insertBtn.setTitle(insertTitle, for: .normal)
+                insertBtn.contentHorizontalAlignment = .leading
+                var cfg = UIButton.Configuration.plain()
+                cfg.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 10, bottom: 0, trailing: 10)
+                insertBtn.configuration = cfg
+                insertBtn.titleLabel?.font = .systemFont(ofSize: 14)
+                insertBtn.titleLabel?.lineBreakMode = .byTruncatingTail
+                insertBtn.setTitleColor(.label, for: .normal)
+                insertBtn.backgroundColor = Self.characterKeyFill
+                insertBtn.layer.cornerRadius = isPadLayout ? 8 : 6
+                insertBtn.accessibilityIdentifier = "clipboard.item.\(idx)"
+                insertBtn.addAction(UIAction { [weak self] _ in
+                    guard let self else { return }
+                    self.triggerFeedback()
+                    self.discardComposition()
+                    self.textDocumentProxy.insertText(item.text)
+                    self.page = .letters
+                    self.renderKeys()
+                    self.updateSuggestions()
+                }, for: .touchUpInside)
+                row.addArrangedSubview(insertBtn)
+
+                let pinBtn = addKey(item.isPinned ? "★" : "☆", label: item.isPinned ? "Bỏ ghim" : "Ghim", role: .modifier, to: row) { keyboard in
+                    keyboard.triggerFeedback()
+                    keyboard.settings.togglePinClipboard(item.text)
+                    keyboard.renderKeys()
+                }
+                pinBtn.widthAnchor.constraint(equalToConstant: 42).isActive = true
+            }
+        }
     }
 
     private func refreshEmojiSearchUI() {

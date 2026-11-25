@@ -37,7 +37,10 @@ public enum WordPrediction {
     public static func suggest(context: String, prefix: String, mode: Mode = .automatic,
                                domain: VocabularyDomain? = nil, lexicon: PredictionLexicon = .standard,
                                personal: PersonalFrequency? = nil,
-                               systemCandidates: [String] = [], limit: Int = 5) -> [WordCandidate] {
+                               systemCandidates: [String] = [],
+                               shortcuts: Shortcuts? = nil,
+                               rawPrefix: String? = nil,
+                               limit: Int = 5) -> [WordCandidate] {
         guard limit > 0 else { return [] }
         let bounded = context.suffix(contextLimit)
         let before = String(bounded.dropLast(prefix.count))
@@ -58,9 +61,13 @@ public enum WordPrediction {
             } else {
                 emoji = []
             }
-            // Once a phrase completes the typed prefix, unrelated dictionary entries
+            let shortcutMatches: [WordCandidate] = prefix.isEmpty ? [] :
+                (shortcuts?.candidateExpansions(forPrefix: prefix, rawPrefix: rawPrefix, limit: 2) ?? []).enumerated().map {
+                    WordCandidate(text: $0.element, source: .phrase, score: 2_200 - $0.offset, appendsSpace: true)
+                }
+            // Once a phrase or shortcut completes the typed prefix, unrelated dictionary entries
             // and system spellings should not fill the remaining slots in the bar.
-            let phrases = (personalMatches + local).filter { $0.source == .phrase }
+            let phrases = shortcutMatches + (personalMatches + local).filter { $0.source == .phrase }
             if !phrases.isEmpty {
                 candidates = phrases + (prefix.isEmpty ? emoji : [])
             } else {
