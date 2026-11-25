@@ -23,6 +23,8 @@ let package = Package(
         .executableTarget(name: "vitek-bench", dependencies: ["VitekSession"]),
         /// Local dictionary latency and reproducible prediction examples, independent of macOS spellcheck.
         .executableTarget(name: "vitek-prediction-bench", dependencies: ["VitekSession"]),
+        /// Reproducible accuracy benchmark for Vietnamese orthography, bilingual code-switching, and semantic ranking.
+        .executableTarget(name: "vitek-eval", dependencies: ["VitekEngine", "VitekSession"]),
         .testTarget(name: "VitekEngineTests", dependencies: ["VitekEngine"]),
         .testTarget(name: "VitekSessionTests", dependencies: ["VitekSession"]),
         .testTarget(name: "RepositoryTests"),

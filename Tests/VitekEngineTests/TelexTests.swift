@@ -76,4 +76,13 @@ import Testing
         #expect(typed(keys, EngineOptions(bracketVowels: true)) == expected)
         #expect(typed(keys) == keys)
     }
+
+    @Test(arguments: [
+        ("tuoongw", "tương"), ("buoonfw", "bườn"), ("muooiwf", "mười"),
+        ("tuowngo", "tuông"), ("muowifo", "muồi"), ("duowcjo", "duộc"),
+        ("taanw", "tăn"), ("tawna", "tân"),
+    ] as [(String, String)])
+    func switchesSmoothlyBetweenCompoundVowelMarks(_ keys: String, _ expected: String) {
+        #expect(typed(keys) == expected, "\(keys)")
+    }
 }

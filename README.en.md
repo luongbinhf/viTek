@@ -17,7 +17,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-0B66E4.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/Platform-macOS%2014%2B%20%7C%20iOS%20%26%20iPadOS%2026%2B-053A8F.svg)](#getting-started)
 [![Swift](https://img.shields.io/badge/Swift-6.0%20Strict-F05138.svg)](Package.swift)
-[![Release](https://img.shields.io/badge/Release-20261125.1.003-F7B529.svg)](https://github.com/luongbinhf/viTek/releases)
+[![Release](https://img.shields.io/badge/Release-20261125.1.004-F7B529.svg)](https://github.com/luongbinhf/viTek/releases)
 [![Live Demo](https://img.shields.io/badge/GitHub%20Pages-Try%20Live-16A34A.svg)](https://luongbinhf.github.io/viTek/)
 
 </div>
@@ -41,10 +41,10 @@ Try typing `vieetj vie65t reset server userName github.com ` → expected result
 
 | Group | Capabilities |
 |---|---|
-| **1. Smart Bilingual Typing** | Per-word **Telex & VNI auto-detection** · Instant **`VI ↔ EN`** toggle (`⌥⌥` with macOS **Liquid Glass HUD** / `VI/EN` key on iOS) · Free tone placement, Modern (`hoà`) / Traditional (`hòa`) orthography, optional quick consonants · Post-word mark editing · Instant **`Esc`** raw-key undo · Per-app English auto-switch (Terminal, iTerm2, Warp, Ghostty, Alacritty, Kitty) & **Apple Focus Filter** |
-| **2. Macros, Trigrams, Clipboard & iCloud** | Case-preserving text shortcuts (`ko` / `Ko` / `KO`), multi-line templates, dynamic **`{{date}}` / `{{time}}` / `{{datetime}}`**, **live shortcut expansion hints** while typing · Adaptive **1–3 word (`Trigram`) personal prediction** with **`⌥ Space` / `⌥ 1–5`** quick accept & bilingual Emoji search · **Clipboard Manager** (`⌃⌥V` Liquid Glass macOS popup & iOS **`📋`** picker, accent-insensitive search, pinned snippets, password-manager exclusion) · **iCloud sync** for settings, macros, pinned snippets & personal vocabulary |
-| **3. Text Tools & Apple Ecosystem** | Pure-Swift `TextConverter` with auto legacy font repair (**`VNI Windows` / `TCVN3` → `Unicode NFC`**), accent stripping, and **`UPPER` / `lower` / `Title Case`** across macOS menu, Clipboard Manager, iOS **`Aa`** button, and **Apple Shortcuts** · **Apple Intelligence** (`FoundationModels`), Interactive Widgets & Control Center |
-| **4. Adaptive iOS & iPadOS Keyboard** | Portrait **Left/Right One-Handed mode** · Landscape & iPad **Split Keyboard** · Flick-down keys for numbers & symbols · **Hardware / Magic Keyboard support** (`pressesBegan`) · URL/Email convenience keys, contextual Return key, continuous `⌫` hold-delete, Spacebar trackpad |
+| **1. Smart Bilingual & ANE Typing** | Per-word **Telex & VNI auto-detection** · Smooth **`uô ↔ ươ`** switching & **`viw` / `yw` / `uyw`** Quick Telex · Off-critical-path **ANE Core ML (`20 KB`)** sentence context disambiguation · Instant **`VI ↔ EN`** toggle (`⌥⌥` with macOS **Liquid Glass HUD** / `VI/EN` key on iOS) · Post-word mark editing & **`Esc`** raw-key undo · Per-app English auto-switch & **Apple Focus Filter** |
+| **2. Smart Macros, Semantic Ranking & Clipboard v2** | Automatic **collision-free shortcut mining** from repeated phrases (`cob → cảm ơn bạn`), case-preserving macros & **`{{date}}` / `{{time}}` / `{{datetime}}`** · **Trigram + `SemanticRanker`** prediction (`⌥ Space` / `⌥ 1–5`) · **Swift 27 Liquid Glass Clipboard** (`⌃⌥V` macOS & iOS **`📋`** / Smart Paste, URL/OTP/Phone/Hex/Code badges, concept-aware accent-insensitive search, **iCloud sync**) |
+| **3. Cursor Quick Actions (`⌃⌥A`) & Apple Intelligence** | Floating **`⌃⌥A`** Liquid Glass palette replacing selected text in-place · **5 on-device `@Generable` Apple Intelligence modes** (*Restore Vietnamese Diacritics*, *Homophone Proofreader*, *Professional*, *Friendly*, *Clipboard Analyzer*) · Pure-Swift `TextConverter` (**`VNI` / `TCVN3` → `Unicode NFC`**) & **Apple Shortcuts** |
+| **4. Adaptive iOS, iPadOS & Foldable (Duo) Keyboard** | Posture-aware **`KeyboardPosture`** engine: One-Handed mode, thumb **Split Keyboard**, and **3-mode Center Bridge** on wide/foldable displays (2D D-pad trackpad, `3×4` numpad, quick clipboard) · Flick-down symbols · **Hardware / Magic Keyboard** (`pressesBegan`) |
 
 ## Getting Started
 
@@ -57,19 +57,20 @@ Try typing `vieetj vie65t reset server userName github.com ` → expected result
   brew tap luongbinhf/vitek https://github.com/luongbinhf/viTek
   brew install --cask luongbinhf/vitek/vitek
   ```
-- **macOS (Visual .DMG):** Download `viTek-20261125.1.003.dmg` from [GitHub Releases](https://github.com/luongbinhf/viTek/releases), drag **Cài viTek** to `Applications`, and open it once to register **viTek** (`🌐` or `⌃ Space`). See [macOS Install Guide](docs/INSTALL.md).
+- **macOS (Visual .DMG):** Download `viTek-20261125.1.004.dmg` from [GitHub Releases](https://github.com/luongbinhf/viTek/releases), drag **Cài viTek** to `Applications`, and open it once to register **viTek** (`🌐` or `⌃ Space`). See [macOS Install Guide](docs/INSTALL.md).
 - **Build from Source (macOS):** Run `CONFIGURATION=Release scripts/install_dev.sh` (Apple Silicon, Xcode with macOS 26+ SDK, XcodeGen).
 - **iPhone & iPad:** Run `xcodegen generate --spec Apps/iOS/project.yml`, build or follow [App Store / TestFlight Guide](docs/APPSTORE.md), and enable **viTek** in **Settings → General → Keyboard → Keyboards**.
 
 ## Versioning (`YYYYMMDD.X.YYY`) & Verification
 
-- **Format:** `YYYYMMDD` (release date) · `X` (major release counter) · `YYY` (3-digit padded build for macOS/GitHub Releases, e.g. **`20261125.1.003`**; unpadded **`20261125.1.3`** for iOS App Store Connect).
+- **Format:** `YYYYMMDD` (release date) · `X` (major release counter) · `YYY` (3-digit padded build for macOS/GitHub Releases, e.g. **`20261125.1.004`**; unpadded **`20261125.1.4`** for iOS App Store Connect).
 
 ```sh
 scripts/version.sh check                  # Verify macOS, iOS & Casks/vitek.rb versions match
 swift test                                # Run full unit test suite
 swift run vitek "Tooi yeeu tieengs Vieetj"
-swift run -c release vitek-bench          # Core engine benchmark (0.88 µs p50 / 2.54 µs p99)
+swift run -c release vitek-eval           # Orthography, bilingual & semantic ranking evaluation
+swift run -c release vitek-bench          # Core engine benchmark (< 1 µs p50 / < 5 µs p99)
 swift run -c release vitek-prediction-bench # Prediction benchmark (20.5 µs p50 / 72.9 µs p99)
 scripts/release.sh --local                # Build local test DMG
 ```

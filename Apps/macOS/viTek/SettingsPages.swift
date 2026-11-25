@@ -37,8 +37,13 @@ struct WelcomePage: View {
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                             Text("·").foregroundStyle(.tertiary)
-                            KeyCap("Esc")
-                            Text("Hoàn tác về phím gốc")
+                            KeyCap("⌃ ⌥ V")
+                            Text("Clipboard")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                            Text("·").foregroundStyle(.tertiary)
+                            KeyCap("⌃ ⌥ A")
+                            Text("Sửa chữ & AI")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
@@ -183,7 +188,7 @@ struct TypingPage: View {
                 Footnote("Khi tắt kiểm tra chính tả, phím dấu luôn thêm dấu vào chữ gần nhất có thể nhận.")
             }
             Section {
-                Toggle("Gõ nhanh iê bằng w (viw → viê, viwtj → việt)", isOn: $settings.quickTelexW)
+                Toggle("Gõ nhanh iê / yê / uyê bằng w (viw → viê, chuywnj → chuyện)", isOn: $settings.quickTelexW)
                 Toggle("w đứng riêng gõ ra ư (tw → tư)", isOn: $settings.standaloneW)
                 Toggle("[ và ] gõ ra ơ và ư", isOn: $settings.bracketVowels)
                 Toggle("Gõ tắt phụ âm đầu (cc→ch, gg→gi, kk→kh, nn→ng, pp→ph, qq→qu, tt→th)",
@@ -193,7 +198,7 @@ struct TypingPage: View {
             } header: {
                 Text("Telex")
             } footer: {
-                Footnote("Gõ tắt phụ âm giúp giảm số phím nhưng có thể trùng với một số từ tiếng Anh ngắn (vd: bag, cash, task).")
+                Footnote("Hỗ trợ đổi mượt uô ↔ ươ ngay trong âm tiết (tuoongw → tương, tuowngo → tuông). Gõ tắt phụ âm có thể trùng một số từ tiếng Anh ngắn.")
             }
         }
         .settingsForm()
@@ -310,6 +315,17 @@ struct ShortcutsPage: View {
     @Bindable private var settings = SettingsStore.shared
     @State private var addingShortcut = false
 
+    private var smartSuggestions: [SuggestedShortcut] {
+        let existingAbbr = Set(settings.shortcuts.map { $0.abbreviation.trimmingCharacters(in: .whitespaces).lowercased() })
+        let existingExp = Set(settings.shortcuts.map { $0.expansion.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() })
+        return settings.personalFrequency.suggestedShortcuts(
+            excluding: existingAbbr,
+            existingExpansions: existingExp,
+            minCount: 4,
+            limit: 5
+        )
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
@@ -326,6 +342,44 @@ struct ShortcutsPage: View {
                  + "Chữ hoa theo cách bạn gõ: ko → không, Ko → Không, KO → KHÔNG.")
                 .font(.callout)
                 .foregroundStyle(.secondary)
+
+            let suggestions = smartSuggestions
+            if !suggestions.isEmpty {
+                VStack(alignment: .leading, spacing: 6) {
+                    Label("Gợi ý tự động từ cụm từ bạn hay gõ", systemImage: "sparkles")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.secondary)
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 8) {
+                            ForEach(suggestions, id: \.abbreviation) { item in
+                                Button {
+                                    settings.importShortcuts([ShortcutEntry(abbreviation: item.abbreviation, expansion: item.phrase)])
+                                } label: {
+                                    HStack(spacing: 5) {
+                                        Image(systemName: "plus.circle.fill")
+                                            .foregroundStyle(Color.accentColor)
+                                        Text(item.abbreviation)
+                                            .font(.system(.caption, design: .monospaced).weight(.bold))
+                                        Image(systemName: "arrow.right")
+                                            .font(.caption2)
+                                            .foregroundStyle(.tertiary)
+                                        Text(item.phrase)
+                                            .font(.caption)
+                                        Text("(\(item.count)×)")
+                                            .font(.caption2)
+                                            .foregroundStyle(.secondary)
+                                    }
+                                    .padding(.horizontal, 10)
+                                    .padding(.vertical, 5)
+                                    .glassFilterChip(isSelected: false)
+                                }
+                                .buttonStyle(.plain)
+                                .help("Thêm gõ tắt \(item.abbreviation) → \(item.phrase)")
+                            }
+                        }
+                    }
+                }
+            }
             VStack(spacing: 0) {
                 HStack(spacing: 12) {
                     Text("Chữ tắt").frame(width: 140, alignment: .leading)
@@ -568,234 +622,97 @@ struct ClipboardPage: View {
 
     var body: some View {
         let now = Int(Date().timeIntervalSince1970)
-        VStack(alignment: .leading, spacing: 12) {
-            HStack(spacing: 16) {
+        let items = filteredItems
+        let pinned = settings.clipboardHistory.pinnedItems
+
+        Form {
+            Section {
                 Toggle("Lưu lịch sử Clipboard", isOn: $settings.clipboardHistoryEnabled)
-                Toggle("Ghim qua iCloud", isOn: $settings.syncClipboardPinnedICloud)
-                Toggle("Mục gần đây qua iCloud", isOn: $settings.syncClipboardRecentICloud)
-                Spacer()
-                HStack(spacing: 4) {
+                Toggle("Đồng bộ mẫu ghim qua iCloud", isOn: $settings.syncClipboardPinnedICloud)
+                    .disabled(!settings.iCloudSyncEnabled)
+                Toggle("Đồng bộ mục gần đây qua iCloud", isOn: $settings.syncClipboardRecentICloud)
+                    .disabled(!settings.iCloudSyncEnabled)
+                LabeledContent("Phím tắt dán nhanh tại con trỏ") {
                     KeyCap("⌃ ⌥ V")
-                    Text("mở dán nhanh")
-                        .font(.callout)
-                        .foregroundStyle(.secondary)
                 }
+            } footer: {
+                Footnote("Dữ liệu nhạy cảm từ trình quản lý mật khẩu luôn tự động được bỏ qua. Nhấn ⌃⌥V khi đang gõ để tìm và dán nhanh ngay tại con trỏ.")
             }
 
-            HStack(spacing: 8) {
-                TextField("Tên gợi nhớ (tuỳ chọn, vd: STK, Chữ ký)", text: $newAlias)
-                    .textFieldStyle(.roundedBorder)
-                    .frame(width: 210)
-                TextField("Nội dung mẫu văn bản ghim cố định…", text: $newPinned)
-                    .textFieldStyle(.roundedBorder)
-                Button {
-                    let text = newPinned.trimmingCharacters(in: .whitespacesAndNewlines)
-                    guard !text.isEmpty else { return }
-                    settings.addPinnedClipboard(text, alias: newAlias)
-                    newPinned = ""
-                    newAlias = ""
-                } label: {
-                    Label("Ghim mẫu", systemImage: "pin.fill")
-                }
-                .disabled(newPinned.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-            }
-
-            HStack(spacing: 8) {
-                TextField("Tìm kiếm theo nội dung hoặc tên gợi nhớ (không dấu)…", text: $query)
-                    .textFieldStyle(.roundedBorder)
-                ForEach(ClipboardFilter.allCases, id: \.self) { chip in
-                    let isActive = chip == filter
+            Section("Thêm mẫu ghim cố định") {
+                TextField("Tên gợi nhớ", text: $newAlias, prompt: Text("Tuỳ chọn (vd: STK Vietcombank, Chữ ký, Địa chỉ)"))
+                TextField("Nội dung mẫu", text: $newPinned, prompt: Text("Nhập văn bản cần ghim cố định…"))
+                HStack {
+                    if let aiStatusMessage {
+                        Text(aiStatusMessage)
+                            .font(.callout)
+                            .foregroundStyle(Color.accentColor)
+                            .lineLimit(2)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    Spacer()
                     Button {
-                        filter = chip
+                        let text = newPinned.trimmingCharacters(in: .whitespacesAndNewlines)
+                        guard !text.isEmpty else { return }
+                        settings.addPinnedClipboard(text, alias: newAlias)
+                        newPinned = ""
+                        newAlias = ""
                     } label: {
-                        Label(chip.title, systemImage: chip.symbolName)
-                            .font(.callout.weight(isActive ? .semibold : .regular))
-                            .padding(.horizontal, 9)
-                            .padding(.vertical, 4)
-                            .background(
-                                isActive ? Color.accentColor.opacity(0.18) : Color.primary.opacity(0.05),
-                                in: Capsule()
-                            )
-                            .foregroundStyle(isActive ? Color.accentColor : .secondary)
+                        Label("Ghim mẫu", systemImage: "pin.fill")
                     }
-                    .buttonStyle(.plain)
+                    .glassProminentButton()
+                    .disabled(newPinned.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 }
             }
 
-            let items = filteredItems
-            let pinned = settings.clipboardHistory.pinnedItems
-            ScrollView {
-                LazyVStack(spacing: 0) {
-                    ForEach(items, id: \.text) { item in
-                        HStack(spacing: 10) {
-                            ClipboardKindBadge(item: item, size: 28)
+            Section("Danh sách Clipboard (\(items.count))") {
+                TextField("Tìm kiếm", text: $query, prompt: Text("Tìm theo nội dung hoặc tên gợi nhớ (hỗ trợ không dấu)…"))
 
-                            VStack(alignment: .leading, spacing: 2) {
-                                HStack(spacing: 6) {
-                                    if !item.alias.isEmpty {
-                                        Text(item.alias)
-                                            .font(.body.weight(.semibold))
-                                            .lineLimit(1)
-                                    }
-                                    Text(item.kind.badgeTitle)
-                                        .font(.caption2.weight(.medium))
-                                        .foregroundStyle(.secondary)
-                                        .padding(.horizontal, 6)
-                                        .padding(.vertical, 1)
-                                        .background(Color.primary.opacity(0.06), in: Capsule())
-                                    let rel = item.relativeTimeText(now: now)
-                                    Text(rel.isEmpty ? item.statsSummary : "\(item.statsSummary) · \(rel)")
-                                        .font(.caption2)
-                                        .foregroundStyle(.tertiary)
-                                        .lineLimit(1)
-                                }
-                                Text(item.preview)
-                                    .font(item.kind.usesMonospacedFont
-                                          ? .system(.callout, design: .monospaced)
-                                          : .callout)
-                                    .foregroundStyle(item.alias.isEmpty ? .primary : .secondary)
-                                    .lineLimit(2)
-                            }
-                            .frame(maxWidth: .infinity, alignment: .leading)
+                clipboardFilterBar
 
-                            if filter == .all && query.trimmingCharacters(in: .whitespaces).isEmpty,
-                               item.isPinned,
-                               let pinnedIdx = pinned.firstIndex(where: { $0.text == item.text }) {
-                                HStack(spacing: 2) {
-                                    Button {
-                                        settings.movePinnedClipboard(from: pinnedIdx, to: pinnedIdx - 1)
-                                    } label: {
-                                        Image(systemName: "arrow.up")
-                                            .font(.caption2)
-                                    }
-                                    .buttonStyle(.borderless)
-                                    .disabled(pinnedIdx == 0)
-                                    .help("Đưa lên trên")
-                                    Button {
-                                        settings.movePinnedClipboard(from: pinnedIdx, to: pinnedIdx + 1)
-                                    } label: {
-                                        Image(systemName: "arrow.down")
-                                            .font(.caption2)
-                                    }
-                                    .buttonStyle(.borderless)
-                                    .disabled(pinnedIdx + 1 >= pinned.count)
-                                    .help("Đưa xuống dưới")
-                                }
-                            }
-
-                            Button("Chép") {
-                                ClipboardMonitor.copyToPasteboard(item.text)
-                            }
-                            .buttonStyle(.borderless)
-
-                            Menu {
-                                Button {
-                                    editingDraft = ClipboardEditDraft(
-                                        originalText: item.text,
-                                        text: item.text,
-                                        alias: item.alias,
-                                        isPinned: item.isPinned
-                                    )
-                                } label: {
-                                    Label("Sửa nội dung / tên gợi nhớ…", systemImage: "square.and.pencil")
-                                }
-                                Button {
-                                    shortcutDraft = ClipboardShortcutDraft(expansion: item.text)
-                                } label: {
-                                    Label("Tạo Gõ tắt từ mục này…", systemImage: "bolt.horizontal.fill")
-                                }
-                                if #available(macOS 26, *), WritingSuggestion.readiness().canGenerate {
-                                    Divider()
-                                    Button {
-                                        analyzeClipboardWithAI(item)
-                                    } label: {
-                                        Label("Đặt tên & Gợi ý gõ tắt (AI)…", systemImage: "sparkles")
-                                    }
-                                    Button {
-                                        restoreClipboardAccentsWithAI(item)
-                                    } label: {
-                                        Label("Khôi phục dấu tiếng Việt (AI)", systemImage: "textformat")
-                                    }
-                                }
-                                Divider()
-                                Button("Sửa lỗi font → Unicode") {
-                                    ClipboardMonitor.copyToPasteboard(TextConverter.convert(item.text, mode: .autoToUnicode))
-                                }
-                                Button("Bỏ dấu tiếng Việt") {
-                                    ClipboardMonitor.copyToPasteboard(TextConverter.convert(item.text, mode: .stripAccents))
-                                }
-                                Button("CHỮ HOA") {
-                                    ClipboardMonitor.copyToPasteboard(TextConverter.convert(item.text, mode: .uppercase))
-                                }
-                                Button("Viết Hoa Đầu Từ") {
-                                    ClipboardMonitor.copyToPasteboard(TextConverter.convert(item.text, mode: .titleCase))
-                                }
-                            } label: {
-                                Image(systemName: "ellipsis.circle")
-                            }
-                            .menuStyle(.borderlessButton)
-                            .fixedSize()
-                            .help("Chỉnh sửa, chuyển mã hoặc tạo gõ tắt")
-
-                            Button {
-                                settings.togglePinClipboard(item.text)
-                            } label: {
-                                Image(systemName: item.isPinned ? "pin.fill" : "pin")
-                                    .foregroundStyle(item.isPinned ? Color.accentColor : .secondary)
-                            }
-                            .buttonStyle(.borderless)
-                            .help(item.isPinned ? "Bỏ ghim" : "Ghim lên đầu")
-
-                            Button(role: .destructive) {
-                                settings.removeClipboard(item.text)
-                            } label: {
-                                Image(systemName: "trash")
-                            }
-                            .buttonStyle(.borderless)
-                        }
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 8)
-                        Divider()
-                    }
-                }
-            }
-            .frame(maxHeight: .infinity)
-            .background(Color(nsColor: .controlBackgroundColor))
-            .clipShape(RoundedRectangle(cornerRadius: 8))
-            .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(Color.secondary.opacity(0.25)))
-            .overlay {
                 if items.isEmpty {
-                    Text(settings.clipboardHistory.isEmpty
-                         ? "Chưa có mục Clipboard nào. Dữ liệu nhạy cảm từ trình quản lý mật khẩu luôn được bỏ qua."
-                         : "Không tìm thấy mục phù hợp.")
-                        .foregroundStyle(.secondary)
-                        .padding()
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(settings.clipboardHistory.isEmpty
+                             ? "Chưa có mục Clipboard nào."
+                             : "Không tìm thấy mục phù hợp với bộ lọc hiện tại.")
+                            .font(.callout.weight(.medium))
+                            .foregroundStyle(.secondary)
+                        if settings.clipboardHistory.isEmpty {
+                            Text("Sao chép văn bản bất kỳ hoặc thêm mẫu ghim cố định ở mục phía trên.")
+                                .font(.caption)
+                                .foregroundStyle(.tertiary)
+                        }
+                    }
+                    .padding(.vertical, 8)
+                } else {
+                    ForEach(items, id: \.text) { item in
+                        clipboardRow(item: item, pinned: pinned, now: now)
+                    }
                 }
-            }
 
-            HStack {
-                Text("\(settings.clipboardHistory.pinnedItems.count) ghim · \(settings.clipboardHistory.unpinnedItems.count) gần đây")
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
-                if let aiStatusMessage {
-                    Text("· \(aiStatusMessage)")
-                        .font(.caption)
-                        .foregroundStyle(Color.accentColor)
-                        .lineLimit(1)
+                if !settings.clipboardHistory.isEmpty {
+                    HStack(spacing: 10) {
+                        Text("\(pinned.count) đã ghim · \(settings.clipboardHistory.unpinnedItems.count) gần đây")
+                            .font(.callout)
+                            .foregroundStyle(.secondary)
+                        Spacer()
+                        Button("Xoá mục chưa ghim") {
+                            settings.clearUnpinnedClipboard()
+                        }
+                        .glassButton()
+                        .controlSize(.small)
+                        .disabled(settings.clipboardHistory.unpinnedItems.isEmpty)
+
+                        Button("Xoá tất cả", role: .destructive) {
+                            settings.clearAllClipboard()
+                        }
+                        .controlSize(.small)
+                    }
+                    .padding(.top, 4)
                 }
-                Spacer()
-                Button("Xoá mục chưa ghim") {
-                    settings.clearUnpinnedClipboard()
-                }
-                .disabled(settings.clipboardHistory.unpinnedItems.isEmpty)
-                Button("Xoá tất cả", role: .destructive) {
-                    settings.clearAllClipboard()
-                }
-                .disabled(settings.clipboardHistory.isEmpty)
             }
         }
-        .padding(.horizontal, 28)
-        .padding(.vertical, 20)
+        .settingsForm()
         .sheet(item: $editingDraft) { draft in
             EditClipboardItemSheet(draft: draft) { updated in
                 settings.updateClipboardItem(
@@ -811,6 +728,171 @@ struct ClipboardPage: View {
                 settings.importShortcuts([entry])
             }
         }
+    }
+
+    @ViewBuilder
+    private var clipboardFilterBar: some View {
+        let strip = ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 6) {
+                ForEach(ClipboardFilter.allCases, id: \.self) { chip in
+                    let isActive = chip == filter
+                    Button {
+                        filter = chip
+                    } label: {
+                        Label(chip.title, systemImage: chip.symbolName)
+                            .font(.callout.weight(isActive ? .semibold : .medium))
+                            .padding(.horizontal, 11)
+                            .padding(.vertical, 5)
+                            .foregroundStyle(isActive ? Color.accentColor : .primary)
+                            .glassFilterChip(isSelected: isActive)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            .padding(.vertical, 3)
+        }
+        if #available(macOS 26.0, *) {
+            GlassEffectContainer(spacing: 6) { strip }
+        } else {
+            strip
+        }
+    }
+
+    private func clipboardRow(item: ClipboardItem, pinned: [ClipboardItem], now: Int) -> some View {
+        HStack(alignment: .top, spacing: 12) {
+            ClipboardKindBadge(item: item, size: 30)
+                .padding(.top, 2)
+
+            VStack(alignment: .leading, spacing: 4) {
+                HStack(spacing: 6) {
+                    if !item.alias.isEmpty {
+                        Text(item.alias)
+                            .font(.body.weight(.semibold))
+                            .lineLimit(1)
+                    }
+                    Text(item.kind.badgeTitle)
+                        .font(.caption2.weight(.semibold))
+                        .foregroundStyle(.secondary)
+                        .padding(.horizontal, 6.5)
+                        .padding(.vertical, 2)
+                        .background(Color.primary.opacity(0.06), in: Capsule())
+                    let rel = item.relativeTimeText(now: now)
+                    Text(rel.isEmpty ? item.statsSummary : "\(item.statsSummary) · \(rel)")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                }
+                Text(item.preview)
+                    .font(item.kind.usesMonospacedFont
+                          ? .system(.callout, design: .monospaced)
+                          : .callout)
+                    .foregroundStyle(item.alias.isEmpty ? .primary : .secondary)
+                    .lineSpacing(2)
+                    .lineLimit(3)
+                    .padding(.vertical, 1)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+
+            HStack(spacing: 6) {
+                if filter == .all && query.trimmingCharacters(in: .whitespaces).isEmpty,
+                   item.isPinned,
+                   let pinnedIdx = pinned.firstIndex(where: { $0.text == item.text }) {
+                    Button {
+                        settings.movePinnedClipboard(from: pinnedIdx, to: pinnedIdx - 1)
+                    } label: {
+                        Image(systemName: "arrow.up")
+                            .font(.caption)
+                    }
+                    .buttonStyle(.borderless)
+                    .disabled(pinnedIdx == 0)
+                    .help("Đưa lên trên")
+
+                    Button {
+                        settings.movePinnedClipboard(from: pinnedIdx, to: pinnedIdx + 1)
+                    } label: {
+                        Image(systemName: "arrow.down")
+                            .font(.caption)
+                    }
+                    .buttonStyle(.borderless)
+                    .disabled(pinnedIdx + 1 >= pinned.count)
+                    .help("Đưa xuống dưới")
+                }
+
+                Button("Chép") {
+                    ClipboardMonitor.copyToPasteboard(item.text)
+                }
+                .glassButton()
+                .controlSize(.small)
+
+                Menu {
+                    Button {
+                        editingDraft = ClipboardEditDraft(
+                            originalText: item.text,
+                            text: item.text,
+                            alias: item.alias,
+                            isPinned: item.isPinned
+                        )
+                    } label: {
+                        Label("Sửa nội dung / tên gợi nhớ…", systemImage: "square.and.pencil")
+                    }
+                    Button {
+                        shortcutDraft = ClipboardShortcutDraft(expansion: item.text)
+                    } label: {
+                        Label("Tạo Gõ tắt từ mục này…", systemImage: "bolt.horizontal.fill")
+                    }
+                    if #available(macOS 26, *), WritingSuggestion.readiness().canGenerate {
+                        Divider()
+                        Button {
+                            analyzeClipboardWithAI(item)
+                        } label: {
+                            Label("Đặt tên & Gợi ý gõ tắt (AI)…", systemImage: "sparkles")
+                        }
+                        Button {
+                            restoreClipboardAccentsWithAI(item)
+                        } label: {
+                            Label("Khôi phục dấu tiếng Việt (AI)", systemImage: "textformat")
+                        }
+                    }
+                    Divider()
+                    Button("Sửa lỗi font → Unicode") {
+                        ClipboardMonitor.copyToPasteboard(TextConverter.convert(item.text, mode: .autoToUnicode))
+                    }
+                    Button("Bỏ dấu tiếng Việt") {
+                        ClipboardMonitor.copyToPasteboard(TextConverter.convert(item.text, mode: .stripAccents))
+                    }
+                    Button("CHỮ HOA") {
+                        ClipboardMonitor.copyToPasteboard(TextConverter.convert(item.text, mode: .uppercase))
+                    }
+                    Button("Viết Hoa Đầu Từ") {
+                        ClipboardMonitor.copyToPasteboard(TextConverter.convert(item.text, mode: .titleCase))
+                    }
+                } label: {
+                    Image(systemName: "ellipsis.circle")
+                }
+                .menuStyle(.borderlessButton)
+                .fixedSize()
+                .help("Chỉnh sửa, chuyển mã hoặc tạo gõ tắt")
+
+                Button {
+                    settings.togglePinClipboard(item.text)
+                } label: {
+                    Image(systemName: item.isPinned ? "pin.fill" : "pin")
+                        .foregroundStyle(item.isPinned ? Color.accentColor : .secondary)
+                }
+                .buttonStyle(.borderless)
+                .help(item.isPinned ? "Bỏ ghim" : "Ghim lên đầu")
+
+                Button(role: .destructive) {
+                    settings.removeClipboard(item.text)
+                } label: {
+                    Image(systemName: "trash")
+                }
+                .buttonStyle(.borderless)
+            }
+            .padding(.top, 2)
+        }
+        .padding(.vertical, 5)
     }
 
     @available(macOS 26, *)

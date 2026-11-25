@@ -4,6 +4,23 @@ Mọi bản phát hành của **viTek** sử dụng quy tắc phiên bản **`YY
 
 ---
 
+## `20261125.1.004` *(iOS `20261125.1.4`)*
+
+### Nhân gõ Tiếng Việt & Khử mơ hồ ngữ cảnh ANE
+- **Chuyển đổi mượt nguyên âm ghép hai chiều (`uô ↔ ươ`):** Cho phép đổi trực tiếp `uô → ươ` bằng `w` (`tuoongw` → `tương`, `muooiwf` → `mười`) và `ươ → uô` bằng `o` (`tuowngo` → `tuông`, `muowifo` → `muồi`) mà không cần xoá gõ lại.
+- **Mở rộng gõ nhanh `w` (`yw` / `uyw` → `yê` / `uyê`):** Đồng bộ với `viw → viê`, hỗ trợ `ywus` → `yếu`, `quywts` → `quyết`, `chuywnj` → `chuyện`, `nguywnx` → `nguyễn` (nhấn `ww` hoàn tác về phím thô).
+- **Mô hình ANE Core ML mở rộng (`NeuralContextScorer`):** Huấn luyện lại `VitekLanguageContext.mlmodelc` và `VitekDomainClassifier.mlmodelc` trên **260 mẫu câu song ngữ MIT** (chỉ `20 KB` mỗi mô hình, suy luận bất đồng bộ ngoài luồng phím nóng trên Neural Engine) kết hợp `SemanticRanker` xếp hạng ngữ nghĩa dài hạn và bộ đo kiểm `vitek-eval`.
+
+### Thanh tác vụ chữ & Apple Intelligence tại con trỏ (`⌃⌥A`) & Gợi ý Gõ tắt
+- **Quick Action Palette (`⌃⌥A` trên macOS):** Bảng nổi Liquid Glass ngay tại con trỏ (`QuickActionPanel`), hỗ trợ thay thế trực tiếp văn bản đang bôi đen bằng 5 tác vụ **Apple Intelligence `@Generable` trên thiết bị** (*Khôi phục dấu tiếng Việt*, *Sửa chính tả đồng âm*, *Chuẩn hoá lịch sự công sở*, …) cùng công cụ sửa font Unicode NFC, bỏ dấu, đổi hoa/thường chỉ bằng phím `1–7`.
+- **Tự động phát hiện gợi ý gõ tắt (`SuggestedShortcut`):** Khai phá các cụm 2–3 từ lặp lại trong `PersonalFrequency` thành chữ tắt an toàn không trùng âm tiết tiếng Việt hay từ tiếng Anh (`"cảm ơn bạn"` → `cob`, `"tài khoản"` → `tk`) để thêm chỉ với 1 cú nhấp trên macOS & iOS.
+
+### Giao diện Clipboard Liquid Glass Swift 27 & Tư thế Bàn phím Gập (Duo)
+- **Thiết kế lại Clipboard Swift 27 (`GlassCornerStyle.rounded(16)` & `GlassEffectContainer`):** Khắc phục triệt để lỗi bo tròn quá mức làm cắt góc chữ và mất dấu tiếng Việt chồng tầng; đồng bộ trang Cài đặt Clipboard sang `.settingsForm()` liền mạch kèm huy hiệu phân loại thông minh (URL, Email, SĐT, OTP, Mã màu, Code) và Smart Paste Chip.
+- **Tối ưu tư thế màn hình gập (`KeyboardPosture`):** Bàn phím iOS/iPadOS tự thích ứng từ màn ngoài gọn sang màn mở rộng chia đôi kèm **Cầu nối trung tâm 3 chế độ** (Rê con trỏ 2D, Numpad `3×4`, Clipboard nhanh).
+
+---
+
 ## `20261125.1.003` *(iOS `20261125.1.3`)*
 
 ### Quản lý Clipboard & Đồng bộ iCloud mở rộng

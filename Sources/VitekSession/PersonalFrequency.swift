@@ -1,5 +1,18 @@
 import VitekEngine
 
+/// A collision-free shortcut candidate mined from repeated personal bigrams and trigrams.
+public struct SuggestedShortcut: Sendable, Equatable {
+    public let abbreviation: String
+    public let phrase: String
+    public let count: Int
+
+    public init(abbreviation: String, phrase: String, count: Int) {
+        self.abbreviation = abbreviation
+        self.phrase = phrase
+        self.count = count
+    }
+}
+
 /// Bounded, on-device personal frequency memory for 1-word unigrams, 2-word bigrams, and 3-word trigrams.
 /// Pure Swift standard library: zero Foundation, O(1) indexed lookup by previous context and
 /// first folded ASCII letter, strictly capped in size for iOS keyboard extension memory limits.
@@ -142,6 +155,75 @@ public struct PersonalFrequency: Sendable, Equatable {
             if unique.count == limit { break }
         }
         return unique
+    }
+
+    /// Mines repeated 2-word and 3-word phrases from personal typing history into collision-free
+    /// initialism shortcuts (e.g. `"cảm ơn bạn"` → `"cob"`, `"tài khoản"` → `"tk"`), excluding any
+    /// abbreviation that already exists or forms a valid Vietnamese syllable or common English word.
+    public func suggestedShortcuts(
+        excluding existingAbbreviations: Set<String> = [],
+        existingExpansions: Set<String> = [],
+        minCount: Int = 4,
+        limit: Int = 5
+    ) -> [SuggestedShortcut] {
+        guard limit > 0, minCount > 0, (!bigrams.isEmpty || !trigrams.isEmpty) else { return [] }
+        let blockedAbbr = Set(existingAbbreviations.map { $0.lowercased() })
+        let blockedPhrases = Set(existingExpansions.map { $0.lowercased() })
+
+        struct RankedCandidate {
+            let suggestion: SuggestedShortcut
+            let score: Int
+        }
+
+        var candidates: [RankedCandidate] = []
+
+        func consider(phrase: String, count: Int, wordBonus: Int) {
+            guard count >= minCount, phrase.count >= 6 else { return }
+            let lowerPhrase = phrase.lowercased()
+            guard !blockedPhrases.contains(lowerPhrase) else { return }
+            let parts = lowerPhrase.split(separator: " ")
+            guard (2...4).contains(parts.count) else { return }
+            var abbr = ""
+            abbr.reserveCapacity(parts.count)
+            for part in parts {
+                guard let first = part.first else { return }
+                let folded = Spelling.lookupKey(String(first))
+                guard let ascii = folded.first, ascii >= "a", ascii <= "z" else { return }
+                abbr.append(ascii)
+            }
+            guard abbr.count >= 2,
+                  !blockedAbbr.contains(abbr),
+                  !Spelling.isCollisionProneAbbreviation(abbr),
+                  !EnglishWords.contains(abbr) else { return }
+            candidates.append(RankedCandidate(
+                suggestion: SuggestedShortcut(abbreviation: abbr, phrase: lowerPhrase, count: count),
+                score: count * wordBonus + min(lowerPhrase.count, 20)
+            ))
+        }
+
+        for (triple, count) in trigrams {
+            consider(phrase: triple, count: count, wordBonus: 15)
+        }
+        for (pair, count) in bigrams {
+            consider(phrase: pair, count: count, wordBonus: 10)
+        }
+
+        candidates.sort {
+            if $0.score != $1.score { return $0.score > $1.score }
+            if $0.suggestion.count != $1.suggestion.count { return $0.suggestion.count > $1.suggestion.count }
+            return $0.suggestion.phrase < $1.suggestion.phrase
+        }
+
+        var usedAbbr = Set<String>()
+        var usedPhrases = Set<String>()
+        var results: [SuggestedShortcut] = []
+        for entry in candidates {
+            guard usedAbbr.insert(entry.suggestion.abbreviation).inserted,
+                  usedPhrases.insert(entry.suggestion.phrase).inserted else { continue }
+            results.append(entry.suggestion)
+            if results.count == limit { break }
+        }
+        return results
     }
 
     private mutating func prune() {

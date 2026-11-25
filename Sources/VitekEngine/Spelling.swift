@@ -30,6 +30,27 @@ public enum Spelling {
         return true
     }
 
+    /// True when `ascii` is already a complete unaccented Vietnamese syllable (e.g. `"co"`, `"an"`, `"em"`)
+    /// or composes into a marked Vietnamese syllable under default Telex (e.g. `"cas"` → `"cá"`, `"too"` → `"tô"`).
+    public static func isCollisionProneAbbreviation(_ ascii: String) -> Bool {
+        guard !ascii.isEmpty else { return true }
+        var forms: [Form] = []
+        forms.reserveCapacity(ascii.utf8.count)
+        for ch in ascii {
+            guard let byte = ch.asciiValue, ASCII.isLetter(byte) else { return true }
+            forms.append(Form(ASCII.lowercased(byte)))
+        }
+        if Orthography.isComplete(forms, tone: .level) {
+            return true
+        }
+        var engine = VitekEngine()
+        for ch in ascii.lowercased() {
+            _ = engine.type(ch)
+        }
+        let committed = engine.finish()?.text ?? ascii.lowercased()
+        return committed != ascii.lowercased()
+    }
+
     private static func parse(_ character: Character) -> (form: Form, tone: Tone)? {
         if let byte = character.asciiValue, ASCII.isLetter(byte) { return (Form(ASCII.lowercased(byte)), .level) }
         return Glyphs.parse(character).map { ($0.letter.form, $0.tone) }

@@ -203,6 +203,12 @@ struct Composer: Sendable {
         for index in run.reversed() where targets(letters[index].form) && letters[index].form.mark != .circumflex {
             var candidate = letters
             candidate[index].form.mark = .circumflex
+            // Transitioning `ươ` + `o`/`6` -> `uô` (`tương` + `o` -> `tuông`).
+            if candidate[index].form.base == ASCII.o,
+               index > run.lowerBound,
+               candidate[index - 1].form == Form("u", .horn) {
+                candidate[index - 1].form.mark = .none
+            }
             if accept(candidate, tone, key: key) { return true }
         }
         if let index = run.last(where: { targets(letters[$0].form) && letters[$0].form.mark == .circumflex }) {
@@ -215,17 +221,28 @@ struct Composer: Sendable {
 
     private mutating func applyQuickTelexW(key: Character) -> Bool {
         let run = vowels
-        guard let first = run.first, letters[first].form == Form("i") else { return false }
-        if run.count == 1 {
+        guard let first = run.first else { return false }
+        // Supports both `iw`/`iew` -> `iê` (`viwtj` -> `việt`) and `yw`/`uyw` -> `yê`/`uyê`
+        // (`ywus` -> `yếu`, `quywts` -> `quyết`, `chuywnj` -> `chuyện`, `nguywnx` -> `nguyễn`).
+        let baseIndex: Int
+        if letters[first].form == Form("i") || letters[first].form == Form("y") {
+            baseIndex = first
+        } else if run.count >= 2, letters[first].form == Form("u"), letters[first + 1].form == Form("y") {
+            baseIndex = first + 1
+        } else {
+            return false
+        }
+        let tailCount = run.upperBound - baseIndex
+        if tailCount == 1 {
             let index = run.upperBound
             var candidate = letters
-            candidate.insert(Letter(form: Form("e", .circumflex), isUppercase: letters[first].isUppercase), at: index)
+            candidate.insert(Letter(form: Form("e", .circumflex), isUppercase: letters[baseIndex].isUppercase), at: index)
             guard accept(candidate, tone, key: key) else { return false }
             quickWInsertion = index
             return true
         }
-        guard run.count == 2, letters[first + 1].form.base == ASCII.e else { return false }
-        let index = first + 1
+        guard tailCount == 2, letters[baseIndex + 1].form.base == ASCII.e else { return false }
+        let index = baseIndex + 1
         if letters[index].form.mark == .circumflex {
             if quickWInsertion == index { letters.remove(at: index) }
             else { letters[index].form.mark = .none }
@@ -241,10 +258,10 @@ struct Composer: Sendable {
     private mutating func applyHornOrBreve(horn: Bool, breve: Bool, key: Character) -> Bool {
         let run = vowels
         var candidates: [[Letter]] = []
-        // uo takes both horns at once: ươ.
+        // uo (and uô when switching marks) takes both horns at once: ươ.
         if horn, let u = run.dropLast().first(where: { letters[$0].form.base == ASCII.u && letters[$0 + 1].form.base == ASCII.o }) {
             let marks = (letters[u].form.mark, letters[u + 1].form.mark)
-            if [Mark.none, .horn].contains(marks.0), [Mark.none, .horn].contains(marks.1), marks != (.horn, .horn) {
+            if [Mark.none, .horn].contains(marks.0), [Mark.none, .horn, .circumflex].contains(marks.1), marks != (.horn, .horn) {
                 var candidate = letters
                 candidate[u].form.mark = .horn
                 candidate[u + 1].form.mark = .horn

@@ -4,6 +4,11 @@ Mỗi bản phát hành chính thức được gắn tag theo chuẩn [phiên b�
 
 ## Đã hoàn thành
 
+### `20261125.1.004` — Nhân gõ nâng cao, ANE + Apple Intelligence trên máy, Clipboard Swift 27 & iPhone Duo
+- [x] Chuyển đổi hai chiều mượt `uô ↔ ươ`, gõ nhanh `yw`/`uyw` → `yê`/`uyê` và bộ đo lường chất lượng tự động `vitek-eval`.
+- [x] Tích hợp mô hình **ANE Core ML (`20 KB`)** phân loại ngữ cảnh câu song ngữ ngoài luồng phím nóng, `SemanticRanker` xếp hạng ngữ nghĩa dài hạn và 5 chế độ **Apple Intelligence `@Generable`**.
+- [x] Bảng tác vụ nhanh tại con trỏ **`⌃⌥A`** (`QuickActionPanel`), tự động gợi ý gõ tắt từ cụm hay gõ (`SuggestedShortcut`), làm mới giao diện **Clipboard Liquid Glass Swift 27** (`GlassCornerStyle.rounded(16)`, `GlassEffectContainer`) và tư thế bàn phím gập **iPhone Duo** (`KeyboardPosture`).
+
 ### `20261125.1.003` — Quản lý Clipboard, Đồng bộ iCloud mở rộng & Tiên đoán 3-từ
 - [x] `ClipboardHistory` thuần Swift tìm kiếm không dấu, `ClipboardMonitor` bỏ qua mật khẩu, popup Liquid Glass **`⌃⌥V`** macOS, tab Clipboard + phím **`📋`** trên bàn phím iOS.
 - [x] Mở rộng `CloudSettingsSync`: đồng bộ mẫu Clipboard ghim, tuỳ chọn Clipboard gần đây và bộ nhớ từ vựng cá nhân `1–3` từ qua iCloud.

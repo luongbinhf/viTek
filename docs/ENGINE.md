@@ -82,11 +82,11 @@ Ràng buộc theo phụ âm đầu:
 | móc (ơ ư; `uo` → `ươ`) | `w` | `7` |
 | trăng (ă) | `w` | `8` |
 | gạch (đ) | `dd` | `9` |
-| iê rút gọn của viTek | `iw` hoặc `iew` (tuỳ chọn `quickTelexW`, mặc định bật) | — |
+| iê / yê / uyê rút gọn của viTek | `iw` / `iew`, `yw` / `uyw` (tuỳ chọn `quickTelexW`, mặc định bật) | — |
 | ư đứng riêng | `w` (tuỳ chọn `standaloneW`) | — |
 | ơ, ư một phím | `[ ]`, hoa `{ }` (tuỳ chọn `bracketVowels`) | — |
 
-Telex chuẩn vẫn dùng `vieetj` → `việt`. Tuỳ chọn gõ nhanh của viTek thêm `viw` → `viê`, `viwtj` → `việt`, `viwts` → `viết`, và `vietwj` → `việt`. `s` vẫn là dấu sắc; có thể đặt trước/sau `w`. Nhấn `w` lần nữa trả ký tự gốc (`viww` → `viw`, `vieww` → `view`); Backspace xoá ký tự đang hiển thị (`viê` → `vi`). Chữ hoa theo nguyên âm đã gõ, không theo phím modifier. Từ chưa hoàn chỉnh như `viê` vẫn theo quy tắc khôi phục chính tả khi kết thúc từ. Có thể tắt riêng trong Cài đặt → Telex.
+Telex chuẩn vẫn dùng `vieetj` → `việt`. Tuỳ chọn gõ nhanh của viTek thêm `viw` → `viê`, `viwtj` → `việt`, `viwts` → `viết`, `vietwj` → `việt`, cũng như `ywus` → `yếu`, `quywts` → `quyết`, `chuywnj` → `chuyện`. `s` vẫn là dấu sắc; có thể đặt trước/sau `w`. Nhấn `w` lần nữa trả ký tự gốc (`viww` → `viw`, `vieww` → `view`, `chuyww` → `chuyw`); Backspace xoá ký tự đang hiển thị (`viê` → `vi`). Chữ hoa theo nguyên âm đã gõ, không theo phím modifier. Từ chưa hoàn chỉnh như `viê` vẫn theo quy tắc khôi phục chính tả khi kết thúc từ. Có thể tắt riêng trong Cài đặt → Telex.
 
 Khi bật giữ từ tiếng Anh, `view` ưu tiên tiếng Anh ngay lúc đang soạn, kể cả khi ngữ cảnh trước đó thiên về tiếng Việt. Gõ tiếp `s`, `er`, `ing` giữ tiền tố đang thấy (`views`, `viewer`, `viewing`). Backspace từ `view` cho `vie`, từ `views` cho `view`; gõ lại chữ vừa xóa không mất ký tự. `vieww` vẫn là thao tác hủy `w` cho `view`. Do ưu tiên này, dùng `viwtj` hoặc `vietwj` để gõ `việt`; `viewtj` chỉ đọc thành `việt` khi tắt giữ từ tiếng Anh. `swiss` giữ đủ hai chữ `s` cuối, cùng quy tắc bảo vệ các từ tiếng Anh chứa phím thanh lặp.
 
@@ -94,8 +94,8 @@ Khi bật giữ từ tiếng Anh, `view` ưu tiên tiếng Anh ngay lúc đang s
 
 Phím dấu tìm **ứng viên** trong chuỗi nguyên âm, từ phải sang trái, và nhận ứng viên đầu tiên mà kết quả vẫn **có thể thành âm tiết** (`Orthography.isPlausiblePrefix`):
 
-* `w`/`7`: thử cặp `uo` trước (→ `ươ`), sau đó từng a/o/u (`mua` + w: `muă` không hợp lệ → `mưa`; `hoa` + w → `hoă`).
-* mũ: nguyên âm cùng chữ gốc (Telex) hoặc bất kỳ a/e/o (VNI); đổi được `ă`→`â`, `ơ`→`ô`.
+* `w`/`7`: thử cặp `uo` / `uô` trước (→ `ươ`, ví dụ `tuoongw` → `tương`), sau đó từng a/o/u (`mua` + w: `muă` không hợp lệ → `mưa`; `hoa` + w → `hoă`).
+* mũ: nguyên âm cùng chữ gốc (Telex) hoặc bất kỳ a/e/o (VNI); đổi hai chiều `ă` ↔ `â`, `ơ` → `ô` và cặp nguyên âm ghép `ươ` → `uô` (`tuowngo` → `tuông`).
 * gạch: chỉ áp lên `d` ở đầu từ, ở bất kỳ thời điểm nào (`dod` → `đo`).
 * thanh: cần ít nhất một nguyên âm; thanh mới thay thanh cũ.
 

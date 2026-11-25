@@ -152,8 +152,13 @@ enum BuiltinVocabulary {
         """, .education)
         phrases("""
         chăm sóc sức khỏe
+        khám sức khỏe
         sức khỏe tinh thần
         khám chữa bệnh
+        bệnh viện
+        bệnh nhân
+        bác sĩ chuyên khoa
+        phác đồ điều trị
         điều trị nội trú
         điều trị ngoại trú
         hồ sơ bệnh án

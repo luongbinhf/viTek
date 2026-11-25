@@ -48,4 +48,9 @@ public enum EnglishWords {
 
     /// The listed words, sorted, for showing to the user.
     public static let all = words.sorted()
+
+    /// True when `word` is in the built-in common English word list (case-insensitive).
+    public static func contains(_ word: String) -> Bool {
+        words.contains(word.lowercased())
+    }
 }

@@ -7,6 +7,9 @@ import Testing
         ("viwst", "viết"), ("viswt", "viết"), ("vietwj", "việt"),
         ("VIWTJ", "VIỆT"), ("Viwts", "Viết"), ("viWts", "viết"),
         ("biwn", "biên"), ("tiwngs", "tiếng"),
+        ("yw", "yê"), ("ywu", "yêu"), ("ywus", "yếu"), ("ywn", "yên"),
+        ("quywts", "quyết"), ("chuywnj", "chuyện"), ("nguywnx", "nguyễn"), ("tuywts", "tuyết"),
+        ("yww", "yw"), ("chuyww", "chuyw"),
         ("viww", "viw"), ("vieww", "view"), ("viwtss", "viêts"),
     ] as [(String, String)])
     func composingQuickW(_ keys: String, _ expected: String) {

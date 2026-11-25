@@ -220,8 +220,46 @@ private struct IOSShortcutsView: View {
     @State private var importText = ""
     @State private var importSummary: String?
 
+    private var smartSuggestions: [SuggestedShortcut] {
+        let existingAbbr = Set(settings.shortcuts.map { $0.abbreviation.trimmingCharacters(in: .whitespaces).lowercased() })
+        let existingExp = Set(settings.shortcuts.map { $0.expansion.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() })
+        return settings.personalFrequency.suggestedShortcuts(
+            excluding: existingAbbr,
+            existingExpansions: existingExp,
+            minCount: 4,
+            limit: 5
+        )
+    }
+
     var body: some View {
         List {
+            let suggestions = smartSuggestions
+            if !suggestions.isEmpty {
+                Section("Gợi ý tự động từ thói quen gõ") {
+                    ForEach(suggestions, id: \.abbreviation) { item in
+                        Button {
+                            settings.importShortcuts([ShortcutEntry(abbreviation: item.abbreviation, expansion: item.phrase)])
+                        } label: {
+                            HStack(spacing: 8) {
+                                Image(systemName: "plus.circle.fill")
+                                    .foregroundStyle(Color.accentColor)
+                                Text(item.abbreviation)
+                                    .font(.system(.body, design: .monospaced).weight(.semibold))
+                                Image(systemName: "arrow.right")
+                                    .font(.caption)
+                                    .foregroundStyle(.tertiary)
+                                Text(item.phrase)
+                                    .foregroundStyle(.primary)
+                                Spacer()
+                                Text("\(item.count)×")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                    }
+                }
+            }
+
             Section("Thêm gõ tắt") {
                 TextField("Chữ tắt (vd: ko)", text: $abbreviation)
                     .textInputAutocapitalization(.never)
@@ -413,26 +451,29 @@ private struct IOSClipboardView: View {
 
                 Section {
                     ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: 8) {
-                            ForEach(ClipboardFilter.allCases, id: \.self) { chip in
-                                let isActive = chip == filter
-                                Button {
-                                    filter = chip
-                                } label: {
-                                    Label(chip.title, systemImage: chip.symbolName)
-                                        .font(.caption.weight(isActive ? .semibold : .medium))
-                                        .padding(.horizontal, 10)
-                                        .padding(.vertical, 6)
-                                        .background(
-                                            isActive ? Color.accentColor.opacity(0.2) : Color.secondary.opacity(0.12),
-                                            in: Capsule()
-                                        )
-                                        .foregroundStyle(isActive ? Color.accentColor : .primary)
+                        GlassEffectContainer(spacing: 8) {
+                            HStack(spacing: 8) {
+                                ForEach(ClipboardFilter.allCases, id: \.self) { chip in
+                                    let isActive = chip == filter
+                                    Button {
+                                        filter = chip
+                                    } label: {
+                                        Label(chip.title, systemImage: chip.symbolName)
+                                            .font(.caption.weight(isActive ? .semibold : .medium))
+                                            .padding(.horizontal, 12)
+                                            .padding(.vertical, 7)
+                                            .foregroundStyle(isActive ? Color.accentColor : .primary)
+                                            .glassEffect(
+                                                isActive ? .regular.tint(.accentColor).interactive() : .regular.interactive(),
+                                                in: .capsule
+                                            )
+                                    }
+                                    .buttonStyle(.plain)
                                 }
-                                .buttonStyle(.plain)
                             }
+                            .padding(.vertical, 3)
+                            .padding(.horizontal, 2)
                         }
-                        .padding(.vertical, 2)
                     }
                 }
 

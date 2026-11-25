@@ -52,4 +52,22 @@ import VitekSession
         let vn = WordPrediction.suggest(context: "người Vn", prefix: "Vn", shortcuts: shortcuts)
         #expect(vn.first?.text == "Việt nam" || vn.first?.text == "Việt Nam")
     }
+
+    @Test func minesCollisionFreeShortcutSuggestionsFromRepeatedPhrases() {
+        var memory = PersonalFrequency()
+        for _ in 0..<5 {
+            memory.record(word: "ơn", after: "cảm")
+            memory.record(word: "bạn", after: "ơn", beforeThat: "cảm")
+            memory.record(word: "khoản", after: "tài")
+        }
+        let suggestions = memory.suggestedShortcuts(excluding: ["existing"], minCount: 4, limit: 5)
+        #expect(suggestions.contains { $0.abbreviation == "cob" && $0.phrase == "cảm ơn bạn" && $0.count == 5 })
+        #expect(suggestions.contains { $0.abbreviation == "tk" && $0.phrase == "tài khoản" && $0.count == 5 })
+        // "cảm ơn" -> "co" is a valid Vietnamese syllable, so it must NEVER be suggested as a collision-prone shortcut.
+        #expect(!suggestions.contains { $0.abbreviation == "co" })
+
+        let filtered = memory.suggestedShortcuts(excluding: ["cob"], existingExpansions: ["tài khoản"], minCount: 4)
+        #expect(!filtered.contains { $0.abbreviation == "cob" })
+        #expect(!filtered.contains { $0.abbreviation == "tk" })
+    }
 }

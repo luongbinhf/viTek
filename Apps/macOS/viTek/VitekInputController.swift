@@ -74,6 +74,7 @@ final class VitekInputController: IMKInputController {
             callback.value.0.commit(to: callback.value.1)
             callback.value.0.hideSuggestions()
             ClipboardPanel.hide()
+            QuickActionPanel.hide()
             callback.value.0.activeClient = nil
             callback.value.0.typedContext = ""
         }
@@ -119,6 +120,7 @@ final class VitekInputController: IMKInputController {
             commit(to: sender)
             hideSuggestions()
             ClipboardPanel.hide()
+            QuickActionPanel.hide()
             typedContext = ""
             return false
         }
@@ -144,10 +146,19 @@ final class VitekInputController: IMKInputController {
         if mods == [.control, .option], event.keyCode == 0x09 {
             _ = document.handle(.boundary, client: adapter(client))
             hideSuggestions()
+            QuickActionPanel.hide()
             typedContext = ""
             ClipboardPanel.toggle(caret: clientCaretRect(client)) { [weak self] text in
                 self?.insertClipboardText(text)
             }
+            return true
+        }
+        if mods == [.control, .option], event.keyCode == 0x00 {
+            _ = document.handle(.boundary, client: adapter(client))
+            hideSuggestions()
+            ClipboardPanel.hide()
+            typedContext = ""
+            toggleQuickActions(for: client)
             return true
         }
         if ClipboardPanel.isVisible {
@@ -155,6 +166,12 @@ final class VitekInputController: IMKInputController {
                 return true
             }
             ClipboardPanel.hide()
+        }
+        if QuickActionPanel.isVisible {
+            if QuickActionPanel.handleKeyEvent(event) {
+                return true
+            }
+            QuickActionPanel.hide()
         }
         // Ordinary text callbacks can lag behind the tap, even with renewed IMK
         // timestamps. They must not consume the next Command press.
@@ -536,6 +553,33 @@ final class VitekInputController: IMKInputController {
         targetClient.insertText(text, replacementRange: NSRange(location: NSNotFound, length: 0))
     }
 
+    private func toggleQuickActions(for client: IMKTextInput) {
+        let selection = client.selectedRange()
+        var selectedText: String?
+        if selection.location != NSNotFound, (1...4096).contains(selection.length),
+           let text = client.attributedSubstring(from: selection)?.string,
+           text.utf16.count == selection.length {
+            selectedText = text
+        }
+        let hasSelection = selectedText != nil
+        let source = selectedText ?? (NSPasteboard.general.string(forType: .string) ?? "")
+        let targetRange = selection
+        QuickActionPanel.toggle(
+            caret: clientCaretRect(client),
+            sourceText: source,
+            replacesSelection: hasSelection
+        ) { [weak self] transformed in
+            guard let self else { return }
+            if hasSelection, let targetClient = self.activeClient as? IMKTextInput {
+                self.document.resetForFocusChange()
+                targetClient.insertText(transformed, replacementRange: targetRange)
+            } else {
+                ClipboardMonitor.copyToPasteboard(transformed)
+                self.settings.recordClipboard(transformed)
+            }
+        }
+    }
+
     private static func trailingTwoWords(in text: String) -> (prev2: String?, prev1: String?) {
         let words = text.split(whereSeparator: { !$0.isLetter })
         let prev1 = words.last.map(String.init)
@@ -562,6 +606,7 @@ final class VitekInputController: IMKInputController {
         menu.addItem(item("Gõ tắt", #selector(toggleShortcuts(_:)), on: settings.shortcutsEnabled))
         menu.addItem(item("Gợi ý từ", #selector(toggleSuggestions(_:)), on: settings.showSuggestions))
         menu.addItem(.separator())
+        menu.addItem(item("Công cụ chữ & AI nhanh (⌃⌥A)", #selector(showQuickActionPalette(_:)), on: false))
         menu.addItem(makeClipboardSubmenuItem())
         menu.addItem(.separator())
         if #available(macOS 26, *) {
@@ -621,6 +666,18 @@ final class VitekInputController: IMKInputController {
         let rect = (activeClient as? IMKTextInput).map(clientCaretRect) ?? .zero
         ClipboardPanel.show(caret: rect) { [weak self] text in
             self?.insertClipboardText(text)
+        }
+    }
+
+    @objc private func showQuickActionPalette(_ sender: Any?) {
+        if let active = activeClient as? IMKTextInput {
+            toggleQuickActions(for: active)
+        } else {
+            let clip = NSPasteboard.general.string(forType: .string) ?? ""
+            QuickActionPanel.show(caret: .zero, sourceText: clip, replacesSelection: false) { [weak self] transformed in
+                ClipboardMonitor.copyToPasteboard(transformed)
+                self?.settings.recordClipboard(transformed)
+            }
         }
     }
 
