@@ -432,11 +432,12 @@ struct ShortcutsPage: View {
 /// Keep an unfinished new shortcut local until both fields are ready.
 private struct NewShortcutForm: View {
     @Environment(\.dismiss) private var dismiss
-    @State private var abbreviation = ""
+    @State private var abbreviation: String
     @State private var expansion: String
     let save: (ShortcutEntry) -> Void
 
-    init(initialExpansion: String = "", save: @escaping (ShortcutEntry) -> Void) {
+    init(initialAbbreviation: String = "", initialExpansion: String = "", save: @escaping (ShortcutEntry) -> Void) {
+        _abbreviation = State(initialValue: initialAbbreviation)
         _expansion = State(initialValue: initialExpansion)
         self.save = save
     }
@@ -546,8 +547,9 @@ private struct ClipboardEditDraft: Identifiable {
 }
 
 private struct ClipboardShortcutDraft: Identifiable {
+    var abbreviation: String = ""
     let expansion: String
-    var id: String { expansion }
+    var id: String { abbreviation + ":" + expansion }
 }
 
 struct ClipboardPage: View {
@@ -558,6 +560,7 @@ struct ClipboardPage: View {
     @State private var filter: ClipboardFilter = .all
     @State private var editingDraft: ClipboardEditDraft?
     @State private var shortcutDraft: ClipboardShortcutDraft?
+    @State private var aiStatusMessage: String?
 
     private var filteredItems: [ClipboardItem] {
         settings.clipboardHistory.filter(filter, query: query)
@@ -701,6 +704,19 @@ struct ClipboardPage: View {
                                 } label: {
                                     Label("Tạo Gõ tắt từ mục này…", systemImage: "bolt.horizontal.fill")
                                 }
+                                if #available(macOS 26, *), WritingSuggestion.readiness().canGenerate {
+                                    Divider()
+                                    Button {
+                                        analyzeClipboardWithAI(item)
+                                    } label: {
+                                        Label("Đặt tên & Gợi ý gõ tắt (AI)…", systemImage: "sparkles")
+                                    }
+                                    Button {
+                                        restoreClipboardAccentsWithAI(item)
+                                    } label: {
+                                        Label("Khôi phục dấu tiếng Việt (AI)", systemImage: "textformat")
+                                    }
+                                }
                                 Divider()
                                 Button("Sửa lỗi font → Unicode") {
                                     ClipboardMonitor.copyToPasteboard(TextConverter.convert(item.text, mode: .autoToUnicode))
@@ -761,6 +777,12 @@ struct ClipboardPage: View {
                 Text("\(settings.clipboardHistory.pinnedItems.count) ghim · \(settings.clipboardHistory.unpinnedItems.count) gần đây")
                     .font(.callout)
                     .foregroundStyle(.secondary)
+                if let aiStatusMessage {
+                    Text("· \(aiStatusMessage)")
+                        .font(.caption)
+                        .foregroundStyle(Color.accentColor)
+                        .lineLimit(1)
+                }
                 Spacer()
                 Button("Xoá mục chưa ghim") {
                     settings.clearUnpinnedClipboard()
@@ -785,8 +807,43 @@ struct ClipboardPage: View {
             }
         }
         .sheet(item: $shortcutDraft) { draft in
-            NewShortcutForm(initialExpansion: draft.expansion) { entry in
+            NewShortcutForm(initialAbbreviation: draft.abbreviation, initialExpansion: draft.expansion) { entry in
                 settings.importShortcuts([entry])
+            }
+        }
+    }
+
+    @available(macOS 26, *)
+    private func analyzeClipboardWithAI(_ item: ClipboardItem) {
+        aiStatusMessage = "Đang phân tích mẫu bằng Apple Intelligence…"
+        Task { @MainActor in
+            do {
+                let insight = try await WritingSuggestion.analyzeClipboardSnippet(item.text)
+                settings.updateClipboardItem(
+                    oldText: item.text,
+                    newText: insight.extractedValue,
+                    alias: insight.alias,
+                    isPinned: true
+                )
+                aiStatusMessage = "Đã đặt tên “\(insight.alias)” (gợi ý gõ tắt: \(insight.abbreviation))."
+                shortcutDraft = ClipboardShortcutDraft(abbreviation: insight.abbreviation, expansion: insight.extractedValue)
+            } catch {
+                aiStatusMessage = error.localizedDescription
+            }
+        }
+    }
+
+    @available(macOS 26, *)
+    private func restoreClipboardAccentsWithAI(_ item: ClipboardItem) {
+        aiStatusMessage = "Đang khôi phục dấu tiếng Việt trên thiết bị…"
+        Task { @MainActor in
+            do {
+                let output = try await WritingSuggestion.runTask(mode: .restoreDiacritics, input: item.text)
+                ClipboardMonitor.copyToPasteboard(output.text)
+                settings.recordClipboard(output.text)
+                aiStatusMessage = "Đã khôi phục dấu và chép vào Bộ nhớ tạm."
+            } catch {
+                aiStatusMessage = error.localizedDescription
             }
         }
     }
@@ -864,6 +921,16 @@ struct AboutPage: View {
             }
             Section {
                 LabeledContent("Phiên bản") { Text(version).monospacedDigit().textSelection(.enabled) }
+                LabeledContent("ANE Ngữ cảnh") {
+                    Text(NeuralContextScorer.shared.statusSummary)
+                        .foregroundStyle(.secondary)
+                }
+                if #available(macOS 26, *) {
+                    LabeledContent("Apple Intelligence") {
+                        Text(WritingSuggestion.readiness().message)
+                            .foregroundStyle(.secondary)
+                    }
+                }
                 HStack {
                     Button(checkingUpdate ? "Đang kiểm tra…" : "Kiểm tra bản cập nhật…") {
                         checkUpdate()

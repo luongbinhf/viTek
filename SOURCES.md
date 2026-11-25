@@ -26,7 +26,8 @@ Mỗi dữ liệu, asset hoặc thư viện bên ngoài là một dòng. PR thi�
 | Bộ nhận diện thương hiệu, linh vật Cú Lạc & Logo (`AppIcon.icns`, `viTek.png`, `BrandMascot.png`, `assets/brand/*`) | tạo trong dự án và đóng gói qua `scripts/make_brand_assets.swift` | thuộc dự án (MIT) | sinh lại được từ nguồn gốc |
 | Icon nguồn nhập (`InputIconTemplate.pdf`) | vẽ trong dự án bằng `scripts/make_input_icon.swift`: PDF vector, chữ là đường viền glyph của font hệ thống | thuộc dự án | sinh lại được từ script |
 | Tín hiệu thói quen gõ (`TypingHabits.swift`) | Ví dụ từ mơ hồ và từ tiếng Anh do dự án chọn cho chế độ tự động | thuộc dự án | chỉ lưu điểm số theo ứng dụng |
-| Gợi ý viết | Foundation Models của Apple, gọi `SystemLanguageModel.default` | thuộc hệ điều hành | mô hình trên thiết bị, không đóng gói trọng số |
+| Gợi ý viết & Biên tập có cấu trúc | Foundation Models của Apple (`SystemLanguageModel.default` + `@Generable`) | thuộc hệ điều hành | mô hình trên thiết bị, không đóng gói trọng số |
+| Mô hình phân loại ngữ cảnh ANE (`VitekLanguageContext.mlmodelc`, `VitekDomainClassifier.mlmodelc`) | huấn luyện và biên dịch từ dữ liệu tự soạn trong dự án qua `scripts/make_ane_models.swift` (`CreateML` + `CoreML` `.cpuAndNeuralEngine`) | thuộc dự án (MIT) | sinh lại 100% bằng `xcrun swift scripts/make_ane_models.swift` |
 | Gợi ý từ bổ sung | dịch vụ hoàn tất từ tiếng Việt của macOS, gọi qua `NSSpellChecker` | thuộc macOS | chỉ bổ sung sau kết quả cục bộ; không dùng cho code |
 | Từ/cụm và thuật ngữ (`BuiltinVocabulary.swift`) | dữ liệu khởi đầu do dự án tự soạn, chia 6 lĩnh vực | thuộc dự án | ưu tiên biên tập, không phải tần suất đo từ corpus; không chép từ điển hay dữ liệu của bộ gõ khác |
 | Từ khóa và member code (`CodeCompletion.swift`) | danh sách do dự án chọn; định danh khác chỉ lấy trong ngữ cảnh của lượt gợi ý | thuộc dự án | hoàn tất từ vựng, không suy luận kiểu hoặc chạy mã |

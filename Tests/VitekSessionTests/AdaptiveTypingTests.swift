@@ -123,4 +123,17 @@ import VitekSession
         viField.type("owr been anh as ")
         #expect(viField.committed == "ở bên anh á ")
     }
+
+    @Test func aneContextHintDisambiguatesCodeSwitchCollisions() {
+        var englishHinted = field()
+        englishHinted.session.engine.habits = TypingHabits(telexScore: 3)
+        englishHinted.session.engine.contextHint = .english
+        englishHinted.type("max tax box mix six bus thus ")
+        #expect(englishHinted.committed == "max tax box mix six bus thus ")
+
+        var vietnameseHinted = field()
+        vietnameseHinted.session.engine.contextHint = .vietnamese
+        vietnameseHinted.type("thus vui max ")
+        #expect(vietnameseHinted.committed == "thú vui mã ")
+    }
 }

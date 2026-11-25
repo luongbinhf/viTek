@@ -31,7 +31,14 @@ targets:
     sources:
       - path: viTek
         excludes: [Info.plist]
-      - ../Shared
+      - path: ../Shared
+        excludes: [Models]
+      - path: ../Shared/Models/VitekLanguageContext.mlmodelc
+        type: folder
+        buildPhase: resources
+      - path: ../Shared/Models/VitekDomainClassifier.mlmodelc
+        type: folder
+        buildPhase: resources
     dependencies:
       - package: viTek
         product: VitekEngine
@@ -67,6 +74,13 @@ targets:
       - path: Keyboard
         excludes: [Info.plist]
       - path: ../Shared/IOSKeyboardSettings.swift
+      - path: ../Shared/NeuralContextScorer.swift
+      - path: ../Shared/Models/VitekLanguageContext.mlmodelc
+        type: folder
+        buildPhase: resources
+      - path: ../Shared/Models/VitekDomainClassifier.mlmodelc
+        type: folder
+        buildPhase: resources
       - path: ../Shared/PrivacyInfo.xcprivacy
     dependencies:
       - package: viTek

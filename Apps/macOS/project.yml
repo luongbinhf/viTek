@@ -30,6 +30,13 @@ targets:
       - path: viTek
         excludes: [Info.plist]
       - path: ../Shared
+        excludes: [Models]
+      - path: ../Shared/Models/VitekLanguageContext.mlmodelc
+        type: folder
+        buildPhase: resources
+      - path: ../Shared/Models/VitekDomainClassifier.mlmodelc
+        type: folder
+        buildPhase: resources
     settings:
       base:
         PRODUCT_NAME: viTek

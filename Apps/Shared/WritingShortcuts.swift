@@ -27,5 +27,11 @@ struct WritingShortcuts: AppShortcutsProvider {
         AppShortcut(intent: StripVietnameseAccentsIntent(), phrases: [
             "Bỏ dấu tiếng Việt bằng \(.applicationName)", "Strip Vietnamese accents with \(.applicationName)"
         ], shortTitle: "Bỏ dấu tiếng Việt", systemImageName: "textformat.abc")
+        AppShortcut(intent: RestoreVietnameseDiacriticsIntent(), phrases: [
+            "Thêm dấu tiếng Việt bằng \(.applicationName)", "Restore Vietnamese accents with \(.applicationName)"
+        ], shortTitle: "Khôi phục dấu AI", systemImageName: "sparkles")
+        AppShortcut(intent: ProofreadVietnameseIntent(), phrases: [
+            "Sửa chính tả tiếng Việt bằng \(.applicationName)", "Proofread Vietnamese with \(.applicationName)"
+        ], shortTitle: "Sửa chính tả AI", systemImageName: "doc.text.fill")
     }
 }

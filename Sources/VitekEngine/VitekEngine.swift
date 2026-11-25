@@ -1,3 +1,9 @@
+public enum ContextLanguageHint: Sendable, Equatable {
+    case automatic
+    case vietnamese
+    case english
+}
+
 /// The Vietnamese input engine for one text field. Feed it keys, show `composition` as the word in
 /// progress, and commit what `finish()` returns when the word ends.
 ///
@@ -8,6 +14,8 @@ public struct VitekEngine: Sendable {
     }
 
     public var habits = TypingHabits()
+    /// Asynchronous sentence-level hint supplied off the keystroke hot path (e.g. ANE Core ML classifier).
+    public var contextHint: ContextLanguageHint = .automatic
     private var evidence: TypingHabits.Evidence?
     private enum Language { case english, vietnamese }
     private var previousLanguage: Language?
@@ -57,13 +65,19 @@ public struct VitekEngine: Sendable {
             if options.customEnglishWords.contains(lower) { return true }
         }
         let automatic = options.automaticallyDetectsMethod
-        guard (automatic || previousLanguage == .english), composer.keys.count <= 7 else { return false }
+        guard (automatic || previousLanguage == .english || contextHint == .english), composer.keys.count <= 7 else { return false }
         if automatic, TypingHabits.resemblesCellReference(composer.keys) { return habits.vniScore <= 0 }
         guard options.keepEnglishWords, composer.options.inputMethod == .telex else { return false }
         guard let keys = ASCII.lowercasedString(composer.keys, maxLength: 7) else { return false }
         if automatic, TypingHabits.englishCues.contains(keys) { return true }
+        if TypingHabits.codeSwitchAmbiguous.contains(keys) {
+            if let previousLanguage { return previousLanguage == .english }
+            return contextHint == .english
+        }
         guard TypingHabits.ambiguous.contains(keys) else { return false }
         if let previousLanguage { return previousLanguage == .english }
+        if contextHint == .english { return true }
+        if contextHint == .vietnamese { return false }
         return habits.telexScore <= 0 && !TypingHabits.needsEnglishContext.contains(keys)
     }
 
@@ -151,7 +165,7 @@ public struct VitekEngine: Sendable {
         if options.automaticallyDetectsMethod {
             let keys = word.keys.lowercased()
             evidence = nil
-            if !cellReference && !TypingHabits.ambiguous.contains(keys) {
+            if !cellReference && !TypingHabits.ambiguous.contains(keys) && !TypingHabits.codeSwitchAmbiguous.contains(keys) {
                 if EnglishWords.words.contains(keys) || TypingHabits.englishCues.contains(keys) {
                     evidence = .english
                 } else if word.text == word.vietnamese, word.text != word.keys, word.keys.allSatisfy(\.isASCII) {

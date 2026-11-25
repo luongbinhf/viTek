@@ -68,3 +68,41 @@ struct StripVietnameseAccentsIntent: AppIntent {
         .result(value: TextConverter.stripVietnameseAccents(text))
     }
 }
+
+@available(macOS 26.0, iOS 26.0, *)
+struct RestoreVietnameseDiacriticsIntent: AppIntent {
+    static let title: LocalizedStringResource = "Khôi phục dấu tiếng Việt bằng AI"
+    static let description = IntentDescription("Thêm lại đầy đủ dấu tiếng Việt theo ngữ cảnh toàn câu bằng mô hình Apple Intelligence cục bộ trên thiết bị.")
+
+    @Parameter(title: "Văn bản không dấu")
+    var text: String
+
+    static var parameterSummary: some ParameterSummary {
+        Summary("Khôi phục dấu tiếng Việt cho \(\.$text)")
+    }
+
+    @MainActor
+    func perform() async throws -> some IntentResult & ReturnsValue<String> {
+        let output = try await WritingSuggestion.runTask(mode: .restoreDiacritics, input: text)
+        return .result(value: output.text)
+    }
+}
+
+@available(macOS 26.0, iOS 26.0, *)
+struct ProofreadVietnameseIntent: AppIntent {
+    static let title: LocalizedStringResource = "Sửa chính tả tiếng Việt bằng AI"
+    static let description = IntentDescription("Rà soát và sửa lỗi chính tả đồng âm tiếng Việt trên thiết bị mà vẫn giữ nguyên ý nghĩa, code và số liệu.")
+
+    @Parameter(title: "Văn bản cần kiểm tra")
+    var text: String
+
+    static var parameterSummary: some ParameterSummary {
+        Summary("Sửa chính tả tiếng Việt cho \(\.$text)")
+    }
+
+    @MainActor
+    func perform() async throws -> some IntentResult & ReturnsValue<String> {
+        let output = try await WritingSuggestion.runTask(mode: .proofreadHomophones, input: text)
+        return .result(value: output.text)
+    }
+}

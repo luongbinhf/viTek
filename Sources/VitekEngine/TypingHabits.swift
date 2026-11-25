@@ -28,6 +28,13 @@ public struct TypingHabits: Equatable, Sendable {
         "as", "is", "of", "or", "us", "has", "his", "its", "low", "how", "now", "row", "too",
         "been", "soon", "noon", "teen", "own", "room", "see", "moon", "this", "more", "there", "here", "these", "does", "days", "those",
     ])
+    // Common English words that collide with valid Telex syllables in mixed technical/office sentences
+    // (e.g. bus/bú, max/mã, tax/tã, box/bõ, mix/mĩ, six/sĩ, bar/bả, thus/thú). Kept literal only when
+    // preceded by English or when the host's ANE context classifier signals English context.
+    static let codeSwitchAmbiguous: Set<String> = [
+        "bus", "gas", "tax", "max", "box", "mix", "six", "bar", "tar", "nor", "sir",
+        "bow", "tow", "sow", "vow", "thus", "ways", "rows",
+    ]
     static let englishCues: Set<String> = [
         "the", "with", "from", "and", "hello", "server", "express", "data",
         "www", "issue", "issues", "class", "address", "message", "lose",

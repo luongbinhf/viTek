@@ -467,6 +467,7 @@ public struct ClipboardHistory: Sendable, Equatable {
         return items.filter { item in
             Self.matchesQuery(item.text, lowerQuery: lowerQuery, foldedQuery: foldedQuery)
                 || (!item.alias.isEmpty && Self.matchesQuery(item.alias, lowerQuery: lowerQuery, foldedQuery: foldedQuery))
+                || SemanticRanker.matchesClipboardConcept(item: item, foldedQuery: foldedQuery)
         }
     }
 

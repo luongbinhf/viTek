@@ -210,12 +210,28 @@ final class VitekInputController: IMKInputController {
         for case .insert(let text) in output.commands { typedContext += text }
         guard output.passThrough else { return }
         switch event {
-        case .character(let key): typedContext.append(key)
-        case .backspace: if !typedContext.isEmpty { typedContext.removeLast() }
-        case .boundary: typedContext = ""
+        case .character(let key):
+            typedContext.append(key)
+            if key.isWhitespace, !session.engine.isComposing {
+                refreshANEContextHint(for: typedContext)
+            }
+        case .backspace:
+            if !typedContext.isEmpty { typedContext.removeLast() }
+        case .boundary:
+            typedContext = ""
+            session.engine.contextHint = .automatic
         }
         if typedContext.count > WordPrediction.contextLimit {
             typedContext = String(typedContext.suffix(WordPrediction.contextLimit))
+        }
+    }
+
+    private func refreshANEContextHint(for snapshot: String) {
+        guard snapshot.count >= 10 else { return }
+        Task(priority: .utility) { [weak self] in
+            let evaluated = await NeuralContextScorer.shared.evaluateLanguageHint(for: snapshot)
+            guard let self, !self.session.engine.isComposing else { return }
+            self.session.engine.contextHint = evaluated.hint
         }
     }
 
@@ -580,6 +596,10 @@ final class VitekInputController: IMKInputController {
         submenu.addItem(subItem("Tự động sửa lỗi font → Unicode", #selector(autoConvertClipboard(_:))))
         submenu.addItem(subItem("Chuẩn hoá Unicode dựng sẵn (NFC)", #selector(normalizeClipboardNFC(_:))))
         submenu.addItem(subItem("Bỏ dấu tiếng Việt", #selector(stripClipboardAccents(_:))))
+        if #available(macOS 26, *), WritingSuggestion.readiness().canGenerate {
+            submenu.addItem(subItem("Khôi phục dấu câu không dấu (AI)", #selector(restoreClipboardDiacriticsAI(_:))))
+            submenu.addItem(subItem("Sửa chính tả đồng âm (AI)", #selector(proofreadClipboardAI(_:))))
+        }
         submenu.addItem(.separator())
         submenu.addItem(subItem("Chuyển mã VNI Windows → Unicode", #selector(convertClipboardVNI(_:))))
         submenu.addItem(subItem("Chuyển mã TCVN3 (ABC) → Unicode", #selector(convertClipboardTCVN3(_:))))
@@ -624,6 +644,26 @@ final class VitekInputController: IMKInputController {
     @objc private func uppercaseClipboard(_ sender: Any?) { transformClipboard(using: .uppercase) }
     @objc private func lowercaseClipboard(_ sender: Any?) { transformClipboard(using: .lowercase) }
     @objc private func titleCaseClipboard(_ sender: Any?) { transformClipboard(using: .titleCase) }
+
+    @available(macOS 26, *)
+    @objc private func restoreClipboardDiacriticsAI(_ sender: Any?) {
+        runAIClipboardTransform(mode: .restoreDiacritics)
+    }
+
+    @available(macOS 26, *)
+    @objc private func proofreadClipboardAI(_ sender: Any?) {
+        runAIClipboardTransform(mode: .proofreadHomophones)
+    }
+
+    @available(macOS 26, *)
+    private func runAIClipboardTransform(mode: WritingTaskMode) {
+        guard let current = NSPasteboard.general.string(forType: .string), !current.isEmpty else { return }
+        Task { @MainActor in
+            guard let output = try? await WritingSuggestion.runTask(mode: mode, input: current) else { return }
+            ClipboardMonitor.copyToPasteboard(output.text)
+            SettingsStore.shared.recordClipboard(output.text)
+        }
+    }
 
     private func item(_ title: String, _ action: Selector, on: Bool) -> NSMenuItem {
         let item = NSMenuItem(title: title, action: action, keyEquivalent: "")

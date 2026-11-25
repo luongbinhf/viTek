@@ -197,6 +197,8 @@ private struct KeyboardSettingsView: View {
 
                 Section {
                     LabeledContent("Phiên bản", value: Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "?")
+                    LabeledContent("ANE Ngữ cảnh", value: NeuralContextScorer.shared.statusSummary)
+                    LabeledContent("Apple Intelligence", value: WritingSuggestion.readiness().canGenerate ? "Sẵn sàng trên thiết bị" : "Theo cài đặt máy")
                     LabeledContent("Giấy phép", value: "MIT Open Source")
                     if let repoURL = URL(string: "https://github.com/luongbinhf/viTek") {
                         Link("Mã nguồn trên GitHub", destination: repoURL)
@@ -350,8 +352,9 @@ private struct IOSClipboardEditDraft: Identifiable {
 }
 
 private struct IOSShortcutDraft: Identifiable {
+    var abbreviation: String = ""
     let expansion: String
-    var id: String { expansion }
+    var id: String { abbreviation + ":" + expansion }
 }
 
 private struct IOSClipboardView: View {
@@ -512,6 +515,43 @@ private struct IOSClipboardView: View {
                                 } label: {
                                     Label("Tạo Gõ tắt từ mục này…", systemImage: "bolt.horizontal.fill")
                                 }
+                                if WritingSuggestion.readiness().canGenerate {
+                                    Button {
+                                        statusBanner = "Đang phân tích bằng Apple Intelligence…"
+                                        Task { @MainActor in
+                                            do {
+                                                let insight = try await WritingSuggestion.analyzeClipboardSnippet(item.text)
+                                                settings.updateClipboardItem(
+                                                    oldText: item.text,
+                                                    newText: insight.extractedValue,
+                                                    alias: insight.alias,
+                                                    isPinned: true
+                                                )
+                                                statusBanner = "Đã đặt tên “\(insight.alias)”."
+                                                shortcutDraft = IOSShortcutDraft(abbreviation: insight.abbreviation, expansion: insight.extractedValue)
+                                            } catch {
+                                                statusBanner = error.localizedDescription
+                                            }
+                                        }
+                                    } label: {
+                                        Label("Đặt tên & Gợi ý gõ tắt (AI)…", systemImage: "sparkles")
+                                    }
+                                    Button {
+                                        statusBanner = "Đang khôi phục dấu trên thiết bị…"
+                                        Task { @MainActor in
+                                            do {
+                                                let output = try await WritingSuggestion.runTask(mode: .restoreDiacritics, input: item.text)
+                                                UIPasteboard.general.string = output.text
+                                                settings.recordClipboard(output.text)
+                                                statusBanner = "Đã khôi phục dấu và chép vào Bộ nhớ tạm."
+                                            } catch {
+                                                statusBanner = error.localizedDescription
+                                            }
+                                        }
+                                    } label: {
+                                        Label("Khôi phục dấu tiếng Việt (AI)", systemImage: "textformat")
+                                    }
+                                }
                                 Button {
                                     settings.togglePinClipboard(item.text)
                                 } label: {
@@ -559,7 +599,7 @@ private struct IOSClipboardView: View {
                 }
             }
             .sheet(item: $shortcutDraft) { draft in
-                IOSCreateShortcutSheet(initialExpansion: draft.expansion) { entry in
+                IOSCreateShortcutSheet(initialAbbreviation: draft.abbreviation, initialExpansion: draft.expansion) { entry in
                     settings.importShortcuts([entry])
                     statusBanner = "Đã thêm gõ tắt “\(entry.abbreviation)”."
                 }
@@ -606,11 +646,12 @@ private struct IOSEditClipboardSheet: View {
 
 private struct IOSCreateShortcutSheet: View {
     @Environment(\.dismiss) private var dismiss
-    @State private var abbreviation = ""
+    @State private var abbreviation: String
     @State private var expansion: String
     let onSave: (ShortcutEntry) -> Void
 
-    init(initialExpansion: String, onSave: @escaping (ShortcutEntry) -> Void) {
+    init(initialAbbreviation: String = "", initialExpansion: String, onSave: @escaping (ShortcutEntry) -> Void) {
+        _abbreviation = State(initialValue: initialAbbreviation)
         _expansion = State(initialValue: initialExpansion)
         self.onSave = onSave
     }

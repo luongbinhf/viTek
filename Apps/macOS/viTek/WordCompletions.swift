@@ -15,9 +15,11 @@ actor WordCompletions {
     ) -> [WordCandidate] {
         guard !Task.isCancelled,
               let partial = Terminology.prefixLength(context: context, prefix: prefix) else { return [] }
+        let detectedDomain = NeuralContextScorer.shared.inferredDomain(for: context)
         let local = WordPrediction.suggest(
             context: context,
             prefix: prefix,
+            domain: detectedDomain,
             personal: personal,
             shortcuts: shortcuts,
             rawPrefix: rawPrefix
@@ -31,6 +33,7 @@ actor WordCompletions {
         return WordPrediction.suggest(
             context: context,
             prefix: prefix,
+            domain: detectedDomain,
             personal: personal,
             systemCandidates: raw,
             shortcuts: shortcuts,

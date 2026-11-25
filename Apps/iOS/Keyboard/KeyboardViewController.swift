@@ -672,13 +672,23 @@ final class KeyboardViewController: UIInputViewController {
     // MARK: - On-device Suggestions (VitekSession)
 
     private func updateSuggestions() {
-        guard settings.effectiveShowSuggestions, session.isVietnamese else { return clearSuggestions() }
         let context = textDocumentProxy.documentContextBeforeInput ?? ""
+        if displayed.isEmpty {
+            let contextSample = context
+            Task(priority: .utility) { [weak self] in
+                let evaluated = await NeuralContextScorer.shared.evaluateLanguageHint(for: contextSample)
+                guard let self, self.displayed.isEmpty else { return }
+                self.session.engine.contextHint = evaluated.hint
+            }
+        }
+        guard settings.effectiveShowSuggestions, session.isVietnamese else { return clearSuggestions() }
         let prefix = displayed
         let rawPrefix = session.engine.isComposing ? session.engine.rawKeys : nil
+        let detectedDomain = NeuralContextScorer.shared.inferredDomain(for: context)
         let next = Array(WordPrediction.suggest(
             context: context,
             prefix: prefix,
+            domain: detectedDomain,
             personal: settings.personalFrequency,
             shortcuts: settings.shortcutTable,
             rawPrefix: rawPrefix

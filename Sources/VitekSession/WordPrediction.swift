@@ -50,8 +50,9 @@ public enum WordPrediction {
         case .code: candidates = CodeCompletion.candidates(before: before, prefix: prefix)
         case .prose:
             let previous = proseWords(before[...])
+            let effectiveDomain = domain ?? SemanticRanker.inferDomain(from: before)
             let personalMatches = personal?.matches(before: previous, prefix: prefix, limit: limit) ?? []
-            let local = lexicon.matches(before: previous, prefix: prefix, domain: domain).compactMap { match -> WordCandidate? in
+            let local = lexicon.matches(before: previous, prefix: prefix, domain: effectiveDomain).compactMap { match -> WordCandidate? in
                 guard let text = Suggestions.prepare([match.text], prefix: prefix, limit: 1).first else { return nil }
                 return WordCandidate(text: text, source: match.source, score: match.score, appendsSpace: true)
             }
@@ -78,13 +79,17 @@ public enum WordPrediction {
             }
         }
         var seen = Set<String>()
-        return Array(candidates.sorted {
+        let deduplicated = candidates.sorted {
             if $0.score != $1.score { return $0.score > $1.score }
             return $0.text < $1.text
         }.filter {
             // Prose is case-insensitive; identifiers differing only in case are distinct.
             seen.insert($0.appendsSpace ? $0.text.lowercased() : $0.text).inserted
-        }.prefix(min(limit, 32)))
+        }
+        let reranked = (policy(context: context, prefix: prefix, mode: mode) == .prose)
+            ? SemanticRanker.rerank(deduplicated, sentenceContext: String(bounded), prefix: prefix)
+            : deduplicated
+        return Array(reranked.prefix(min(limit, 32)))
     }
 
     public static func words(context: String, prefix: String, limit: Int = 5) -> [String] {

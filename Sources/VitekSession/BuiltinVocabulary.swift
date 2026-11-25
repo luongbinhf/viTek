@@ -154,6 +154,8 @@ enum BuiltinVocabulary {
         chăm sóc sức khỏe
         sức khỏe tinh thần
         khám chữa bệnh
+        điều trị nội trú
+        điều trị ngoại trú
         hồ sơ bệnh án
         bảo hiểm y tế
         cơ sở y tế
