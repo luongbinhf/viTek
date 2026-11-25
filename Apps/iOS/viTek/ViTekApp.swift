@@ -148,7 +148,34 @@ private struct KeyboardSettingsView: View {
                 } header: {
                     Text("Giao diện & Trải nghiệm bàn phím")
                 } footer: {
-                    Text("Nhấn giữ phím VI/EN để đổi nhanh chế độ một tay; bấm ◫ khi xoay ngang hoặc trên iPad để chia đôi/gộp bàn phím.")
+                    Text("Nhấn giữ phím VI/EN để đổi nhanh chế độ một tay; bấm biểu tượng chia đôi khi xoay ngang hoặc trên iPad / iPhone Duo.")
+                }
+
+                Section {
+                    Picker(selection: $settings.duoCenterBridgeMode) {
+                        ForEach(DuoBridgeMode.allCases, id: \.self) { mode in
+                            Label(mode.title, systemImage: mode.symbolName).tag(mode)
+                        }
+                    } label: {
+                        Label("Cầu nối giữa bản lề", systemImage: "rectangle.split.2x1.fill")
+                    }
+                    Toggle(isOn: $settings.duoDuplicateBoundaryKeys) {
+                        Label("Lặp phím G & B hai bên khi chia đôi", systemImage: "keyboard")
+                    }
+                    Toggle(isOn: $settings.duoTabletopUtilityBar) {
+                        Label("Thanh công cụ Esc · Tab · Điều hướng", systemImage: "bolt.horizontal.fill")
+                    }
+                    Picker(selection: $settings.coverOneHandedMode) {
+                        Text("Đầy đủ").tag(IOSKeyboardSettings.OneHandedMode.full)
+                        Text("Tay trái").tag(IOSKeyboardSettings.OneHandedMode.left)
+                        Text("Tay phải").tag(IOSKeyboardSettings.OneHandedMode.right)
+                    } label: {
+                        Label("Gõ một tay trên màn ngoài", systemImage: "keyboard.onehanded.right")
+                    }
+                } header: {
+                    Text("Màn hình gập iPhone Duo & Đa nhiệm")
+                } footer: {
+                    Text("Tự chuyển về bàn phím đơn khi chia đôi 2 ứng dụng (< 480 pt); khi mở phẳng Duo sẽ hiện cầu nối giữa bản lề với bàn rê 2D, Numpad hoặc Clipboard.")
                 }
 
                 Section {
@@ -314,17 +341,35 @@ private struct IOSCustomWordsView: View {
     }
 }
 
+private struct IOSClipboardEditDraft: Identifiable {
+    let originalText: String
+    var text: String
+    var alias: String
+    var isPinned: Bool
+    var id: String { originalText }
+}
+
+private struct IOSShortcutDraft: Identifiable {
+    let expansion: String
+    var id: String { expansion }
+}
+
 private struct IOSClipboardView: View {
     @Bindable private var settings = IOSKeyboardSettings.shared
     @State private var newPinned = ""
+    @State private var newAlias = ""
     @State private var query = ""
+    @State private var filter: ClipboardFilter = .all
     @State private var statusBanner: String?
+    @State private var editingDraft: IOSClipboardEditDraft?
+    @State private var shortcutDraft: IOSShortcutDraft?
 
     private var items: [ClipboardItem] {
-        settings.clipboardHistory.search(query)
+        settings.clipboardHistory.filter(filter, query: query)
     }
 
     var body: some View {
+        let now = Int(Date().timeIntervalSince1970)
         NavigationStack {
             List {
                 Section {
@@ -336,16 +381,18 @@ private struct IOSClipboardView: View {
                             statusBanner = "Bộ nhớ tạm hiện chưa có văn bản."
                         }
                     } label: {
-                        Label("Lưu văn bản đang có trong Bộ nhớ tạm", systemImage: "doc.on.clipboard")
+                        Label("Lưu văn bản đang có trong Bộ nhớ tạm", systemImage: "doc.on.clipboard.fill")
                     }
 
+                    TextField("Tên gợi nhớ (tuỳ chọn, vd: Chữ ký, STK)", text: $newAlias)
                     HStack {
-                        TextField("Thêm mẫu ghim (email, địa chỉ, chữ ký)…", text: $newPinned)
+                        TextField("Nội dung mẫu ghim cố định…", text: $newPinned)
                         Button("Ghim") {
                             let text = newPinned.trimmingCharacters(in: .whitespacesAndNewlines)
                             guard !text.isEmpty else { return }
-                            settings.addPinnedClipboard(text)
+                            settings.addPinnedClipboard(text, alias: newAlias)
                             newPinned = ""
+                            newAlias = ""
                             statusBanner = "Đã ghim mẫu mới."
                         }
                         .disabled(newPinned.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
@@ -358,7 +405,32 @@ private struct IOSClipboardView: View {
                 } header: {
                     Text("Thêm vào Clipboard viTek")
                 } footer: {
-                    Text("Mẫu ghim được đồng bộ với macOS qua iCloud và sẵn dùng ngay trên phím 📋 của bàn phím viTek ngay cả khi tắt truy cập đầy đủ.")
+                    Text("Mẫu ghim được đồng bộ với macOS qua iCloud và sẵn dùng ngay trên phím Clipboard của bàn phím viTek ngay cả khi tắt truy cập đầy đủ.")
+                }
+
+                Section {
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 8) {
+                            ForEach(ClipboardFilter.allCases, id: \.self) { chip in
+                                let isActive = chip == filter
+                                Button {
+                                    filter = chip
+                                } label: {
+                                    Label(chip.title, systemImage: chip.symbolName)
+                                        .font(.caption.weight(isActive ? .semibold : .medium))
+                                        .padding(.horizontal, 10)
+                                        .padding(.vertical, 6)
+                                        .background(
+                                            isActive ? Color.accentColor.opacity(0.2) : Color.secondary.opacity(0.12),
+                                            in: Capsule()
+                                        )
+                                        .foregroundStyle(isActive ? Color.accentColor : .primary)
+                                }
+                                .buttonStyle(.plain)
+                            }
+                        }
+                        .padding(.vertical, 2)
+                    }
                 }
 
                 Section("Danh sách (\(items.count))") {
@@ -373,12 +445,34 @@ private struct IOSClipboardView: View {
                                 UIPasteboard.general.string = item.text
                                 statusBanner = "Đã chép vào Bộ nhớ tạm."
                             } label: {
-                                HStack(spacing: 10) {
-                                    Image(systemName: item.isPinned ? "pin.fill" : "doc.text")
-                                        .foregroundStyle(item.isPinned ? Color.accentColor : .secondary)
-                                    Text(item.preview)
-                                        .foregroundStyle(.primary)
-                                        .lineLimit(2)
+                                HStack(spacing: 12) {
+                                    ClipboardKindBadge(item: item, size: 30)
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        HStack(spacing: 6) {
+                                            if !item.alias.isEmpty {
+                                                Text(item.alias)
+                                                    .font(.subheadline.weight(.semibold))
+                                                    .foregroundStyle(.primary)
+                                                    .lineLimit(1)
+                                            }
+                                            if item.isPinned {
+                                                Image(systemName: "pin.fill")
+                                                    .font(.caption2)
+                                                    .foregroundStyle(Color.accentColor)
+                                            }
+                                            let rel = item.relativeTimeText(now: now)
+                                            Text(rel.isEmpty ? item.statsSummary : "\(item.statsSummary) · \(rel)")
+                                                .font(.caption2)
+                                                .foregroundStyle(.secondary)
+                                                .lineLimit(1)
+                                        }
+                                        Text(item.preview)
+                                            .font(item.kind.usesMonospacedFont
+                                                  ? .system(.callout, design: .monospaced)
+                                                  : .callout)
+                                            .foregroundStyle(item.alias.isEmpty ? .primary : .secondary)
+                                            .lineLimit(2)
+                                    }
                                 }
                             }
                             .swipeActions(edge: .leading) {
@@ -398,12 +492,33 @@ private struct IOSClipboardView: View {
                                 }
                             }
                             .contextMenu {
-                                Button("Chép") {
+                                Button {
                                     UIPasteboard.general.string = item.text
+                                } label: {
+                                    Label("Chép", systemImage: "doc.on.clipboard")
                                 }
-                                Button(item.isPinned ? "Bỏ ghim" : "Ghim lên đầu") {
+                                Button {
+                                    editingDraft = IOSClipboardEditDraft(
+                                        originalText: item.text,
+                                        text: item.text,
+                                        alias: item.alias,
+                                        isPinned: item.isPinned
+                                    )
+                                } label: {
+                                    Label("Sửa nội dung / tên gợi nhớ…", systemImage: "square.and.pencil")
+                                }
+                                Button {
+                                    shortcutDraft = IOSShortcutDraft(expansion: item.text)
+                                } label: {
+                                    Label("Tạo Gõ tắt từ mục này…", systemImage: "bolt.horizontal.fill")
+                                }
+                                Button {
                                     settings.togglePinClipboard(item.text)
+                                } label: {
+                                    Label(item.isPinned ? "Bỏ ghim" : "Ghim lên đầu",
+                                          systemImage: item.isPinned ? "pin.slash" : "pin")
                                 }
+                                Divider()
                                 Button("Sửa lỗi font → Unicode") {
                                     let converted = TextConverter.convert(item.text, mode: .autoToUnicode)
                                     UIPasteboard.general.string = converted
@@ -430,6 +545,105 @@ private struct IOSClipboardView: View {
                         settings.clearUnpinnedClipboard()
                     }
                     .disabled(settings.clipboardHistory.unpinnedItems.isEmpty)
+                }
+            }
+            .sheet(item: $editingDraft) { draft in
+                IOSEditClipboardSheet(draft: draft) { updated in
+                    settings.updateClipboardItem(
+                        oldText: updated.originalText,
+                        newText: updated.text,
+                        alias: updated.alias,
+                        isPinned: updated.isPinned
+                    )
+                    statusBanner = "Đã cập nhật mẫu Clipboard."
+                }
+            }
+            .sheet(item: $shortcutDraft) { draft in
+                IOSCreateShortcutSheet(initialExpansion: draft.expansion) { entry in
+                    settings.importShortcuts([entry])
+                    statusBanner = "Đã thêm gõ tắt “\(entry.abbreviation)”."
+                }
+            }
+        }
+    }
+}
+
+private struct IOSEditClipboardSheet: View {
+    @Environment(\.dismiss) private var dismiss
+    @State var draft: IOSClipboardEditDraft
+    let onSave: (IOSClipboardEditDraft) -> Void
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section("Tên gợi nhớ") {
+                    TextField("vd: STK ngân hàng, Chữ ký…", text: $draft.alias)
+                }
+                Section("Nội dung") {
+                    TextEditor(text: $draft.text)
+                        .frame(minHeight: 120)
+                }
+                Section {
+                    Toggle("Ghim lên đầu", isOn: $draft.isPinned)
+                }
+            }
+            .navigationTitle("Sửa mẫu Clipboard")
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Huỷ") { dismiss() }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Lưu") {
+                        onSave(draft)
+                        dismiss()
+                    }
+                    .disabled(draft.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                }
+            }
+        }
+    }
+}
+
+private struct IOSCreateShortcutSheet: View {
+    @Environment(\.dismiss) private var dismiss
+    @State private var abbreviation = ""
+    @State private var expansion: String
+    let onSave: (ShortcutEntry) -> Void
+
+    init(initialExpansion: String, onSave: @escaping (ShortcutEntry) -> Void) {
+        _expansion = State(initialValue: initialExpansion)
+        self.onSave = onSave
+    }
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section("Chữ tắt") {
+                    TextField("vd: stk, dc, email", text: $abbreviation)
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled()
+                }
+                Section("Thay bằng") {
+                    TextEditor(text: $expansion)
+                        .frame(minHeight: 100)
+                }
+            }
+            .navigationTitle("Tạo Gõ tắt mới")
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Huỷ") { dismiss() }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Lưu") {
+                        let key = abbreviation.trimmingCharacters(in: .whitespaces)
+                        let val = expansion.trimmingCharacters(in: .whitespacesAndNewlines)
+                        guard !key.isEmpty, !key.contains(" "), !val.isEmpty else { return }
+                        onSave(ShortcutEntry(abbreviation: key, expansion: val))
+                        dismiss()
+                    }
+                    .disabled(abbreviation.trimmingCharacters(in: .whitespaces).isEmpty
+                              || abbreviation.contains(" ")
+                              || expansion.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 }
             }
         }

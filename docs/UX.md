@@ -21,7 +21,8 @@ viTek là bộ gõ: phần lớn thời gian người dùng không nhìn thấy 
 | Thanh bên cài đặt | cửa sổ cài đặt | khối Liquid Glass bo góc, thụt vào trong cửa sổ (macOS 26+) |
 | Chữ đang soạn | khi gõ | ưu tiên chữ đã chốt với vùng sửa đã xác minh; marked text chỉ là đường tương thích, một số ứng dụng vẫn tự vẽ gạch chân trên đường này |
 | Thanh gợi ý | khi đang gõ dở hoặc ngay sau dấu cách | viên nang Liquid Glass, tối đa 5 từ, từ đầu tô nhạt màu nhấn, kèm phím chọn nhanh `⌥Space` (chọn đầu) và `⌥1–⌥5`. Ở cuối dòng, thanh nằm **cùng dòng, ngay sau con trỏ**, nơi không có chữ nào để che; giữa dòng thì xuống dưới dòng. Trong Chrome và ứng dụng Electron, vị trí con trỏ lấy qua Trợ năng: cần quyền Trợ năng (nút "Cấp quyền…" trong Kiểu gõ), chưa có thì không hiện thanh. Không nhận chuột, không lấy focus |
-| Bảng dán nhanh Clipboard | bấm `⌃⌥V` | bảng nổi Liquid Glass (`ClipboardPanel`), hiển thị tối đa 9 mục (ghim ở trên, gần đây ở dưới), hỗ trợ bấm số `1–9` hoặc click để dán, `Esc` để đóng |
+| Bảng dán nhanh Clipboard | bấm `⌃⌥V` | bảng nổi Liquid Glass (`ClipboardPanel`), tìm kiếm không dấu, chip lọc phân loại, khung xem trước nội dung dài, điều hướng bàn phím (`↑↓`, `↵`, `⇧↵` sửa font, `⌘P` ghim, `Tab` lọc, `1–9` dán nhanh, `Esc` đóng) |
+| Bàn phím iOS / iPadOS / iPhone Duo | hệ thống gõ di động | tự nhận diện tư thế (`KeyboardPosture`): màn ngoài gọn, đa nhiệm chia đôi (`< 480 pt`), mở gập Duo / bàn phím chia đôi với **Cầu nối trung tâm 3 chế độ** (Rê con trỏ 2D, Numpad, Clipboard nhanh), thanh tiện ích `Esc · Tab · ← →` và Smart Paste Chip |
 | Cửa sổ cài đặt | từ menu nguồn nhập | thanh bên 7 mục, xem §3 |
 
 ## 3. Cửa sổ cài đặt

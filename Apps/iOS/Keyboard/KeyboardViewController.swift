@@ -58,6 +58,8 @@ final class KeyboardViewController: UIInputViewController {
     private var lastShiftTap: ContinuousClock.Instant?
     private var lastSpaceTap: ContinuousClock.Instant?
     private var page: LayoutPage = .letters
+    private var clipboardFilter: ClipboardFilter = .all
+    private var dismissedSmartPasteText: String?
     private var emojiCategoryIndex = 0
     private var emojiSearching = false
     private var emojiSearchQuery = ""
@@ -69,7 +71,9 @@ final class KeyboardViewController: UIInputViewController {
     private var keysHeightConstraint: NSLayoutConstraint?
     private var backspaceRepeatTask: Task<Void, Never>?
     private var spaceTrackpadRemainder: CGFloat = 0
+    private var bridgePanRemainder = CGPoint.zero
     private var isLandscapeOverride: Bool?
+    private var pendingTransitionSize: CGSize?
     private var manualLanguageOverrideInField: Bool?
     private var lastObservedKeyboardType: UIKeyboardType?
     private var lastObservedReturnKeyType: UIReturnKeyType?
@@ -114,8 +118,8 @@ final class KeyboardViewController: UIInputViewController {
         outerStack.distribution = .fill
         outerStack.translatesAutoresizingMaskIntoConstraints = false
 
-        configureDockStrip(leftDockStrip, expandSymbol: "‹", switchSymbol: "◧", switchLabel: "Gõ một tay trái", targetMode: .left)
-        configureDockStrip(rightDockStrip, expandSymbol: "›", switchSymbol: "◨", switchLabel: "Gõ một tay phải", targetMode: .right)
+        configureDockStrip(leftDockStrip, isLeftExpand: true, targetMode: .left)
+        configureDockStrip(rightDockStrip, isLeftExpand: false, targetMode: .right)
 
         rootStack.axis = .vertical
         rootStack.spacing = 4
@@ -180,11 +184,22 @@ final class KeyboardViewController: UIInputViewController {
         updateDockStripVisibility()
     }
 
+    private func symbolImage(_ name: String, pointSize: CGFloat, weight: UIImage.SymbolWeight = .medium) -> UIImage? {
+        let cfg = UIImage.SymbolConfiguration(pointSize: pointSize, weight: weight)
+        return UIImage(systemName: name, withConfiguration: cfg)
+    }
+
+    private func setOneHandedPreference(_ mode: IOSKeyboardSettings.OneHandedMode) {
+        if currentPosture == .coverCompact {
+            settings.coverOneHandedMode = mode
+        } else {
+            settings.oneHandedMode = mode
+        }
+    }
+
     private func configureDockStrip(
         _ strip: UIStackView,
-        expandSymbol: String,
-        switchSymbol: String,
-        switchLabel: String,
+        isLeftExpand: Bool,
         targetMode: IOSKeyboardSettings.OneHandedMode
     ) {
         strip.axis = .vertical
@@ -194,9 +209,8 @@ final class KeyboardViewController: UIInputViewController {
         strip.widthAnchor.constraint(equalToConstant: 42).isActive = true
 
         let expandBtn = UIButton(type: .system)
-        expandBtn.setTitle(expandSymbol, for: .normal)
-        expandBtn.titleLabel?.font = .systemFont(ofSize: 24, weight: .semibold)
-        expandBtn.setTitleColor(.label, for: .normal)
+        expandBtn.setImage(symbolImage("arrow.up.left.and.arrow.down.right", pointSize: 16, weight: .semibold), for: .normal)
+        expandBtn.tintColor = .label
         expandBtn.backgroundColor = Self.modifierKeyFill
         expandBtn.layer.cornerRadius = 8
         expandBtn.accessibilityLabel = "Bàn phím đầy đủ"
@@ -204,75 +218,114 @@ final class KeyboardViewController: UIInputViewController {
         expandBtn.addAction(UIAction { [weak self] _ in
             guard let self else { return }
             self.triggerFeedback()
-            self.settings.oneHandedMode = .full
+            self.setOneHandedPreference(.full)
             self.updateDockStripVisibility()
             self.renderKeys()
         }, for: .touchUpInside)
 
         let switchBtn = UIButton(type: .system)
-        switchBtn.setTitle(switchSymbol, for: .normal)
-        switchBtn.titleLabel?.font = .systemFont(ofSize: 18, weight: .medium)
-        switchBtn.setTitleColor(.secondaryLabel, for: .normal)
+        let switchSymbol = targetMode == .left ? "keyboard.onehanded.left" : "keyboard.onehanded.right"
+        let switchLabel = targetMode == .left ? "Gõ một tay trái" : "Gõ một tay phải"
+        switchBtn.setImage(symbolImage(switchSymbol, pointSize: 17, weight: .medium), for: .normal)
+        switchBtn.tintColor = .secondaryLabel
         switchBtn.backgroundColor = Self.modifierKeyFill
         switchBtn.layer.cornerRadius = 8
         switchBtn.accessibilityLabel = switchLabel
         switchBtn.addAction(UIAction { [weak self] _ in
             guard let self else { return }
             self.triggerFeedback()
-            self.settings.oneHandedMode = targetMode
+            self.setOneHandedPreference(targetMode)
             self.updateDockStripVisibility()
             self.renderKeys()
         }, for: .touchUpInside)
+        _ = isLeftExpand
 
         strip.addArrangedSubview(expandBtn)
         strip.addArrangedSubview(switchBtn)
     }
 
+    private var activeContainerSize: CGSize {
+        if let pendingTransitionSize { return pendingTransitionSize }
+        if view.bounds.width > 0 && view.bounds.height > 0 { return view.bounds.size }
+        return view.window?.windowScene?.screen.bounds.size ?? CGSize(width: 393, height: 852)
+    }
+
+    private var currentScreenSize: CGSize {
+        view.window?.windowScene?.screen.bounds.size ?? activeContainerSize
+    }
+
+    private var currentPosture: KeyboardPosture {
+        let container = activeContainerSize
+        let screen = currentScreenSize
+        let verticalCompact = isLandscapeOverride ?? (traitCollection.verticalSizeClass == .compact)
+        return KeyboardPosture.classify(
+            containerWidth: Double(container.width),
+            containerHeight: Double(container.height),
+            screenWidth: Double(screen.width),
+            screenHeight: Double(screen.height),
+            isVerticalCompact: verticalCompact
+        )
+    }
+
     private var isPadLayout: Bool {
-        traitCollection.userInterfaceIdiom == .pad || traitCollection.horizontalSizeClass == .regular
+        traitCollection.userInterfaceIdiom == .pad
+            || currentPosture == .duoUnfoldedBook
+            || currentPosture == .tabletopWide
     }
 
     private var isLandscapeLayout: Bool {
         if let override = isLandscapeOverride { return override }
         if traitCollection.verticalSizeClass == .compact { return true }
-        let b = view.bounds
+        let b = activeContainerSize
         return b.width > 0 && b.height > 0 && b.width > b.height
     }
 
     private var effectiveOneHandedMode: IOSKeyboardSettings.OneHandedMode {
-        guard !isPadLayout, !isLandscapeLayout, page != .emoji, page != .clipboard else { return .full }
-        return settings.oneHandedMode
+        let posture = currentPosture
+        guard posture.allowsOneHanded, page != .emoji, page != .clipboard else { return .full }
+        return posture == .coverCompact ? settings.coverOneHandedMode : settings.oneHandedMode
     }
 
     private var isSplitLayoutActive: Bool {
-        (isLandscapeLayout || isPadLayout)
+        currentPosture.allowsSplit
             && settings.splitLandscapeKeyboard
             && page != .emoji
             && page != .clipboard
     }
 
+    private var showsUtilityDeck: Bool {
+        settings.duoTabletopUtilityBar && currentPosture.supportsUtilityDeck && page == .letters
+    }
+
     private var preferredKeysHeight: CGFloat {
-        let base: CGFloat
-        if isPadLayout {
-            base = isLandscapeLayout ? 280 : 252
-        } else if isLandscapeLayout {
-            base = 162
-        } else {
-            base = 210
+        let posture = currentPosture
+        let base: CGFloat = switch posture {
+        case .tabletopWide: 280
+        case .duoUnfoldedBook: 256
+        case .phoneLandscape: 162
+        case .coverCompact: 202
+        case .standardPortrait, .dualPaneCompact: 214
         }
-        let extra: CGFloat = isLandscapeLayout && !isPadLayout ? 28 : 38
-        return (settings.showNumberRow && page == .letters) ? base + extra : base
+        let numberExtra: CGFloat = (settings.showNumberRow && page == .letters)
+            ? (posture == .phoneLandscape ? 28 : 38)
+            : 0
+        let deckExtra: CGFloat = showsUtilityDeck ? 30 : 0
+        return base + numberExtra + deckExtra
     }
 
     override func viewWillTransition(to size: CGSize, with coordinator: any UIViewControllerTransitionCoordinator) {
         super.viewWillTransition(to: size, with: coordinator)
+        // Preserve active Vietnamese composition (`session` & `displayed`) across fold/unfold/rotation!
+        pendingTransitionSize = size
         isLandscapeOverride = size.width > size.height
         coordinator.animate(alongsideTransition: { [weak self] _ in
             guard let self else { return }
-            self.rows.spacing = (self.isLandscapeLayout && !self.isPadLayout) ? 4 : 5
+            self.rows.spacing = (self.currentPosture == .phoneLandscape) ? 4 : 5
             self.updateDockStripVisibility()
             self.renderKeys()
             self.view.layoutIfNeeded()
+        }, completion: { [weak self] _ in
+            self?.pendingTransitionSize = nil
         })
     }
 
@@ -369,8 +422,9 @@ final class KeyboardViewController: UIInputViewController {
     }
 
     private func configureClipboardButton() {
-        clipboardButton.setTitle("📋", for: .normal)
-        clipboardButton.titleLabel?.font = .systemFont(ofSize: 15)
+        clipboardButton.setTitle(nil, for: .normal)
+        clipboardButton.setImage(symbolImage("doc.on.clipboard", pointSize: 15, weight: .medium), for: .normal)
+        clipboardButton.tintColor = .label
         clipboardButton.backgroundColor = .secondarySystemFill
         clipboardButton.layer.cornerRadius = 6
         clipboardButton.accessibilityLabel = "Clipboard"
@@ -386,9 +440,9 @@ final class KeyboardViewController: UIInputViewController {
     }
 
     private func configureTextToolsButton() {
-        textToolsButton.setTitle("Aa", for: .normal)
-        textToolsButton.titleLabel?.font = .systemFont(ofSize: 13, weight: .semibold)
-        textToolsButton.setTitleColor(.label, for: .normal)
+        textToolsButton.setTitle(nil, for: .normal)
+        textToolsButton.setImage(symbolImage("textformat", pointSize: 15, weight: .semibold), for: .normal)
+        textToolsButton.tintColor = .label
         textToolsButton.backgroundColor = .secondarySystemFill
         textToolsButton.layer.cornerRadius = 6
         textToolsButton.accessibilityLabel = "Công cụ chữ"
@@ -651,6 +705,43 @@ final class KeyboardViewController: UIInputViewController {
         guard !(page == .emoji && emojiSearching) else { return }
         for view in suggestionBar.arrangedSubviews { view.removeFromSuperview() }
         guard settings.effectiveShowSuggestions else { return }
+
+        if page == .letters && displayed.isEmpty {
+            let livePaste = hasFullAccess ? UIPasteboard.general.string : nil
+            if let smartItem = settings.clipboardHistory.smartPasteCandidate(
+                pasteboardText: livePaste,
+                now: Int(Date().timeIntervalSince1970)
+            ), smartItem.text != dismissedSmartPasteText {
+                var cfg = UIButton.Configuration.filled()
+                cfg.baseBackgroundColor = UIColor.systemBlue.withAlphaComponent(0.16)
+                cfg.baseForegroundColor = .systemBlue
+                cfg.cornerStyle = .capsule
+                cfg.contentInsets = NSDirectionalEdgeInsets(top: 2, leading: 8, bottom: 2, trailing: 8)
+                cfg.imagePadding = 4
+                cfg.image = symbolImage(smartItem.kind.symbolName, pointSize: 11.5, weight: .semibold)
+                cfg.title = smartItem.smartChipTitle
+                cfg.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { incoming in
+                    var out = incoming
+                    out.font = .systemFont(ofSize: 12.5, weight: .semibold)
+                    return out
+                }
+                let chip = UIButton(configuration: cfg)
+                chip.titleLabel?.lineBreakMode = .byTruncatingTail
+                chip.accessibilityLabel = smartItem.smartChipTitle
+                chip.accessibilityIdentifier = "suggestion.smartPaste"
+                chip.addAction(UIAction { [weak self] _ in
+                    guard let self else { return }
+                    self.triggerFeedback()
+                    self.discardComposition()
+                    self.textDocumentProxy.insertText(smartItem.text)
+                    self.settings.recordClipboard(smartItem.text)
+                    self.dismissedSmartPasteText = smartItem.text
+                    self.updateSuggestions()
+                }, for: .touchUpInside)
+                suggestionBar.addArrangedSubview(chip)
+            }
+        }
+
         for (index, candidate) in candidates.enumerated() {
             let button = UIButton(type: .system)
             button.setTitle(candidate.text, for: .normal)
@@ -771,14 +862,17 @@ final class KeyboardViewController: UIInputViewController {
     @objc private func handleLanguageLongPress(_ gesture: UILongPressGestureRecognizer) {
         guard gesture.state == .began else { return }
         triggerFeedback()
-        if isLandscapeLayout || isPadLayout {
+        let posture = currentPosture
+        if posture.allowsSplit {
             settings.splitLandscapeKeyboard.toggle()
         } else {
-            settings.oneHandedMode = switch settings.oneHandedMode {
+            let current = posture == .coverCompact ? settings.coverOneHandedMode : settings.oneHandedMode
+            let next: IOSKeyboardSettings.OneHandedMode = switch current {
             case .full: .right
             case .right: .left
             case .left: .full
             }
+            setOneHandedPreference(next)
             updateDockStripVisibility()
         }
         renderKeys()
@@ -822,6 +916,11 @@ final class KeyboardViewController: UIInputViewController {
 
         let spacing: CGFloat = isPadLayout ? 6 : 4
 
+        clipboardButton.setImage(
+            symbolImage(page == .clipboard ? "doc.on.clipboard.fill" : "doc.on.clipboard", pointSize: 15, weight: .medium),
+            for: .normal
+        )
+        clipboardButton.tintColor = (page == .clipboard) ? .white : .label
         clipboardButton.backgroundColor = (page == .clipboard) ? .systemBlue : .secondarySystemFill
         if page == .emoji {
             renderEmojiPicker(spacing: spacing)
@@ -832,12 +931,103 @@ final class KeyboardViewController: UIInputViewController {
             return
         }
 
+        if showsUtilityDeck {
+            renderUtilityDeckBar(spacing: spacing)
+        }
+
         if isSplitLayoutActive {
             renderSplitLayout(spacing: spacing)
         } else {
             renderStandardLayout(spacing: spacing)
         }
         updateLanguageIndicators()
+    }
+
+    private func renderUtilityDeckBar(spacing: CGFloat) {
+        let deck = UIStackView()
+        deck.axis = .horizontal
+        deck.spacing = spacing
+        deck.alignment = .fill
+        deck.distribution = .fill
+        deck.translatesAutoresizingMaskIntoConstraints = false
+        deck.heightAnchor.constraint(equalToConstant: 26).isActive = true
+        rows.addArrangedSubview(deck)
+
+        func addDeckIcon(_ symbol: String, label: String, width: CGFloat = 38, action: @escaping (KeyboardViewController) -> Void) {
+            let btn = makeSymbolButton(symbol, pointSize: 13, label: label, role: .modifier, action: action)
+            btn.widthAnchor.constraint(equalToConstant: width).isActive = true
+            deck.addArrangedSubview(btn)
+        }
+
+        addDeckIcon("escape", label: "Hoàn tác thô (Esc)") { kb in
+            kb.triggerFeedback()
+            if kb.session.engine.isComposing, kb.session.engine.composition != kb.session.engine.rawKeys {
+                let commands = kb.session.restoreRawKeys()
+                for case .insert(let raw) in commands {
+                    kb.replaceDisplayed(with: raw, in: kb.textDocumentProxy)
+                    kb.displayed = ""
+                }
+                kb.updateSuggestions()
+            }
+        }
+        addDeckIcon("arrow.right.to.line", label: "Tab") { kb in
+            kb.triggerFeedback()
+            kb.discardComposition()
+            kb.textDocumentProxy.insertText("\t")
+        }
+        addDeckIcon("arrow.uturn.backward", label: "Xoá cả từ") { kb in
+            kb.triggerFeedback()
+            if !kb.displayed.isEmpty {
+                for _ in kb.displayed { kb.textDocumentProxy.deleteBackward() }
+                kb.discardComposition()
+            } else if let before = kb.textDocumentProxy.documentContextBeforeInput, !before.isEmpty {
+                var count = 0
+                for ch in before.reversed() {
+                    if ch.isWhitespace && count > 0 { break }
+                    count += 1
+                }
+                for _ in 0..<max(1, count) { kb.textDocumentProxy.deleteBackward() }
+            }
+            kb.updateSuggestions()
+        }
+
+        let spacer = UIView()
+        spacer.setContentHuggingPriority(.defaultLow, for: .horizontal)
+        deck.addArrangedSubview(spacer)
+
+        let badge = UILabel()
+        badge.text = "  \(currentPosture.labelTitle)  "
+        badge.font = .systemFont(ofSize: 11, weight: .semibold)
+        badge.textColor = .secondaryLabel
+        badge.textAlignment = .center
+        badge.backgroundColor = UIColor.secondarySystemFill.withAlphaComponent(0.65)
+        badge.layer.cornerRadius = 6
+        badge.layer.masksToBounds = true
+        deck.addArrangedSubview(badge)
+
+        let boundaryBtn = makeButton(
+            settings.duoDuplicateBoundaryKeys ? "G·B ✓" : "G·B",
+            label: "Lặp phím ranh giới G & B",
+            role: settings.duoDuplicateBoundaryKeys ? .prominent : .modifier
+        ) { kb in
+            kb.triggerFeedback()
+            kb.settings.duoDuplicateBoundaryKeys.toggle()
+            kb.renderKeys()
+        }
+        boundaryBtn.titleLabel?.font = .systemFont(ofSize: 11.5, weight: .semibold)
+        boundaryBtn.widthAnchor.constraint(equalToConstant: 50).isActive = true
+        deck.addArrangedSubview(boundaryBtn)
+
+        addDeckIcon("arrow.left", label: "Sang trái", width: 34) { kb in
+            kb.triggerFeedback()
+            kb.discardComposition()
+            kb.textDocumentProxy.adjustTextPosition(byCharacterOffset: -1)
+        }
+        addDeckIcon("arrow.right", label: "Sang phải", width: 34) { kb in
+            kb.triggerFeedback()
+            kb.discardComposition()
+            kb.textDocumentProxy.adjustTextPosition(byCharacterOffset: 1)
+        }
     }
 
     private func renderStandardLayout(spacing: CGFloat) {
@@ -929,7 +1119,7 @@ final class KeyboardViewController: UIInputViewController {
             bottom.addArrangedSubview(conv)
         }
 
-        if isLandscapeLayout || isPadLayout {
+        if currentPosture.allowsSplit {
             let splitBtn = makeSplitToggleButton(isSplit: false)
             splitBtn.widthAnchor.constraint(equalToConstant: compactWidth).isActive = true
             bottom.addArrangedSubview(splitBtn)
@@ -941,19 +1131,135 @@ final class KeyboardViewController: UIInputViewController {
     }
 
     private func renderSplitLayout(spacing: CGFloat) {
-        let gapWidth: CGFloat = isPadLayout ? 104 : 62
+        let posture = currentPosture
+        let containerWidth = Double(activeContainerSize.width)
+        let gapWidth = CGFloat(posture.recommendedBridgeWidth(for: containerWidth))
+        let duplicateBoundary = settings.duoDuplicateBoundaryKeys && page == .letters
 
+        let letterPairs: [(String, String)] = duplicateBoundary
+            ? [("qwert", "yuiop"), ("asdfg", "ghjkl"), ("zxcvb", "bnm")]
+            : [("qwert", "yuiop"), ("asdfg", "hjkl"), ("zxcv", "bnm")]
+
+        let pairs: [(String, String)] = switch page {
+        case .letters: letterPairs
+        case .numbers: [("12345", "67890"), ("-/:;(", ")$&@\""), (".,?", "!'")]
+        case .symbols: [("[]{}#", "%^*+="), ("_\\|~<", ">€£¥•"), (".,?", "!'")]
+        case .emoji, .clipboard: []
+        }
+
+        if posture.usesInteractiveCenterBridge(for: containerWidth) {
+            let splitShell = UIStackView()
+            splitShell.axis = .horizontal
+            splitShell.spacing = 0
+            splitShell.alignment = .fill
+            splitShell.distribution = .fill
+            rows.addArrangedSubview(splitShell)
+
+            let leftColumn = UIStackView()
+            leftColumn.axis = .vertical
+            leftColumn.spacing = spacing
+            leftColumn.distribution = .fillEqually
+
+            let rightColumn = UIStackView()
+            rightColumn.axis = .vertical
+            rightColumn.spacing = spacing
+            rightColumn.distribution = .fillEqually
+
+            let bridgeView = makeInteractiveCenterBridgeView(width: gapWidth, spacing: spacing)
+
+            splitShell.addArrangedSubview(leftColumn)
+            splitShell.addArrangedSubview(bridgeView)
+            splitShell.addArrangedSubview(rightColumn)
+            leftColumn.widthAnchor.constraint(equalTo: rightColumn.widthAnchor).isActive = true
+
+            func makeClusterRow() -> UIStackView {
+                let row = UIStackView()
+                row.axis = .horizontal
+                row.spacing = spacing
+                row.distribution = .fillEqually
+                return row
+            }
+
+            if settings.showNumberRow && page == .letters {
+                let leftNum = makeClusterRow()
+                let rightNum = makeClusterRow()
+                populateCharacterCluster(letters: "12345", into: leftNum)
+                populateCharacterCluster(letters: "67890", into: rightNum)
+                leftColumn.addArrangedSubview(leftNum)
+                rightColumn.addArrangedSubview(rightNum)
+            }
+
+            for (index, (leftLetters, rightLetters)) in pairs.enumerated() {
+                let leftRow = makeClusterRow()
+                let rightRow = makeClusterRow()
+                if index == 2 {
+                    leftRow.addArrangedSubview(makeLeadingRow2Button())
+                    populateCharacterCluster(letters: leftLetters, into: leftRow)
+                    populateCharacterCluster(letters: rightLetters, into: rightRow)
+                    rightRow.addArrangedSubview(makeBackspaceButton())
+                } else {
+                    populateCharacterCluster(letters: leftLetters, into: leftRow)
+                    populateCharacterCluster(letters: rightLetters, into: rightRow)
+                }
+                leftColumn.addArrangedSubview(leftRow)
+                rightColumn.addArrangedSubview(rightRow)
+            }
+
+            let leftBottom = UIStackView()
+            leftBottom.axis = .horizontal
+            leftBottom.spacing = spacing
+            leftBottom.distribution = .fill
+
+            let rightBottom = UIStackView()
+            rightBottom.axis = .horizontal
+            rightBottom.spacing = spacing
+            rightBottom.distribution = .fill
+
+            let btnW: CGFloat = isPadLayout ? 44 : 36
+            let pageBtn = makePageToggleButton()
+            pageBtn.widthAnchor.constraint(equalToConstant: btnW).isActive = true
+            leftBottom.addArrangedSubview(pageBtn)
+
+            let emojiBtn = makeEmojiButton()
+            emojiBtn.widthAnchor.constraint(equalToConstant: btnW).isActive = true
+            leftBottom.addArrangedSubview(emojiBtn)
+
+            let langBtn = makeLanguageToggleButton()
+            langBtn.widthAnchor.constraint(equalToConstant: btnW).isActive = true
+            leftBottom.addArrangedSubview(langBtn)
+
+            let leftSpace = makeSpaceButton(isPrimary: true)
+            leftSpace.setContentHuggingPriority(.defaultLow, for: .horizontal)
+            leftBottom.addArrangedSubview(leftSpace)
+
+            let rightSpace = makeSpaceButton(isPrimary: false)
+            rightSpace.setContentHuggingPriority(.defaultLow, for: .horizontal)
+            rightBottom.addArrangedSubview(rightSpace)
+
+            if needsInputModeSwitchKey {
+                let globe = makeGlobeButton()
+                globe.widthAnchor.constraint(equalToConstant: btnW).isActive = true
+                rightBottom.addArrangedSubview(globe)
+            } else {
+                let dot = makeButton(".", label: ".", role: .character) { $0.type(".") }
+                dot.widthAnchor.constraint(equalToConstant: btnW).isActive = true
+                rightBottom.addArrangedSubview(dot)
+            }
+
+            let ret = makeReturnButton()
+            ret.widthAnchor.constraint(equalToConstant: isPadLayout ? 72 : 56).isActive = true
+            rightBottom.addArrangedSubview(ret)
+
+            leftColumn.addArrangedSubview(leftBottom)
+            rightColumn.addArrangedSubview(rightBottom)
+            return
+        }
+
+        // Compact phone-landscape split layout
         if settings.showNumberRow && page == .letters {
             let (left, right) = addSplitRow(spacing: spacing, gapWidth: gapWidth)
             populateCharacterCluster(letters: "12345", into: left)
             populateCharacterCluster(letters: "67890", into: right)
-        }
-
-        let pairs: [(String, String)] = switch page {
-        case .letters: [("qwert", "yuiop"), ("asdfg", "hjkl"), ("zxcv", "bnm")]
-        case .numbers: [("12345", "67890"), ("-/:;(", ")$&@\""), (".,?", "!'")]
-        case .symbols: [("[]{}#", "%^*+="), ("_\\|~<", ">€£¥•"), (".,?", "!'")]
-        case .emoji, .clipboard: []
         }
 
         for (index, (leftLetters, rightLetters)) in pairs.enumerated() {
@@ -1001,7 +1307,7 @@ final class KeyboardViewController: UIInputViewController {
         bottomContainer.addArrangedSubview(rightBottom)
         leftBottom.widthAnchor.constraint(equalTo: rightBottom.widthAnchor).isActive = true
 
-        let btnW: CGFloat = isPadLayout ? 48 : 36
+        let btnW: CGFloat = 36
         let pageBtn = makePageToggleButton()
         pageBtn.widthAnchor.constraint(equalToConstant: btnW).isActive = true
         leftBottom.addArrangedSubview(pageBtn)
@@ -1035,8 +1341,203 @@ final class KeyboardViewController: UIInputViewController {
         }
 
         let ret = makeReturnButton()
-        ret.widthAnchor.constraint(equalToConstant: isPadLayout ? 78 : 58).isActive = true
+        ret.widthAnchor.constraint(equalToConstant: 58).isActive = true
         rightBottom.addArrangedSubview(ret)
+    }
+
+    private func makeInteractiveCenterBridgeView(width: CGFloat, spacing: CGFloat) -> UIView {
+        let wrapper = UIView()
+        wrapper.translatesAutoresizingMaskIntoConstraints = false
+        wrapper.widthAnchor.constraint(equalToConstant: width).isActive = true
+
+        let card = UIStackView()
+        card.axis = .vertical
+        card.spacing = 6
+        card.alignment = .fill
+        card.distribution = .fill
+        card.backgroundColor = UIColor.secondarySystemFill.withAlphaComponent(0.52)
+        card.layer.cornerRadius = 10
+        card.layer.borderWidth = 0.5
+        card.layer.borderColor = UIColor.separator.withAlphaComponent(0.5).cgColor
+        card.isLayoutMarginsRelativeArrangement = true
+        card.layoutMargins = UIEdgeInsets(top: 6, left: 6, bottom: 6, right: 6)
+        card.translatesAutoresizingMaskIntoConstraints = false
+        wrapper.addSubview(card)
+
+        NSLayoutConstraint.activate([
+            card.leadingAnchor.constraint(equalTo: wrapper.leadingAnchor, constant: 6),
+            card.trailingAnchor.constraint(equalTo: wrapper.trailingAnchor, constant: -6),
+            card.topAnchor.constraint(equalTo: wrapper.topAnchor),
+            card.bottomAnchor.constraint(equalTo: wrapper.bottomAnchor),
+        ])
+
+        // Top mode selector bar + Split Merge button
+        let modeBar = UIStackView()
+        modeBar.axis = .horizontal
+        modeBar.spacing = 4
+        modeBar.distribution = .fillEqually
+        modeBar.heightAnchor.constraint(equalToConstant: 26).isActive = true
+        for mode in DuoBridgeMode.allCases {
+            let isActive = settings.duoCenterBridgeMode == mode
+            let btn = makeSymbolButton(
+                mode.symbolName,
+                pointSize: 12,
+                weight: .semibold,
+                label: mode.title,
+                role: isActive ? .prominent : .modifier
+            ) { kb in
+                kb.triggerFeedback()
+                kb.settings.duoCenterBridgeMode = mode
+                kb.renderKeys()
+            }
+            btn.accessibilityIdentifier = "duo.bridge.\(mode.rawValue)"
+            modeBar.addArrangedSubview(btn)
+        }
+        let mergeBtn = makeSplitToggleButton(isSplit: true)
+        modeBar.addArrangedSubview(mergeBtn)
+        card.addArrangedSubview(modeBar)
+
+        switch settings.duoCenterBridgeMode {
+        case .trackpad:
+            let pad = UIView()
+            pad.backgroundColor = UIColor.tertiarySystemBackground.withAlphaComponent(0.55)
+            pad.layer.cornerRadius = 8
+            pad.accessibilityLabel = "Bàn rê con trỏ 2D"
+            let pan = UIPanGestureRecognizer(target: self, action: #selector(handleBridgeTrackpadPan(_:)))
+            pad.addGestureRecognizer(pan)
+
+            let iconView = UIImageView(image: symbolImage("arrow.up.and.down.and.arrow.left.and.right", pointSize: 22, weight: .regular))
+            iconView.tintColor = .secondaryLabel
+            iconView.translatesAutoresizingMaskIntoConstraints = false
+            let caption = UILabel()
+            caption.text = "Rê con trỏ"
+            caption.font = .systemFont(ofSize: 11, weight: .medium)
+            caption.textColor = .secondaryLabel
+            caption.translatesAutoresizingMaskIntoConstraints = false
+            pad.addSubview(iconView)
+            pad.addSubview(caption)
+            NSLayoutConstraint.activate([
+                iconView.centerXAnchor.constraint(equalTo: pad.centerXAnchor),
+                iconView.centerYAnchor.constraint(equalTo: pad.centerYAnchor, constant: -10),
+                caption.topAnchor.constraint(equalTo: iconView.bottomAnchor, constant: 4),
+                caption.centerXAnchor.constraint(equalTo: pad.centerXAnchor),
+            ])
+            card.addArrangedSubview(pad)
+
+            let quickNav = UIStackView()
+            quickNav.axis = .horizontal
+            quickNav.spacing = 4
+            quickNav.distribution = .fillEqually
+            quickNav.heightAnchor.constraint(equalToConstant: 32).isActive = true
+            quickNav.addArrangedSubview(makeSymbolButton("arrow.left", pointSize: 13, label: "Sang trái", role: .modifier) { kb in
+                kb.triggerFeedback()
+                kb.discardComposition()
+                kb.textDocumentProxy.adjustTextPosition(byCharacterOffset: -1)
+            })
+            quickNav.addArrangedSubview(makeSymbolButton("arrow.right", pointSize: 13, label: "Sang phải", role: .modifier) { kb in
+                kb.triggerFeedback()
+                kb.discardComposition()
+                kb.textDocumentProxy.adjustTextPosition(byCharacterOffset: 1)
+            })
+            quickNav.addArrangedSubview(makeBackspaceButton())
+            card.addArrangedSubview(quickNav)
+
+        case .numpad:
+            let padRows = ["789", "456", "123", ",0."]
+            let grid = UIStackView()
+            grid.axis = .vertical
+            grid.spacing = spacing
+            grid.distribution = .fillEqually
+            for rowChars in padRows {
+                let row = UIStackView()
+                row.axis = .horizontal
+                row.spacing = spacing
+                row.distribution = .fillEqually
+                for ch in rowChars {
+                    let s = String(ch)
+                    let btn = makeButton(s, label: s, role: .character) { kb in
+                        kb.type(ch)
+                    }
+                    btn.titleLabel?.font = .systemFont(ofSize: 16, weight: .medium)
+                    row.addArrangedSubview(btn)
+                }
+                grid.addArrangedSubview(row)
+            }
+            card.addArrangedSubview(grid)
+
+        case .clipboard:
+            let col = UIStackView()
+            col.axis = .vertical
+            col.spacing = 4
+            col.distribution = .fillEqually
+            let quickItems = Array(settings.clipboardHistory.items.prefix(3))
+            if quickItems.isEmpty {
+                let emptyBtn = makeSymbolButton("doc.on.clipboard.fill", pointSize: 15, label: "Dán từ Bộ nhớ tạm", role: .prominent) { kb in
+                    kb.triggerFeedback()
+                    if let text = UIPasteboard.general.string, !text.isEmpty {
+                        kb.discardComposition()
+                        kb.textDocumentProxy.insertText(text)
+                        kb.settings.recordClipboard(text)
+                        kb.updateSuggestions()
+                    }
+                }
+                col.addArrangedSubview(emptyBtn)
+            } else {
+                for item in quickItems {
+                    let title = item.alias.isEmpty ? item.preview : item.alias
+                    let btn = makeButton(title, label: title, role: .character) { kb in
+                        kb.triggerFeedback()
+                        kb.discardComposition()
+                        kb.textDocumentProxy.insertText(item.text)
+                        kb.updateSuggestions()
+                    }
+                    var cfg = UIButton.Configuration.plain()
+                    cfg.image = symbolImage(item.kind.symbolName, pointSize: 11.5, weight: .semibold)
+                    cfg.imagePadding = 5
+                    cfg.title = title
+                    cfg.baseForegroundColor = .label
+                    cfg.contentInsets = NSDirectionalEdgeInsets(top: 2, leading: 6, bottom: 2, trailing: 6)
+                    btn.configuration = cfg
+                    btn.contentHorizontalAlignment = .leading
+                    btn.titleLabel?.lineBreakMode = .byTruncatingTail
+                    col.addArrangedSubview(btn)
+                }
+            }
+            card.addArrangedSubview(col)
+        }
+
+        return wrapper
+    }
+
+    @objc private func handleBridgeTrackpadPan(_ gesture: UIPanGestureRecognizer) {
+        switch gesture.state {
+        case .began:
+            bridgePanRemainder = .zero
+            discardComposition()
+        case .changed:
+            let translation = gesture.translation(in: gesture.view)
+            gesture.setTranslation(.zero, in: gesture.view)
+            bridgePanRemainder.x += translation.x
+            bridgePanRemainder.y += translation.y
+            let stepX: CGFloat = 10
+            let stepY: CGFloat = 24
+            let dx = Int(bridgePanRemainder.x / stepX)
+            let dy = Int(bridgePanRemainder.y / stepY)
+            if dx != 0 {
+                bridgePanRemainder.x -= CGFloat(dx) * stepX
+                textDocumentProxy.adjustTextPosition(byCharacterOffset: dx)
+                if settings.hapticFeedback { haptic.impactOccurred() }
+            }
+            if dy != 0 {
+                bridgePanRemainder.y -= CGFloat(dy) * stepY
+                textDocumentProxy.adjustTextPosition(byCharacterOffset: dy * 32)
+                if settings.hapticFeedback { haptic.impactOccurred() }
+            }
+        case .ended, .cancelled, .failed:
+            bridgePanRemainder = .zero
+        default:
+            break
+        }
     }
 
     private func populateCharacterCluster(letters: String, into cluster: UIStackView) {
@@ -1072,11 +1573,17 @@ final class KeyboardViewController: UIInputViewController {
         switch page {
         case .letters:
             let shiftSymbol: String = switch shiftState {
-            case .off: "⇧"
-            case .once: "⬆"
-            case .locked: "⇪"
+            case .off: "shift"
+            case .once: "shift.fill"
+            case .locked: "capslock.fill"
             }
-            let btn = makeButton(shiftSymbol, label: "Chữ hoa", role: .modifier) { keyboard in
+            let btn = makeSymbolButton(
+                shiftSymbol,
+                pointSize: 17,
+                weight: .medium,
+                label: "Chữ hoa",
+                role: shiftState == .off ? .modifier : .prominent
+            ) { keyboard in
                 keyboard.triggerFeedback()
                 let now = ContinuousClock.now
                 if let last = keyboard.lastShiftTap, last.duration(to: now) <= .milliseconds(350),
@@ -1107,7 +1614,7 @@ final class KeyboardViewController: UIInputViewController {
     }
 
     private func makeBackspaceButton() -> UIButton {
-        let backspace = makeButton("⌫", label: "Xoá", role: .modifier) { keyboard in
+        let backspace = makeSymbolButton("delete.left", pointSize: 17, weight: .medium, label: "Xoá", role: .modifier) { keyboard in
             keyboard.triggerFeedback()
             keyboard.handle(.backspace)
         }
@@ -1127,7 +1634,7 @@ final class KeyboardViewController: UIInputViewController {
     }
 
     private func makeEmojiButton() -> UIButton {
-        makeButton("😀", label: "Emoji", role: .modifier) { keyboard in
+        makeSymbolButton("face.smiling", pointSize: 17, weight: .medium, label: "Emoji", role: .modifier) { keyboard in
             keyboard.triggerFeedback()
             keyboard.page = .emoji
             keyboard.renderKeys()
@@ -1158,7 +1665,10 @@ final class KeyboardViewController: UIInputViewController {
     }
 
     private func makeGlobeButton() -> UIButton {
-        let globe = styledButton(title: "🌐", label: "Đổi bàn phím", role: .modifier)
+        let globe = styledButton(title: "", label: "Đổi bàn phím", role: .modifier)
+        globe.setTitle(nil, for: .normal)
+        globe.setImage(symbolImage("globe", pointSize: 17, weight: .medium), for: .normal)
+        globe.tintColor = .label
         globe.addTarget(self, action: #selector(handleInputModeList(from:with:)), for: .allTouchEvents)
         return globe
     }
@@ -1178,9 +1688,9 @@ final class KeyboardViewController: UIInputViewController {
     }
 
     private func makeSplitToggleButton(isSplit: Bool) -> UIButton {
-        let symbol = isSplit ? "▭" : "◫"
+        let symbol = isSplit ? "rectangle.split.2x1.fill" : "rectangle.split.2x1"
         let label = isSplit ? "Gộp bàn phím" : "Chia đôi bàn phím"
-        let btn = makeButton(symbol, label: label, role: .modifier) { keyboard in
+        let btn = makeSymbolButton(symbol, pointSize: 14, weight: .medium, label: label, role: .modifier) { keyboard in
             keyboard.triggerFeedback()
             keyboard.settings.splitLandscapeKeyboard.toggle()
             keyboard.renderKeys()
@@ -1235,12 +1745,13 @@ final class KeyboardViewController: UIInputViewController {
         let categories = EmojiSuggestions.categories
         let selectedIndex = min(max(0, emojiCategoryIndex), max(0, categories.count - 1))
         let categoryRow = addRow(spacing: spacing)
-        let searchBtn = addKey("🔍", label: "Tìm Emoji", role: .modifier, to: categoryRow) { keyboard in
+        let searchBtn = makeSymbolButton("magnifyingglass", pointSize: 15, weight: .semibold, label: "Tìm Emoji", role: .modifier) { keyboard in
             keyboard.triggerFeedback()
             keyboard.emojiSearching = true
             keyboard.emojiSearchQuery = ""
             keyboard.renderKeys()
         }
+        categoryRow.addArrangedSubview(searchBtn)
         searchBtn.accessibilityIdentifier = "emoji.search"
         for (idx, category) in categories.enumerated() {
             let button = addKey(category.title, role: .modifier, to: categoryRow) { keyboard in
@@ -1363,7 +1874,48 @@ final class KeyboardViewController: UIInputViewController {
         refreshEmojiSearchUI()
     }
 
-    // MARK: - Inline Clipboard Picker (📋)
+    // MARK: - Inline Clipboard Picker (Scrollable Cards + Semantic Icons + Filters)
+
+    private func badgeTint(for item: ClipboardItem) -> UIColor {
+        if item.kind == .hexColor, let rgb = item.parsedHexColor {
+            return UIColor(red: rgb.redFraction, green: rgb.greenFraction, blue: rgb.blueFraction, alpha: 1)
+        }
+        switch item.kind {
+        case .url: return .systemBlue
+        case .email: return .systemIndigo
+        case .phone: return .systemGreen
+        case .otp: return .systemOrange
+        case .hexColor: return .systemPink
+        case .code: return .systemPurple
+        case .multiline: return .systemTeal
+        case .text: return .secondaryLabel
+        }
+    }
+
+    private func makeClipboardKindBadgeView(for item: ClipboardItem) -> UIView {
+        let badge = UIView()
+        badge.translatesAutoresizingMaskIntoConstraints = false
+        badge.backgroundColor = badgeTint(for: item)
+        badge.layer.cornerRadius = 7
+        badge.layer.cornerCurve = .continuous
+        badge.isUserInteractionEnabled = false
+        if item.kind == .hexColor {
+            badge.layer.borderWidth = 1
+            badge.layer.borderColor = UIColor.white.withAlphaComponent(0.55).cgColor
+        }
+        let iconView = UIImageView(image: symbolImage(item.kind.symbolName, pointSize: 12.5, weight: .semibold))
+        iconView.tintColor = .white
+        iconView.contentMode = .scaleAspectFit
+        iconView.translatesAutoresizingMaskIntoConstraints = false
+        badge.addSubview(iconView)
+        NSLayoutConstraint.activate([
+            badge.widthAnchor.constraint(equalToConstant: 26),
+            badge.heightAnchor.constraint(equalToConstant: 26),
+            iconView.centerXAnchor.constraint(equalTo: badge.centerXAnchor),
+            iconView.centerYAnchor.constraint(equalTo: badge.centerYAnchor),
+        ])
+        return badge
+    }
 
     private func renderClipboardPicker(spacing: CGFloat) {
         let showBar = settings.effectiveShowSuggestions
@@ -1373,82 +1925,215 @@ final class KeyboardViewController: UIInputViewController {
         textToolsButton.isHidden = !showBar
         suggestionHeightConstraint?.constant = showBar ? 34 : 0
 
-        let header = addRow(spacing: spacing)
+        let header = UIStackView()
+        header.axis = .horizontal
+        header.spacing = spacing
         header.distribution = .fill
-        let backBtn = addKey("ABC", label: "Quay lại bàn phím", role: .modifier, to: header) { keyboard in
+        header.heightAnchor.constraint(equalToConstant: 32).isActive = true
+        rows.addArrangedSubview(header)
+
+        let backBtn = makeSymbolButton("keyboard", pointSize: 15, weight: .medium, label: "Quay lại bàn phím", role: .modifier) { keyboard in
             keyboard.triggerFeedback()
             keyboard.page = .letters
             keyboard.renderKeys()
         }
-        backBtn.widthAnchor.constraint(equalToConstant: 56).isActive = true
+        backBtn.widthAnchor.constraint(equalToConstant: 48).isActive = true
+        header.addArrangedSubview(backBtn)
 
-        let pasteBtn = addKey("📋 Dán bộ nhớ tạm", label: "Dán từ Bộ nhớ tạm", role: .prominent, to: header) { keyboard in
-            keyboard.triggerFeedback()
-            if let pasteText = UIPasteboard.general.string, !pasteText.isEmpty {
-                keyboard.discardComposition()
-                keyboard.textDocumentProxy.insertText(pasteText)
-                keyboard.settings.recordClipboard(pasteText)
-                keyboard.page = .letters
-                keyboard.renderKeys()
-                keyboard.updateSuggestions()
-            }
+        let pasteBtn = UIButton(type: .system)
+        var pasteCfg = UIButton.Configuration.filled()
+        pasteCfg.baseBackgroundColor = .systemBlue
+        pasteCfg.baseForegroundColor = .white
+        pasteCfg.cornerStyle = .medium
+        pasteCfg.image = symbolImage("doc.on.clipboard.fill", pointSize: 13.5, weight: .semibold)
+        pasteCfg.imagePadding = 6
+        pasteCfg.title = "Dán bộ nhớ tạm"
+        pasteCfg.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { incoming in
+            var out = incoming
+            out.font = .systemFont(ofSize: 13.5, weight: .semibold)
+            return out
         }
-        pasteBtn.titleLabel?.font = .systemFont(ofSize: 14, weight: .semibold)
+        pasteBtn.configuration = pasteCfg
+        pasteBtn.accessibilityLabel = "Dán từ Bộ nhớ tạm"
         pasteBtn.accessibilityIdentifier = "clipboard.pasteSystem"
+        pasteBtn.addAction(UIAction { [weak self] _ in
+            guard let self else { return }
+            self.triggerFeedback()
+            if let pasteText = UIPasteboard.general.string, !pasteText.isEmpty {
+                self.discardComposition()
+                self.textDocumentProxy.insertText(pasteText)
+                self.settings.recordClipboard(pasteText)
+                self.page = .letters
+                self.renderKeys()
+                self.updateSuggestions()
+            }
+        }, for: .touchUpInside)
+        header.addArrangedSubview(pasteBtn)
 
         if !settings.clipboardHistory.unpinnedItems.isEmpty {
-            let clearBtn = addKey("Xoá", label: "Xoá mục chưa ghim", role: .modifier, to: header) { keyboard in
+            let clearBtn = makeSymbolButton("trash", pointSize: 14, weight: .medium, label: "Xoá mục chưa ghim", role: .modifier) { keyboard in
                 keyboard.triggerFeedback()
                 keyboard.settings.clearUnpinnedClipboard()
                 keyboard.renderKeys()
             }
-            clearBtn.widthAnchor.constraint(equalToConstant: 56).isActive = true
+            clearBtn.widthAnchor.constraint(equalToConstant: 44).isActive = true
+            header.addArrangedSubview(clearBtn)
         }
 
-        let items = Array(settings.clipboardHistory.items.prefix(4))
+        // Category filter chip strip
+        let filterRow = UIStackView()
+        filterRow.axis = .horizontal
+        filterRow.spacing = 5
+        filterRow.distribution = .fillEqually
+        filterRow.heightAnchor.constraint(equalToConstant: 28).isActive = true
+        rows.addArrangedSubview(filterRow)
+        for chip in ClipboardFilter.allCases {
+            let isActive = chip == clipboardFilter
+            var cfg = UIButton.Configuration.filled()
+            cfg.baseBackgroundColor = isActive ? UIColor.systemBlue.withAlphaComponent(0.18) : Self.modifierKeyFill
+            cfg.baseForegroundColor = isActive ? .systemBlue : .label
+            cfg.cornerStyle = .capsule
+            cfg.image = symbolImage(chip.symbolName, pointSize: 11, weight: isActive ? .semibold : .regular)
+            cfg.imagePadding = 4
+            cfg.title = chip.title
+            cfg.contentInsets = NSDirectionalEdgeInsets(top: 2, leading: 6, bottom: 2, trailing: 6)
+            cfg.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { incoming in
+                var out = incoming
+                out.font = .systemFont(ofSize: 11.5, weight: isActive ? .semibold : .medium)
+                return out
+            }
+            let chipBtn = UIButton(configuration: cfg)
+            chipBtn.accessibilityLabel = chip.title
+            chipBtn.addAction(UIAction { [weak self] _ in
+                guard let self else { return }
+                self.triggerFeedback()
+                self.clipboardFilter = chip
+                self.renderKeys()
+            }, for: .touchUpInside)
+            filterRow.addArrangedSubview(chipBtn)
+        }
+
+        let items = Array(settings.clipboardHistory.filter(clipboardFilter).prefix(25))
         if items.isEmpty {
             let hintBtn = UIButton(type: .system)
-            hintBtn.setTitle("Ghim mẫu văn bản trong app viTek hoặc đồng bộ từ Mac qua iCloud", for: .normal)
+            hintBtn.setTitle(
+                clipboardFilter == .all
+                    ? "Ghim mẫu văn bản trong app viTek hoặc đồng bộ từ Mac qua iCloud"
+                    : "Không có mục nào thuộc nhóm “\(clipboardFilter.title)”",
+                for: .normal
+            )
             hintBtn.titleLabel?.font = .systemFont(ofSize: 13)
             hintBtn.titleLabel?.numberOfLines = 2
             hintBtn.titleLabel?.textAlignment = .center
             hintBtn.setTitleColor(.secondaryLabel, for: .normal)
             hintBtn.isUserInteractionEnabled = false
             rows.addArrangedSubview(hintBtn)
+            return
+        }
+
+        let scroll = UIScrollView()
+        scroll.showsVerticalScrollIndicator = true
+        scroll.alwaysBounceVertical = true
+        scroll.translatesAutoresizingMaskIntoConstraints = false
+        rows.addArrangedSubview(scroll)
+
+        let listStack = UIStackView()
+        listStack.axis = .vertical
+        listStack.spacing = 6
+        listStack.alignment = .fill
+        listStack.translatesAutoresizingMaskIntoConstraints = false
+        scroll.addSubview(listStack)
+        NSLayoutConstraint.activate([
+            listStack.leadingAnchor.constraint(equalTo: scroll.contentLayoutGuide.leadingAnchor),
+            listStack.trailingAnchor.constraint(equalTo: scroll.contentLayoutGuide.trailingAnchor),
+            listStack.topAnchor.constraint(equalTo: scroll.contentLayoutGuide.topAnchor),
+            listStack.bottomAnchor.constraint(equalTo: scroll.contentLayoutGuide.bottomAnchor),
+            listStack.widthAnchor.constraint(equalTo: scroll.frameLayoutGuide.widthAnchor),
+        ])
+
+        func makeClipboardCard(item: ClipboardItem, index: Int) -> UIView {
+            let card = UIStackView()
+            card.axis = .horizontal
+            card.spacing = 8
+            card.alignment = .center
+            card.backgroundColor = Self.characterKeyFill
+            card.layer.cornerRadius = isPadLayout ? 9 : 7
+            card.layer.cornerCurve = .continuous
+            card.isLayoutMarginsRelativeArrangement = true
+            card.layoutMargins = UIEdgeInsets(top: 5, left: 8, bottom: 5, right: 6)
+            card.heightAnchor.constraint(equalToConstant: 40).isActive = true
+
+            card.addArrangedSubview(makeClipboardKindBadgeView(for: item))
+
+            let textBtn = UIButton(type: .system)
+            textBtn.contentHorizontalAlignment = .leading
+            var cfg = UIButton.Configuration.plain()
+            cfg.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 2, bottom: 0, trailing: 2)
+            cfg.title = item.alias.isEmpty ? item.preview : item.alias
+            if !item.alias.isEmpty {
+                cfg.subtitle = item.preview
+            }
+            cfg.titleLineBreakMode = .byTruncatingTail
+            cfg.subtitleLineBreakMode = .byTruncatingTail
+            cfg.baseForegroundColor = .label
+            cfg.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { incoming in
+                var out = incoming
+                out.font = !item.alias.isEmpty
+                    ? .systemFont(ofSize: 13, weight: .semibold)
+                    : (item.kind.usesMonospacedFont ? .monospacedSystemFont(ofSize: 12.5, weight: .regular) : .systemFont(ofSize: 13.5))
+                return out
+            }
+            textBtn.configuration = cfg
+            textBtn.accessibilityIdentifier = "clipboard.item.\(index)"
+            textBtn.addAction(UIAction { [weak self] _ in
+                guard let self else { return }
+                self.triggerFeedback()
+                self.discardComposition()
+                self.textDocumentProxy.insertText(item.text)
+                self.page = .letters
+                self.renderKeys()
+                self.updateSuggestions()
+            }, for: .touchUpInside)
+            card.addArrangedSubview(textBtn)
+
+            let pinBtn = makeSymbolButton(
+                item.isPinned ? "pin.fill" : "pin",
+                pointSize: 13,
+                weight: .semibold,
+                label: item.isPinned ? "Bỏ ghim" : "Ghim",
+                role: .modifier
+            ) { keyboard in
+                keyboard.triggerFeedback()
+                keyboard.settings.togglePinClipboard(item.text)
+                keyboard.renderKeys()
+            }
+            pinBtn.backgroundColor = .clear
+            pinBtn.tintColor = item.isPinned ? .systemBlue : .secondaryLabel
+            pinBtn.widthAnchor.constraint(equalToConstant: 30).isActive = true
+            pinBtn.heightAnchor.constraint(equalToConstant: 30).isActive = true
+            card.addArrangedSubview(pinBtn)
+            return card
+        }
+
+        let twoColumn = activeContainerSize.width >= 520
+        if twoColumn {
+            for idx in stride(from: 0, to: items.count, by: 2) {
+                let pairRow = UIStackView()
+                pairRow.axis = .horizontal
+                pairRow.spacing = 6
+                pairRow.distribution = .fillEqually
+                pairRow.addArrangedSubview(makeClipboardCard(item: items[idx], index: idx))
+                if idx + 1 < items.count {
+                    pairRow.addArrangedSubview(makeClipboardCard(item: items[idx + 1], index: idx + 1))
+                } else {
+                    let spacer = UIView()
+                    pairRow.addArrangedSubview(spacer)
+                }
+                listStack.addArrangedSubview(pairRow)
+            }
         } else {
             for (idx, item) in items.enumerated() {
-                let row = addRow(spacing: spacing)
-                row.distribution = .fill
-                let insertTitle = (item.isPinned ? "📌 " : "") + item.preview
-                let insertBtn = UIButton(type: .system)
-                insertBtn.setTitle(insertTitle, for: .normal)
-                insertBtn.contentHorizontalAlignment = .leading
-                var cfg = UIButton.Configuration.plain()
-                cfg.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 10, bottom: 0, trailing: 10)
-                insertBtn.configuration = cfg
-                insertBtn.titleLabel?.font = .systemFont(ofSize: 14)
-                insertBtn.titleLabel?.lineBreakMode = .byTruncatingTail
-                insertBtn.setTitleColor(.label, for: .normal)
-                insertBtn.backgroundColor = Self.characterKeyFill
-                insertBtn.layer.cornerRadius = isPadLayout ? 8 : 6
-                insertBtn.accessibilityIdentifier = "clipboard.item.\(idx)"
-                insertBtn.addAction(UIAction { [weak self] _ in
-                    guard let self else { return }
-                    self.triggerFeedback()
-                    self.discardComposition()
-                    self.textDocumentProxy.insertText(item.text)
-                    self.page = .letters
-                    self.renderKeys()
-                    self.updateSuggestions()
-                }, for: .touchUpInside)
-                row.addArrangedSubview(insertBtn)
-
-                let pinBtn = addKey(item.isPinned ? "★" : "☆", label: item.isPinned ? "Bỏ ghim" : "Ghim", role: .modifier, to: row) { keyboard in
-                    keyboard.triggerFeedback()
-                    keyboard.settings.togglePinClipboard(item.text)
-                    keyboard.renderKeys()
-                }
-                pinBtn.widthAnchor.constraint(equalToConstant: 42).isActive = true
+                listStack.addArrangedSubview(makeClipboardCard(item: item, index: idx))
             }
         }
     }
@@ -1481,11 +2166,14 @@ final class KeyboardViewController: UIInputViewController {
     private func updateShiftKeyTitles() {
         guard page == .letters, !letterButtons.isEmpty else { return }
         let symbol: String = switch shiftState {
-        case .off: "⇧"
-        case .once: "⬆"
-        case .locked: "⇪"
+        case .off: "shift"
+        case .once: "shift.fill"
+        case .locked: "capslock.fill"
         }
-        shiftButton?.setTitle(symbol, for: .normal)
+        shiftButton?.setTitle(nil, for: .normal)
+        shiftButton?.setImage(symbolImage(symbol, pointSize: 17, weight: .medium), for: .normal)
+        shiftButton?.tintColor = shiftState == .off ? .label : .white
+        shiftButton?.backgroundColor = shiftState == .off ? Self.modifierKeyFill : .systemBlue
         let upper = isShifted
         for entry in letterButtons {
             let title = upper ? String(entry.lowercase).uppercased() : String(entry.lowercase)
@@ -1598,11 +2286,12 @@ final class KeyboardViewController: UIInputViewController {
               let row = button.superview as? UIStackView,
               let idx = row.arrangedSubviews.firstIndex(of: button),
               button.bounds.width > 0 else { return primary }
-        let ratio = touch.location(in: button).x / button.bounds.width
+        let edgeRatio = currentPosture.edgeTouchAssistRatio
+        let ratio = Double(touch.location(in: button).x / button.bounds.width)
         let neighborIndex: Int?
-        if ratio < 0.22, idx > 0 {
+        if ratio < edgeRatio, idx > 0 {
             neighborIndex = idx - 1
-        } else if ratio > 0.78, idx + 1 < row.arrangedSubviews.count {
+        } else if ratio > (1.0 - edgeRatio), idx + 1 < row.arrangedSubviews.count {
             neighborIndex = idx + 1
         } else {
             return primary
@@ -1691,6 +2380,24 @@ final class KeyboardViewController: UIInputViewController {
         action: @escaping (KeyboardViewController) -> Void
     ) -> UIButton {
         let button = styledButton(title: title, label: label, role: role)
+        button.addAction(UIAction { [weak self] _ in
+            if let self { action(self) }
+        }, for: .touchUpInside)
+        return button
+    }
+
+    private func makeSymbolButton(
+        _ symbolName: String,
+        pointSize: CGFloat,
+        weight: UIImage.SymbolWeight = .medium,
+        label: String,
+        role: KeyRole,
+        action: @escaping (KeyboardViewController) -> Void
+    ) -> UIButton {
+        let button = styledButton(title: "", label: label, role: role)
+        button.setTitle(nil, for: .normal)
+        button.setImage(symbolImage(symbolName, pointSize: pointSize, weight: weight), for: .normal)
+        button.tintColor = (role == .prominent) ? .white : .label
         button.addAction(UIAction { [weak self] _ in
             if let self { action(self) }
         }, for: .touchUpInside)

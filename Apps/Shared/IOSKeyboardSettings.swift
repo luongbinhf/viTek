@@ -35,6 +35,7 @@ final class IOSKeyboardSettings {
         case personalUnigrams, personalBigrams, personalTrigrams
         case clipboardHistoryEnabled, syncClipboardPinnedICloud, syncClipboardRecentICloud
         case syncPersonalVocabularyICloud, clipboardItems
+        case duoCenterBridgeMode, duoDuplicateBoundaryKeys, duoTabletopUtilityBar, coverOneHandedMode
     }
 
     var toneStyle: ToneStyle { didSet { save(toneStyle.rawValue, .toneStyle) } }
@@ -66,6 +67,10 @@ final class IOSKeyboardSettings {
     var syncClipboardPinnedICloud: Bool { didSet { save(syncClipboardPinnedICloud, .syncClipboardPinnedICloud, syncCloud: false) } }
     var syncClipboardRecentICloud: Bool { didSet { save(syncClipboardRecentICloud, .syncClipboardRecentICloud, syncCloud: false) } }
     var syncPersonalVocabularyICloud: Bool { didSet { save(syncPersonalVocabularyICloud, .syncPersonalVocabularyICloud, syncCloud: false) } }
+    var duoCenterBridgeMode: DuoBridgeMode { didSet { save(duoCenterBridgeMode.rawValue, .duoCenterBridgeMode, syncCloud: false) } }
+    var duoDuplicateBoundaryKeys: Bool { didSet { save(duoDuplicateBoundaryKeys, .duoDuplicateBoundaryKeys, syncCloud: false) } }
+    var duoTabletopUtilityBar: Bool { didSet { save(duoTabletopUtilityBar, .duoTabletopUtilityBar, syncCloud: false) } }
+    var coverOneHandedMode: OneHandedMode { didSet { save(coverOneHandedMode.rawValue, .coverOneHandedMode, syncCloud: false) } }
     var effectiveShowSuggestions: Bool { showSuggestions && !focusHideSuggestions }
     private(set) var personalFrequency: PersonalFrequency
     private(set) var clipboardHistory: ClipboardHistory
@@ -111,6 +116,10 @@ final class IOSKeyboardSettings {
         syncClipboardPinnedICloud = bool(.syncClipboardPinnedICloud, true)
         syncClipboardRecentICloud = bool(.syncClipboardRecentICloud, false)
         syncPersonalVocabularyICloud = bool(.syncPersonalVocabularyICloud, true)
+        duoCenterBridgeMode = defaults.string(forKey: Key.duoCenterBridgeMode.rawValue).flatMap(DuoBridgeMode.init) ?? .trackpad
+        duoDuplicateBoundaryKeys = bool(.duoDuplicateBoundaryKeys, true)
+        duoTabletopUtilityBar = bool(.duoTabletopUtilityBar, true)
+        coverOneHandedMode = defaults.string(forKey: Key.coverOneHandedMode.rawValue).flatMap(OneHandedMode.init) ?? .full
         let unigrams = defaults.dictionary(forKey: Key.personalUnigrams.rawValue) as? [String: Int] ?? [:]
         let bigrams = defaults.dictionary(forKey: Key.personalBigrams.rawValue) as? [String: Int] ?? [:]
         let trigrams = defaults.dictionary(forKey: Key.personalTrigrams.rawValue) as? [String: Int] ?? [:]
@@ -215,6 +224,10 @@ final class IOSKeyboardSettings {
         syncClipboardPinnedICloud = bool(.syncClipboardPinnedICloud, true)
         syncClipboardRecentICloud = bool(.syncClipboardRecentICloud, false)
         syncPersonalVocabularyICloud = bool(.syncPersonalVocabularyICloud, true)
+        duoCenterBridgeMode = defaults.string(forKey: Key.duoCenterBridgeMode.rawValue).flatMap(DuoBridgeMode.init) ?? .trackpad
+        duoDuplicateBoundaryKeys = bool(.duoDuplicateBoundaryKeys, true)
+        duoTabletopUtilityBar = bool(.duoTabletopUtilityBar, true)
+        coverOneHandedMode = defaults.string(forKey: Key.coverOneHandedMode.rawValue).flatMap(OneHandedMode.init) ?? .full
         let unigrams = defaults.dictionary(forKey: Key.personalUnigrams.rawValue) as? [String: Int] ?? [:]
         let bigrams = defaults.dictionary(forKey: Key.personalBigrams.rawValue) as? [String: Int] ?? [:]
         let trigrams = defaults.dictionary(forKey: Key.personalTrigrams.rawValue) as? [String: Int] ?? [:]
@@ -277,8 +290,24 @@ final class IOSKeyboardSettings {
         persistClipboard(syncCloud: iCloudSyncEnabled && syncClipboardRecentICloud)
     }
 
-    func addPinnedClipboard(_ text: String, timestamp: Int = Int(Date().timeIntervalSince1970)) {
-        guard clipboardHistory.addPinned(text, timestamp: timestamp) else { return }
+    func addPinnedClipboard(_ text: String, alias: String = "", timestamp: Int = Int(Date().timeIntervalSince1970)) {
+        guard clipboardHistory.addPinned(text, alias: alias, timestamp: timestamp) else { return }
+        persistClipboard(syncCloud: iCloudSyncEnabled && syncClipboardPinnedICloud)
+    }
+
+    func updateClipboardItem(oldText: String, newText: String, alias: String, isPinned: Bool? = nil) {
+        guard clipboardHistory.updateItem(
+            oldText: oldText,
+            newText: newText,
+            alias: alias,
+            isPinned: isPinned,
+            timestamp: Int(Date().timeIntervalSince1970)
+        ) else { return }
+        persistClipboard(syncCloud: iCloudSyncEnabled && (syncClipboardPinnedICloud || syncClipboardRecentICloud))
+    }
+
+    func movePinnedClipboard(from sourceIndex: Int, to destinationIndex: Int) {
+        clipboardHistory.movePinned(from: sourceIndex, to: destinationIndex)
         persistClipboard(syncCloud: iCloudSyncEnabled && syncClipboardPinnedICloud)
     }
 

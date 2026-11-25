@@ -235,8 +235,24 @@ final class SettingsStore {
         persistClipboard(syncCloud: iCloudSyncEnabled && syncClipboardRecentICloud)
     }
 
-    func addPinnedClipboard(_ text: String, timestamp: Int = Int(Date().timeIntervalSince1970)) {
-        guard clipboardHistory.addPinned(text, timestamp: timestamp) else { return }
+    func addPinnedClipboard(_ text: String, alias: String = "", timestamp: Int = Int(Date().timeIntervalSince1970)) {
+        guard clipboardHistory.addPinned(text, alias: alias, timestamp: timestamp) else { return }
+        persistClipboard(syncCloud: iCloudSyncEnabled && syncClipboardPinnedICloud)
+    }
+
+    func updateClipboardItem(oldText: String, newText: String, alias: String, isPinned: Bool? = nil) {
+        guard clipboardHistory.updateItem(
+            oldText: oldText,
+            newText: newText,
+            alias: alias,
+            isPinned: isPinned,
+            timestamp: Int(Date().timeIntervalSince1970)
+        ) else { return }
+        persistClipboard(syncCloud: iCloudSyncEnabled && (syncClipboardPinnedICloud || syncClipboardRecentICloud))
+    }
+
+    func movePinnedClipboard(from sourceIndex: Int, to destinationIndex: Int) {
+        clipboardHistory.movePinned(from: sourceIndex, to: destinationIndex)
         persistClipboard(syncCloud: iCloudSyncEnabled && syncClipboardPinnedICloud)
     }
 

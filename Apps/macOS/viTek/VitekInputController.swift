@@ -151,13 +151,7 @@ final class VitekInputController: IMKInputController {
             return true
         }
         if ClipboardPanel.isVisible {
-            if event.keyCode == 0x35 {
-                ClipboardPanel.hide()
-                return true
-            }
-            let pasteDigits: [UInt16] = [0x12, 0x13, 0x14, 0x15, 0x17, 0x16, 0x1A, 0x1C, 0x19]
-            if mods.isEmpty, let digitIdx = pasteDigits.firstIndex(of: event.keyCode),
-               ClipboardPanel.pasteByNumber(digitIdx + 1) {
+            if ClipboardPanel.handleKeyEvent(event) {
                 return true
             }
             ClipboardPanel.hide()

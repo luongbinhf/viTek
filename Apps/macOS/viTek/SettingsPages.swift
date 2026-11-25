@@ -433,8 +433,13 @@ struct ShortcutsPage: View {
 private struct NewShortcutForm: View {
     @Environment(\.dismiss) private var dismiss
     @State private var abbreviation = ""
-    @State private var expansion = ""
+    @State private var expansion: String
     let save: (ShortcutEntry) -> Void
+
+    init(initialExpansion: String = "", save: @escaping (ShortcutEntry) -> Void) {
+        _expansion = State(initialValue: initialExpansion)
+        self.save = save
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -532,16 +537,34 @@ struct DictionaryPage: View {
 
 // MARK: Clipboard
 
+private struct ClipboardEditDraft: Identifiable {
+    let originalText: String
+    var text: String
+    var alias: String
+    var isPinned: Bool
+    var id: String { originalText }
+}
+
+private struct ClipboardShortcutDraft: Identifiable {
+    let expansion: String
+    var id: String { expansion }
+}
+
 struct ClipboardPage: View {
     @Bindable private var settings = SettingsStore.shared
     @State private var newPinned = ""
+    @State private var newAlias = ""
     @State private var query = ""
+    @State private var filter: ClipboardFilter = .all
+    @State private var editingDraft: ClipboardEditDraft?
+    @State private var shortcutDraft: ClipboardShortcutDraft?
 
     private var filteredItems: [ClipboardItem] {
-        settings.clipboardHistory.search(query)
+        settings.clipboardHistory.filter(filter, query: query)
     }
 
     var body: some View {
+        let now = Int(Date().timeIntervalSince1970)
         VStack(alignment: .leading, spacing: 12) {
             HStack(spacing: 16) {
                 Toggle("Lưu lịch sử Clipboard", isOn: $settings.clipboardHistoryEnabled)
@@ -557,36 +580,128 @@ struct ClipboardPage: View {
             }
 
             HStack(spacing: 8) {
-                TextField("Thêm mẫu văn bản ghim cố định (vd: email, số tài khoản, chữ ký)…", text: $newPinned)
+                TextField("Tên gợi nhớ (tuỳ chọn, vd: STK, Chữ ký)", text: $newAlias)
                     .textFieldStyle(.roundedBorder)
-                Button("Ghim mẫu") {
+                    .frame(width: 210)
+                TextField("Nội dung mẫu văn bản ghim cố định…", text: $newPinned)
+                    .textFieldStyle(.roundedBorder)
+                Button {
                     let text = newPinned.trimmingCharacters(in: .whitespacesAndNewlines)
                     guard !text.isEmpty else { return }
-                    settings.addPinnedClipboard(text)
+                    settings.addPinnedClipboard(text, alias: newAlias)
                     newPinned = ""
+                    newAlias = ""
+                } label: {
+                    Label("Ghim mẫu", systemImage: "pin.fill")
                 }
                 .disabled(newPinned.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
             }
 
-            TextField("Tìm kiếm trong Clipboard (có dấu hoặc không dấu)…", text: $query)
-                .textFieldStyle(.roundedBorder)
+            HStack(spacing: 8) {
+                TextField("Tìm kiếm theo nội dung hoặc tên gợi nhớ (không dấu)…", text: $query)
+                    .textFieldStyle(.roundedBorder)
+                ForEach(ClipboardFilter.allCases, id: \.self) { chip in
+                    let isActive = chip == filter
+                    Button {
+                        filter = chip
+                    } label: {
+                        Label(chip.title, systemImage: chip.symbolName)
+                            .font(.callout.weight(isActive ? .semibold : .regular))
+                            .padding(.horizontal, 9)
+                            .padding(.vertical, 4)
+                            .background(
+                                isActive ? Color.accentColor.opacity(0.18) : Color.primary.opacity(0.05),
+                                in: Capsule()
+                            )
+                            .foregroundStyle(isActive ? Color.accentColor : .secondary)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
 
             let items = filteredItems
+            let pinned = settings.clipboardHistory.pinnedItems
             ScrollView {
                 LazyVStack(spacing: 0) {
                     ForEach(items, id: \.text) { item in
                         HStack(spacing: 10) {
-                            Image(systemName: item.isPinned ? "pin.fill" : "doc.on.clipboard")
-                                .foregroundStyle(item.isPinned ? Color.accentColor : .secondary)
-                                .frame(width: 18)
-                            Text(item.preview)
-                                .lineLimit(2)
-                                .frame(maxWidth: .infinity, alignment: .leading)
+                            ClipboardKindBadge(item: item, size: 28)
+
+                            VStack(alignment: .leading, spacing: 2) {
+                                HStack(spacing: 6) {
+                                    if !item.alias.isEmpty {
+                                        Text(item.alias)
+                                            .font(.body.weight(.semibold))
+                                            .lineLimit(1)
+                                    }
+                                    Text(item.kind.badgeTitle)
+                                        .font(.caption2.weight(.medium))
+                                        .foregroundStyle(.secondary)
+                                        .padding(.horizontal, 6)
+                                        .padding(.vertical, 1)
+                                        .background(Color.primary.opacity(0.06), in: Capsule())
+                                    let rel = item.relativeTimeText(now: now)
+                                    Text(rel.isEmpty ? item.statsSummary : "\(item.statsSummary) · \(rel)")
+                                        .font(.caption2)
+                                        .foregroundStyle(.tertiary)
+                                        .lineLimit(1)
+                                }
+                                Text(item.preview)
+                                    .font(item.kind.usesMonospacedFont
+                                          ? .system(.callout, design: .monospaced)
+                                          : .callout)
+                                    .foregroundStyle(item.alias.isEmpty ? .primary : .secondary)
+                                    .lineLimit(2)
+                            }
+                            .frame(maxWidth: .infinity, alignment: .leading)
+
+                            if filter == .all && query.trimmingCharacters(in: .whitespaces).isEmpty,
+                               item.isPinned,
+                               let pinnedIdx = pinned.firstIndex(where: { $0.text == item.text }) {
+                                HStack(spacing: 2) {
+                                    Button {
+                                        settings.movePinnedClipboard(from: pinnedIdx, to: pinnedIdx - 1)
+                                    } label: {
+                                        Image(systemName: "arrow.up")
+                                            .font(.caption2)
+                                    }
+                                    .buttonStyle(.borderless)
+                                    .disabled(pinnedIdx == 0)
+                                    .help("Đưa lên trên")
+                                    Button {
+                                        settings.movePinnedClipboard(from: pinnedIdx, to: pinnedIdx + 1)
+                                    } label: {
+                                        Image(systemName: "arrow.down")
+                                            .font(.caption2)
+                                    }
+                                    .buttonStyle(.borderless)
+                                    .disabled(pinnedIdx + 1 >= pinned.count)
+                                    .help("Đưa xuống dưới")
+                                }
+                            }
+
                             Button("Chép") {
                                 ClipboardMonitor.copyToPasteboard(item.text)
                             }
                             .buttonStyle(.borderless)
-                            Menu("Chuyển mã") {
+
+                            Menu {
+                                Button {
+                                    editingDraft = ClipboardEditDraft(
+                                        originalText: item.text,
+                                        text: item.text,
+                                        alias: item.alias,
+                                        isPinned: item.isPinned
+                                    )
+                                } label: {
+                                    Label("Sửa nội dung / tên gợi nhớ…", systemImage: "square.and.pencil")
+                                }
+                                Button {
+                                    shortcutDraft = ClipboardShortcutDraft(expansion: item.text)
+                                } label: {
+                                    Label("Tạo Gõ tắt từ mục này…", systemImage: "bolt.horizontal.fill")
+                                }
+                                Divider()
                                 Button("Sửa lỗi font → Unicode") {
                                     ClipboardMonitor.copyToPasteboard(TextConverter.convert(item.text, mode: .autoToUnicode))
                                 }
@@ -599,16 +714,22 @@ struct ClipboardPage: View {
                                 Button("Viết Hoa Đầu Từ") {
                                     ClipboardMonitor.copyToPasteboard(TextConverter.convert(item.text, mode: .titleCase))
                                 }
+                            } label: {
+                                Image(systemName: "ellipsis.circle")
                             }
                             .menuStyle(.borderlessButton)
                             .fixedSize()
+                            .help("Chỉnh sửa, chuyển mã hoặc tạo gõ tắt")
+
                             Button {
                                 settings.togglePinClipboard(item.text)
                             } label: {
-                                Image(systemName: item.isPinned ? "pin.slash" : "pin")
+                                Image(systemName: item.isPinned ? "pin.fill" : "pin")
+                                    .foregroundStyle(item.isPinned ? Color.accentColor : .secondary)
                             }
                             .buttonStyle(.borderless)
                             .help(item.isPinned ? "Bỏ ghim" : "Ghim lên đầu")
+
                             Button(role: .destructive) {
                                 settings.removeClipboard(item.text)
                             } label: {
@@ -617,7 +738,7 @@ struct ClipboardPage: View {
                             .buttonStyle(.borderless)
                         }
                         .padding(.horizontal, 12)
-                        .padding(.vertical, 7)
+                        .padding(.vertical, 8)
                         Divider()
                     }
                 }
@@ -653,6 +774,52 @@ struct ClipboardPage: View {
         }
         .padding(.horizontal, 28)
         .padding(.vertical, 20)
+        .sheet(item: $editingDraft) { draft in
+            EditClipboardItemSheet(draft: draft) { updated in
+                settings.updateClipboardItem(
+                    oldText: updated.originalText,
+                    newText: updated.text,
+                    alias: updated.alias,
+                    isPinned: updated.isPinned
+                )
+            }
+        }
+        .sheet(item: $shortcutDraft) { draft in
+            NewShortcutForm(initialExpansion: draft.expansion) { entry in
+                settings.importShortcuts([entry])
+            }
+        }
+    }
+}
+
+private struct EditClipboardItemSheet: View {
+    @Environment(\.dismiss) private var dismiss
+    @State var draft: ClipboardEditDraft
+    let onSave: (ClipboardEditDraft) -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            Text("Sửa mục Clipboard").font(.title2.bold())
+            TextField("Tên gợi nhớ (tuỳ chọn, vd: STK Vietcombank)", text: $draft.alias)
+                .textFieldStyle(.roundedBorder)
+            TextEditor(text: $draft.text)
+                .font(.system(.body))
+                .frame(height: 120)
+                .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(Color.secondary.opacity(0.3)))
+            Toggle("Ghim lên đầu danh sách", isOn: $draft.isPinned)
+            HStack {
+                Spacer()
+                Button("Huỷ") { dismiss() }.keyboardShortcut(.cancelAction)
+                Button("Lưu") {
+                    onSave(draft)
+                    dismiss()
+                }
+                .keyboardShortcut(.defaultAction)
+                .disabled(draft.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+            }
+        }
+        .padding(24)
+        .frame(width: 440)
     }
 }
 
