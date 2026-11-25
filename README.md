@@ -10,10 +10,12 @@
 
 **Bộ gõ tiếng Việt 100% Swift 6 Native · Mã nguồn mở cho hệ sinh thái Apple**
 
+**🇻🇳 Tiếng Việt** | **[🇬🇧 English](README.en.md)**
+
 [![License: MIT](https://img.shields.io/badge/License-MIT-0B66E4.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/Platform-macOS%2014%2B%20%7C%20iOS%20%26%20iPadOS%2026%2B-053A8F.svg)](#bắt-đầu)
 [![Swift](https://img.shields.io/badge/Swift-6.0%20Strict-F05138.svg)](Package.swift)
-[![Release](https://img.shields.io/badge/Release-20261125.1.001-F7B529.svg)](https://github.com/luongbinhf/viTek/releases)
+[![Release](https://img.shields.io/badge/Release-20261125.1.002-F7B529.svg)](https://github.com/luongbinhf/viTek/releases)
 
 </div>
 
@@ -31,6 +33,11 @@ Linh vật của dự án là **Cú Lạc viTek** mang vương miện dấu mũ 
 
 ## Bắt đầu
 
+- **macOS (Homebrew Cask):**
+  ```sh
+  brew tap luongbinhf/vitek https://github.com/luongbinhf/viTek
+  brew install --cask luongbinhf/vitek/vitek
+  ```
 - **macOS (DMG):** tải bản phát hành mới nhất tại [GitHub Releases](https://github.com/luongbinhf/viTek/releases), mở tệp `.dmg`, kéo **Cài viTek** vào `Applications` (hoặc mở trực tiếp **Cài viTek**) để cài đặt nguyên tử và bật nguồn nhập **viTek** (`🌐` hoặc `⌃ Space`). Xem thêm [hướng dẫn cài đặt](docs/INSTALL.md).
 - **Build từ mã nguồn (macOS):** chạy `CONFIGURATION=Release scripts/install_dev.sh` tại thư mục dự án. Yêu cầu Apple Silicon, Xcode SDK macOS 26+ và XcodeGen (deployment target: macOS 14.0).
 - **iPhone / iPad:** build `Apps/iOS/viTekMobile.xcodeproj` (tạo bằng `xcodegen generate --spec Apps/iOS/project.yml`), thêm **viTek** trong **Cài đặt → Cài đặt chung → Bàn phím → Bàn phím**, giữ phím quả địa cầu để chọn. Bàn phím gõ đầy đủ tiếng Việt và gợi ý cục bộ ngay cả khi tắt *Cho phép truy cập đầy đủ*. Xem [hướng dẫn App Store](docs/APPSTORE.md).

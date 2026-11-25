@@ -28,7 +28,7 @@ final class SettingsStore {
         case toneStyle, spellCheck, restoreInvalidWords, standaloneW, quickTelexW, bracketVowels, keepEnglishWords
         case quickStartConsonants, quickEndConsonants
         case shortcutsEnabled, shortcuts, shortcutsInEnglishMode, editPreviousWord, underlineComposition, showSuggestions
-        case vietnameseEnabled, quickToggleOptionDoubleTap
+        case vietnameseEnabled, quickToggleOptionDoubleTap, showModeSwitchHUD
         case typingScores, iCloudSyncEnabled, customEnglishWords, excludedBundleIDs
         case focusPreferEnglish, focusHideSuggestions
         case personalUnigrams, personalBigrams
@@ -51,6 +51,7 @@ final class SettingsStore {
     var showSuggestions: Bool { didSet { save(showSuggestions, .showSuggestions) } }
     var vietnameseEnabled: Bool { didSet { save(vietnameseEnabled, .vietnameseEnabled, syncCloud: false) } }
     var quickToggleOptionDoubleTap: Bool { didSet { save(quickToggleOptionDoubleTap, .quickToggleOptionDoubleTap, syncCloud: false) } }
+    var showModeSwitchHUD: Bool { didSet { save(showModeSwitchHUD, .showModeSwitchHUD, syncCloud: false) } }
     var shortcutsEnabled: Bool { didSet { save(shortcutsEnabled, .shortcutsEnabled) } }
     var shortcutsInEnglishMode: Bool { didSet { save(shortcutsInEnglishMode, .shortcutsInEnglishMode) } }
     var shortcuts: [Shortcut] {
@@ -89,6 +90,7 @@ final class SettingsStore {
         showSuggestions = bool(.showSuggestions, false)
         vietnameseEnabled = bool(.vietnameseEnabled, true)
         quickToggleOptionDoubleTap = bool(.quickToggleOptionDoubleTap, true)
+        showModeSwitchHUD = bool(.showModeSwitchHUD, true)
         shortcutsEnabled = bool(.shortcutsEnabled, true)
         shortcutsInEnglishMode = bool(.shortcutsInEnglishMode, false)
         let stored = defaults.array(forKey: Key.shortcuts.rawValue) as? [[String: String]] ?? []

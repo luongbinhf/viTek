@@ -36,4 +36,12 @@ import Testing
         #expect(config.contains("MARKETING_VERSION = \(unpadded)\n"))
         #expect(config.contains("CURRENT_PROJECT_VERSION = \(unpadded)\n"))
     }
+
+    @Test func homebrewCaskMatchesVersion() throws {
+        let cask = try read("Casks/vitek.rb")
+        let version = try version
+        #expect(cask.contains("cask \"vitek\""))
+        #expect(cask.contains("version \"\(version)\""))
+        #expect(cask.contains("viTek-#{version}.dmg"))
+    }
 }

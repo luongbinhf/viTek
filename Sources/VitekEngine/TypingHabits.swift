@@ -19,14 +19,18 @@ public struct TypingHabits: Equatable, Sendable {
 
     // These short spellings are common Telex for cả, hẻ, ì, sẽ, ứa.
     static let needsEnglishContext: Set<String> = ["car", "her", "if", "sex", "was"]
-    static let vietnameseCues: Set<String> = ["khi", "nhau", "sinh", "theo", "thi", "trong"]
+    static let vietnameseCues: Set<String> = [
+        "anh", "chao", "chua", "chuyen", "cung", "dang", "duoc", "khi", "khong", "luon",
+        "minh", "ngay", "nghe", "nguoi", "nhau", "nhieu", "nhung", "sinh", "theo", "thi",
+        "thoi", "trong", "truoc", "vay", "xem",
+    ]
     static let ambiguous = needsEnglishContext.union([
         "as", "is", "of", "or", "us", "has", "his", "its", "low", "how", "now", "row", "too",
-        "teen", "own", "room", "see", "moon", "this", "more", "there", "here", "these", "does", "days", "those",
+        "been", "soon", "noon", "teen", "own", "room", "see", "moon", "this", "more", "there", "here", "these", "does", "days", "those",
     ])
     static let englishCues: Set<String> = [
         "the", "with", "from", "and", "hello", "server", "express", "data",
-        "www", "issue", "issues", "class", "address", "message",
+        "www", "issue", "issues", "class", "address", "message", "lose",
         "core", "sore", "bore", "tore", "chore",
         "nose", "rose", "pose", "dose", "hose", "horse",
         "door", "poor", "loser", "virus", "versus",

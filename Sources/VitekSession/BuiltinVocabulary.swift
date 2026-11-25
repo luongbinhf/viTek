@@ -240,6 +240,31 @@ enum BuiltinVocabulary {
         đồng bộ đám mây
         bàn phím tiếng Việt
         phím tắt hệ thống
+        chúc bạn ngày mới vui vẻ
+        hoàn thành đúng hạn
+        báo cáo tuần này
+        tổng hợp thông tin
+        xác nhận lịch hẹn
+        gửi lời cảm ơn
+        làm việc từ xa
+        phát triển mã nguồn mở
+        gõ tiếng Việt nhanh
+        kiểm tra chính tả
+        từ điển cá nhân
+        chuyển mã văn bản
+        bảo vệ quyền riêng tư
+        cập nhật phiên bản mới
+        hướng dẫn sử dụng
+        thông báo hệ thống
+        mật khẩu bảo mật
+        tài khoản cá nhân
+        kết nối ổn định
+        chia sẻ màn hình
+        ghi chú cuộc họp
+        danh sách công việc
+        mở rộng tính năng
+        trạng thái hoạt động
+        tìm kiếm nhanh chóng
         """, .general)
         return result
     }()

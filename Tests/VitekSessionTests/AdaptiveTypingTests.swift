@@ -109,4 +109,18 @@ import VitekSession
         field.session.discard()
         #expect(field.session.engine.habits == TypingHabits())
     }
+
+    @Test func expandedBilingualCuesDisambiguateEnglishAndVietnamese() {
+        var englishField = field()
+        englishField.session.engine.habits = TypingHabits(telexScore: 3)
+        englishField.type("I have been ")
+        #expect(englishField.committed == "I have been ")
+        englishField.type("see you soon at noon you lose ")
+        #expect(englishField.committed == "I have been see you soon at noon you lose ")
+
+        var viField = field()
+        viField.session.engine.habits = TypingHabits(telexScore: 3)
+        viField.type("owr been anh as ")
+        #expect(viField.committed == "ở bên anh á ")
+    }
 }

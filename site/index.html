@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>viTek — Bộ gõ tiếng Việt 100% Swift Native cho macOS, iOS &amp; iPadOS</title>
+  <meta name="description" content="viTek là bộ gõ tiếng Việt mã nguồn mở 100% Swift 6 Native dành cho macOS 14+ và iOS/iPadOS 26+: tự nhận Telex & VNI, bảo vệ từ tiếng Anh & code, xử lý hoàn toàn trên thiết bị.">
+  <link rel="icon" type="image/png" href="assets/vitek-logo.png">
+  <link rel="stylesheet" href="styles.css">
+  <script defer src="app.js"></script>
+</head>
+<body>
+  <a href="#main-content" class="skip-link visually-hidden">Bỏ qua điều hướng, tới nội dung chính</a>
+
+  <header class="site-header">
+    <div class="container nav-bar">
+      <a href="#top" class="brand" id="top">
+        <img src="assets/vitek-logo.png" onerror="this.onerror=null;this.src='../assets/brand/vitek-logo.png'" alt="Logo viTek" width="36" height="36" class="brand-logo">
+        <span class="brand-name">viTek</span>
+        <span class="badge">MIT Open Source</span>
+      </a>
+      <nav aria-label="Chính">
+        <ul class="nav-list">
+          <li><a href="#playground">Gõ thử</a></li>
+          <li><a href="#features">Tính năng</a></li>
+          <li><a href="#install">Cài đặt</a></li>
+          <li><a href="https://github.com/luongbinhf/viTek" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="container hero-grid">
+        <div class="hero-copy">
+          <div class="pill-row">
+            <span class="pill" id="release-pill">Phiên bản 20261125.1.002</span>
+            <span class="pill pill-accent">0,88 µs p50 · Apple Silicon</span>
+          </div>
+          <h1 id="main-content" tabindex="-1">Bộ gõ tiếng Việt <span class="gradient-text">100% Swift Native</span> cho hệ sinh thái Apple</h1>
+          <p class="lead">
+            viTek được viết hoàn toàn bằng Swift 6 cho <strong>macOS 14+</strong> và <strong>iOS / iPadOS 26+</strong>.
+            Tự nhận Telex &amp; VNI theo từng từ, không cần quyền Trợ năng để gõ, không thu thập dữ liệu.
+          </p>
+          <div class="cta-row">
+            <a id="download-dmg" class="btn btn-primary" href="https://github.com/luongbinhf/viTek/releases/latest">
+              Tải viTek cho macOS (.DMG)
+            </a>
+            <a class="btn btn-secondary" href="https://github.com/luongbinhf/viTek">
+              Xem mã nguồn trên GitHub
+            </a>
+          </div>
+          <div class="brew-box copyable" aria-label="Lệnh cài bằng Homebrew">
+            <pre><code id="brew-snippet">brew tap luongbinhf/vitek https://github.com/luongbinhf/viTek &amp;&amp; brew install --cask luongbinhf/vitek/vitek</code></pre>
+            <span class="copy">
+              <button type="button" class="copy-button" command="--copy" commandfor="brew-snippet" aria-label="Sao chép lệnh cài Homebrew">
+                <svg class="icon icon-copy" aria-hidden="true" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="9" y="9" width="13" height="13" rx="2"></rect>
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                </svg>
+                <svg class="icon icon-check" aria-hidden="true" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2">
+                  <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+              </button>
+              <span class="tip" role="status"></span>
+            </span>
+          </div>
+        </div>
+
+        <div class="hero-visual">
+          <div class="mascot-stage">
+            <img src="assets/vitek-mascot.png" onerror="this.onerror=null;this.src='../assets/brand/vitek-mascot.png'" alt="Linh vật Cú Lạc viTek đội vương miện dấu mũ vàng" width="220" height="220" class="mascot-img">
+          </div>
+
+          <section id="playground" class="playground-card" aria-labelledby="playground-heading">
+            <div class="playground-top">
+              <div>
+                <h2 id="playground-heading">Gõ thử Telex &amp; VNI trực tiếp</h2>
+                <p id="playground-hint" class="playground-hint">Gõ thử tự do cả Telex, VNI và từ tiếng Anh / code trong cùng một câu.</p>
+              </div>
+              <div class="playground-controls">
+                <button type="button" id="toggle-lang" class="chip chip-active" aria-pressed="true">VI</button>
+                <button type="button" id="toggle-tone" class="chip" aria-pressed="true" title="Chuyển đặt dấu kiểu mới (hoà) hoặc kiểu cũ (hòa)">Dấu mới: hoà</button>
+              </div>
+            </div>
+
+            <label for="playground-input" class="visually-hidden">Ô gõ thử tiếng Việt</label>
+            <textarea id="playground-input" rows="3" spellcheck="false" autocomplete="off" aria-describedby="playground-hint" placeholder="Gõ: vieetj vie65t reset server userName github.com …"></textarea>
+
+            <div class="playground-presets">
+              <button type="button" class="preset-btn" data-keys="vieetj vie65t reset server userName github.com ">Mẫu chuẩn</button>
+              <button type="button" class="preset-btn" data-keys="Hoaf bwinhf khoer manhj ">Dấu kiểu mới/cũ</button>
+              <button type="button" class="preset-btn" data-keys="Tooi code Swift treen macOS vaf iPadOS ">Pha Việt–Anh</button>
+              <button type="button" id="clear-playground" class="preset-btn preset-muted">Xoá</button>
+            </div>
+            <p class="playground-note">Hỗ trợ phím <kbd>Esc</kbd> hoàn tác chữ đang gõ về phím gốc trong bản mô phỏng và trên macOS/iPadOS.</p>
+          </section>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" aria-labelledby="dmg-heading">
+      <div class="container dmg-layout">
+        <div class="dmg-copy">
+          <h2 id="dmg-heading">Cài đặt macOS trực quan trong 5 giây</h2>
+          <p>
+            Bộ cài <code>.DMG</code> mới được thiết kế theo phong cách tối giản Apple / Docker / GitHub:
+            kéo <strong>Cài viTek</strong> vào <strong>Applications</strong>, mở lên để cài nguyên tử vào
+            <code>~/Library/Input Methods</code> và bật sẵn nguồn nhập tiếng Việt.
+          </p>
+          <ul class="check-list">
+            <li>Kiểm tra toàn vẹn SHA-256 tự động ngay khi cập nhật từ Cài đặt.</li>
+            <li>Chỉ báo nổi Liquid Glass <code>VI ↔ EN</code> khi nhấn đúp phím <code>⌥ Option</code>.</li>
+            <li>Tự động chuyển sang tiếng Anh trong Terminal, iTerm2, Warp, Ghostty, Kitty.</li>
+          </ul>
+        </div>
+        <figure class="dmg-figure">
+          <img src="assets/dmg-background@2x.png" onerror="this.onerror=null;this.src='../assets/brand/dmg-background@2x.png'" alt="Cửa sổ DMG kéo thả Cài viTek vào thư mục Applications" width="660" height="440" loading="lazy">
+          <figcaption>Trải nghiệm kéo thả DMG Retina đi kèm linh vật Cú Lạc viTek.</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section id="features" class="section section-alt" aria-labelledby="features-heading">
+      <div class="container">
+        <h2 id="features-heading" class="section-title">Thiết kế cho tốc độ, độ chính xác và sự riêng tư</h2>
+        <div class="feature-grid">
+          <article class="card">
+            <h3>Tự nhận Telex &amp; VNI</h3>
+            <p>Không cần đổi qua lại giữa hai kiểu gõ. Bạn có thể gõ <code>vieetj</code> và <code>vie65t</code> ngay trong cùng một câu, kèm phím <code>Esc</code> hoàn tác tức thì.</p>
+          </article>
+          <article class="card">
+            <h3>Bảo vệ Code &amp; Tiếng Anh</h3>
+            <p>Smart Token Bypass giữ nguyên <code>camelCase</code>, <code>snake_case</code>, URL, email, từ ngoại lệ cá nhân và hơn 304 từ tiếng Anh thông dụng theo ngữ cảnh.</p>
+          </article>
+          <article class="card">
+            <h3>iOS &amp; iPadOS Thích ứng</h3>
+            <p>Bố cục một tay trái/phải khi cầm dọc, chia đôi bàn phím (Split Keyboard) khi xoay ngang &amp; trên iPad, công cụ chữ nhanh <code>Aa</code> và bàn phím cứng iPadOS.</p>
+          </article>
+          <article class="card">
+            <h3>Gõ tắt, Emoji &amp; iCloud</h3>
+            <p>Hỗ trợ biến ngày giờ động (<code>{{date}}</code>, <code>{{time}}</code>), nhập tệp UniKey / OpenKey / CSV, tìm Emoji tiếng Việt có dấu hoặc không dấu và đồng bộ iCloud.</p>
+          </article>
+          <article class="card">
+            <h3>Công cụ Chuyển mã</h3>
+            <p>Chuyển mã VNI Windows / TCVN3 sang Unicode NFC, bỏ dấu, đổi HOA/thường qua menu macOS, Apple Shortcuts và phím <code>Aa</code> trên iOS.</p>
+          </article>
+          <article class="card">
+            <h3>Hiệu năng đo thực tế</h3>
+            <p>Độ trễ trung vị lõi engine <strong>0,88 µs</strong> (p99 <strong>2,54 µs</strong>), gợi ý từ &amp; Emoji cục bộ <strong>20,5 µs</strong> p50 trên Apple Silicon.</p>
+          </article>
+        </div>
+
+        <div class="bench-panel">
+          <h3>So sánh tốc độ xử lý trên Apple Silicon</h3>
+          <div class="bench-row">
+            <span>Lõi gõ phím viTek (p99)</span>
+            <div class="bar-track"><div class="bar-fill" style="--w: 5.1%"></div></div>
+            <strong>2,54 µs</strong>
+          </div>
+          <div class="bench-row">
+            <span>Gợi ý từ &amp; Emoji cục bộ (p99)</span>
+            <div class="bar-track"><div class="bar-fill bar-gold" style="--w: 14%"></div></div>
+            <strong>72,9 µs</strong>
+          </div>
+          <div class="bench-row">
+            <span>Khung hình 120Hz ProMotion (8.330 µs)</span>
+            <div class="bar-track"><div class="bar-fill bar-muted" style="--w: 100%"></div></div>
+            <strong>8.330 µs</strong>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="install" class="section" aria-labelledby="install-heading">
+      <div class="container">
+        <h2 id="install-heading" class="section-title">Bắt đầu ngay trên thiết bị Apple của bạn</h2>
+        <div class="install-grid">
+          <div class="card">
+            <h3>macOS 14+ (Apple Silicon)</h3>
+            <p>Tải <code>.dmg</code> mới nhất hoặc cài qua Homebrew, kéo <strong>Cài viTek</strong> vào Applications và mở một lần.</p>
+            <a class="link-arrow" href="https://github.com/luongbinhf/viTek/blob/main/docs/INSTALL.md">Đọc hướng dẫn cài macOS →</a>
+          </div>
+          <div class="card">
+            <h3>iPhone &amp; iPad (iOS/iPadOS 26+)</h3>
+            <p>Build từ <code>Apps/iOS/project.yml</code> hoặc cài qua TestFlight; mọi tính năng gõ tiếng Việt chạy sạch ngay cả khi tắt truy cập đầy đủ.</p>
+            <a class="link-arrow" href="https://github.com/luongbinhf/viTek/blob/main/docs/APPSTORE.md">Xem hướng dẫn iOS / App Store →</a>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <p><strong>viTek</strong> — Phát hành mã nguồn mở theo <a href="https://github.com/luongbinhf/viTek/blob/main/LICENSE">Giấy phép MIT</a>.</p>
+      <ul class="footer-links">
+        <li><a href="https://github.com/luongbinhf/viTek/blob/main/CHANGELOG.md">Changelog</a></li>
+        <li><a href="https://github.com/luongbinhf/viTek/blob/main/SECURITY.md">Bảo mật</a></li>
+        <li><a href="https://github.com/luongbinhf/viTek/blob/main/CONTRIBUTING.md">Đóng góp</a></li>
+        <li><a href="https://github.com/luongbinhf/viTek/blob/main/README.en.md">English Docs</a></li>
+      </ul>
+    </div>
+  </footer>
+</body>
+</html>

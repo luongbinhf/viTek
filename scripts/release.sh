@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # Public release: DEVELOPER_ID_APPLICATION, DEVELOPMENT_TEAM and NOTARY_PROFILE.
-# --local builds an ad-hoc signed DMG for this Mac. SKIP_NOTARIZE=1 skips only notarization.
+# --local builds an ad-hoc signed DMG suffixed -local for this Mac.
+# --adhoc builds an ad-hoc signed DMG with canonical filename (viTek-<version>.dmg).
+# SKIP_NOTARIZE=1 skips only notarization.
 set -euo pipefail
 
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -8,14 +10,19 @@ cd "$root"
 version="$(scripts/version.sh check)"
 name="viTek-$version"
 dist="$root/dist"
-case "${1:-}" in
+mode="${1:-}"
+case "$mode" in
   --local)
     name="$name-local"
     derived="$root/build/DerivedData.noindex"
     signing=(CODE_SIGN_STYLE=Manual CODE_SIGN_IDENTITY=-)
     ;;
+  --adhoc)
+    derived="$root/build/DerivedRelease.noindex"
+    signing=(CODE_SIGN_STYLE=Manual CODE_SIGN_IDENTITY=-)
+    ;;
   "")
-    : "${DEVELOPER_ID_APPLICATION:?set DEVELOPER_ID_APPLICATION or use --local}"
+    : "${DEVELOPER_ID_APPLICATION:?set DEVELOPER_ID_APPLICATION or use --local/--adhoc}"
     derived="$root/build/DerivedRelease.noindex"
     signing=(CODE_SIGN_STYLE=Manual CODE_SIGN_IDENTITY="$DEVELOPER_ID_APPLICATION" OTHER_CODE_SIGN_FLAGS=--timestamp)
     if [[ "${SKIP_NOTARIZE:-0}" != 1 ]]; then
@@ -24,7 +31,7 @@ case "${1:-}" in
     fi
     [[ -z "${DEVELOPMENT_TEAM:-}" ]] || signing+=(DEVELOPMENT_TEAM="$DEVELOPMENT_TEAM")
     ;;
-  *) echo "usage: scripts/release.sh [--local]" >&2; exit 2 ;;
+  *) echo "usage: scripts/release.sh [--local|--adhoc]" >&2; exit 2 ;;
 esac
 
 xcodegen generate --spec Apps/macOS/project.yml
@@ -47,7 +54,7 @@ mkdir "$volume"
 installer="$volume/Cài viTek.app"
 ditto "$derived/Build/Products/Release/viTekInstaller.app" "$installer"
 payload="$installer/Contents/Helpers/viTek.app"
-if [[ "${1:-}" == --local ]]; then
+if [[ "$mode" == --local || "$mode" == --adhoc ]]; then
   # Match install_dev.sh so an existing development Accessibility grant survives the update.
   bundle_id="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$payload/Contents/Info.plist")"
   codesign --force --sign - --preserve-metadata=entitlements,flags \
@@ -135,7 +142,7 @@ hdiutil detach "$device" -quiet
 device=""
 
 hdiutil convert "$stage/edit.dmg" -format UDZO -imagekey zlib-level=9 -o "$dmg" >/dev/null
-if [[ "${1:-}" != --local ]]; then
+if [[ "$mode" != --local && "$mode" != --adhoc ]]; then
   codesign --force --timestamp --sign "$DEVELOPER_ID_APPLICATION" "$dmg"
   if [[ "${SKIP_NOTARIZE:-0}" != 1 ]]; then
     xcrun notarytool submit "$dmg" --keychain-profile "$NOTARY_PROFILE" --wait

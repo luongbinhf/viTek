@@ -34,8 +34,11 @@ jobs:
           if [[ -n "${DEVELOPER_ID_APPLICATION:-}" ]]; then
             scripts/release.sh
           else
-            scripts/release.sh --local
+            scripts/release.sh --adhoc
           fi
+          version="$(scripts/version.sh check)"
+          sha="$(awk '{print $1; exit}' "dist/viTek-$version.dmg.sha256")"
+          scripts/generate_cask.sh "$version" "$sha" > dist/vitek.rb
 
       - name: Verify iOS Simulator build
         run: |
@@ -52,9 +55,9 @@ jobs:
           version="$(scripts/version.sh check)"
           tag="${GITHUB_REF_NAME:-$version}"
           if gh release view "$tag" >/dev/null 2>&1; then
-            gh release upload "$tag" dist/viTek-*.dmg dist/viTek-*.dmg.sha256 --clobber
+            gh release upload "$tag" dist/viTek-*.dmg dist/viTek-*.dmg.sha256 dist/vitek.rb --clobber
           else
-            gh release create "$tag" dist/viTek-*.dmg dist/viTek-*.dmg.sha256 \
+            gh release create "$tag" dist/viTek-*.dmg dist/viTek-*.dmg.sha256 dist/vitek.rb \
               --title "viTek $version" \
               --generate-notes
           fi

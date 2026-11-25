@@ -140,6 +140,8 @@ struct TypingPage: View {
                 }
                 Toggle("Nhấn đúp phím ⌥ Option để chuyển nhanh Việt ↔ Anh",
                        isOn: $settings.quickToggleOptionDoubleTap)
+                Toggle("Hiện chỉ báo nhỏ khi chuyển nhanh Việt ↔ Anh",
+                       isOn: $settings.showModeSwitchHUD)
             }
             Section {
                 Toggle("Gợi ý từ", isOn: $settings.showSuggestions)
@@ -532,6 +534,9 @@ struct AboutPage: View {
     @State private var checkingConnection = false
     @State private var updateStatus: UpdateChecker.Status?
     @State private var checkingUpdate = false
+    @State private var installingUpdate = false
+    @State private var installProgress: String?
+    @State private var installError: String?
 
     private var version: String {
         Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "?"
@@ -566,16 +571,25 @@ struct AboutPage: View {
                     Button(checkingUpdate ? "Đang kiểm tra…" : "Kiểm tra bản cập nhật…") {
                         checkUpdate()
                     }
-                    .disabled(checkingUpdate)
+                    .disabled(checkingUpdate || installingUpdate)
                     Spacer()
                     switch updateStatus {
                     case .upToDate:
                         Label("Đang dùng bản mới nhất", systemImage: "checkmark.circle.fill")
                             .font(.callout)
                             .foregroundStyle(.green)
-                    case .updateAvailable(let latest, let url):
-                        Button("Tải bản \(latest)…") {
-                            NSWorkspace.shared.open(url)
+                    case .updateAvailable(let latest, let pageURL, let dmgURL, let sha256URL):
+                        HStack(spacing: 8) {
+                            if let dmgURL {
+                                Button(installingUpdate ? (installProgress ?? "Đang cập nhật…") : "Cập nhật bản \(latest)") {
+                                    installUpdate(dmgURL: dmgURL, sha256URL: sha256URL)
+                                }
+                                .disabled(installingUpdate)
+                            }
+                            Button("Mở trang tải…") {
+                                NSWorkspace.shared.open(pageURL)
+                            }
+                            .disabled(installingUpdate)
                         }
                     case .failed(let message):
                         Text(message)
@@ -584,6 +598,11 @@ struct AboutPage: View {
                     case nil:
                         EmptyView()
                     }
+                }
+                if let installError {
+                    Text(installError)
+                        .font(.callout)
+                        .foregroundStyle(.red)
                 }
                 LabeledContent("Nguồn nhập") { Text("Vietnamese → viTek") }
                 LabeledContent("Đổi nguồn nhập") { Text("🌐 hoặc ⌃ Space") }
@@ -650,10 +669,30 @@ struct AboutPage: View {
     private func checkUpdate() {
         checkingUpdate = true
         updateStatus = nil
+        installError = nil
         let current = version
         Task { @MainActor in
             defer { checkingUpdate = false }
             updateStatus = await UpdateChecker.check(currentVersion: current)
+        }
+    }
+
+    private func installUpdate(dmgURL: URL, sha256URL: URL?) {
+        installingUpdate = true
+        installError = nil
+        installProgress = "Đang tải bản cập nhật…"
+        Task { @MainActor in
+            defer {
+                installingUpdate = false
+                installProgress = nil
+            }
+            do {
+                try await UpdateChecker.downloadAndLaunchInstaller(dmgURL: dmgURL, sha256URL: sha256URL) { message in
+                    installProgress = message
+                }
+            } catch {
+                installError = error.localizedDescription
+            }
         }
     }
 }

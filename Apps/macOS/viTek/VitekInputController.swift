@@ -229,6 +229,9 @@ final class VitekInputController: IMKInputController {
                 typedContext = ""
                 settings.vietnameseEnabled.toggle()
                 applyAppLanguage(for: client.bundleIdentifier())
+                if settings.showModeSwitchHUD {
+                    ModeIndicatorPanel.show(vietnamese: settings.vietnameseEnabled, caret: clientCaretRect(client))
+                }
             } else {
                 lastSoloOptionRelease = now
             }
@@ -551,6 +554,9 @@ final class VitekInputController: IMKInputController {
     @objc private func toggleVietnameseEnabled(_ sender: Any?) {
         settings.vietnameseEnabled.toggle()
         if !settings.vietnameseEnabled { hideSuggestions() }
+        if settings.showModeSwitchHUD {
+            ModeIndicatorPanel.show(vietnamese: settings.vietnameseEnabled, caret: .zero)
+        }
     }
     @objc private func toggleToneStyle(_ sender: Any?) {
         settings.toneStyle = settings.toneStyle == .modern ? .traditional : .modern

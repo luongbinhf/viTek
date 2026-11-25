@@ -49,7 +49,9 @@ final class KeyboardViewController: UIInputViewController {
     private let leftDockStrip = UIStackView()
     private let rightDockStrip = UIStackView()
     private let rootStack = UIStackView()
+    private let topBar = UIStackView()
     private let suggestionBar = UIStackView()
+    private let textToolsButton = UIButton(type: .system)
     private let rows = UIStackView()
     private var shiftState: ShiftState = .off
     private var lastShiftTap: ContinuousClock.Instant?
@@ -118,17 +120,28 @@ final class KeyboardViewController: UIInputViewController {
         rootStack.spacing = 4
         rootStack.translatesAutoresizingMaskIntoConstraints = false
 
+        topBar.axis = .horizontal
+        topBar.spacing = 6
+        topBar.alignment = .fill
+        topBar.distribution = .fill
+        topBar.translatesAutoresizingMaskIntoConstraints = false
+
         suggestionBar.axis = .horizontal
         suggestionBar.spacing = 6
         suggestionBar.distribution = .fillEqually
         suggestionBar.translatesAutoresizingMaskIntoConstraints = false
+        suggestionBar.setContentHuggingPriority(.defaultLow, for: .horizontal)
+
+        configureTextToolsButton()
 
         rows.axis = .vertical
         rows.spacing = 5
         rows.distribution = .fillEqually
         rows.translatesAutoresizingMaskIntoConstraints = false
 
-        rootStack.addArrangedSubview(suggestionBar)
+        topBar.addArrangedSubview(suggestionBar)
+        topBar.addArrangedSubview(textToolsButton)
+        rootStack.addArrangedSubview(topBar)
         rootStack.addArrangedSubview(rows)
 
         outerStack.addArrangedSubview(leftDockStrip)
@@ -143,7 +156,7 @@ final class KeyboardViewController: UIInputViewController {
         view.addSubview(keyPreview)
 
         let safe = view.safeAreaLayoutGuide
-        let suggestionHeight = suggestionBar.heightAnchor.constraint(equalToConstant: settings.effectiveShowSuggestions ? 34 : 0)
+        let suggestionHeight = topBar.heightAnchor.constraint(equalToConstant: settings.effectiveShowSuggestions ? 34 : 0)
         suggestionHeightConstraint = suggestionHeight
         let keysHeight = rows.heightAnchor.constraint(equalToConstant: preferredKeysHeight)
         keysHeight.priority = .defaultHigh
@@ -342,10 +355,121 @@ final class KeyboardViewController: UIInputViewController {
         lastObservedReturnKeyType = textDocumentProxy.returnKeyType
         syncEffectiveLanguageMode()
         let showBar = settings.effectiveShowSuggestions
+        topBar.isHidden = !showBar
         suggestionBar.isHidden = !showBar
+        textToolsButton.isHidden = !showBar || (page == .emoji && emojiSearching)
         suggestionHeightConstraint?.constant = showBar ? 34 : 0
         keysHeightConstraint?.constant = preferredKeysHeight
         updateDockStripVisibility()
+    }
+
+    private func configureTextToolsButton() {
+        textToolsButton.setTitle("Aa", for: .normal)
+        textToolsButton.titleLabel?.font = .systemFont(ofSize: 13, weight: .semibold)
+        textToolsButton.setTitleColor(.label, for: .normal)
+        textToolsButton.backgroundColor = .secondarySystemFill
+        textToolsButton.layer.cornerRadius = 6
+        textToolsButton.accessibilityLabel = "Công cụ chữ"
+        textToolsButton.accessibilityIdentifier = "keyboard.textTools"
+        textToolsButton.showsMenuAsPrimaryAction = true
+        textToolsButton.translatesAutoresizingMaskIntoConstraints = false
+        textToolsButton.widthAnchor.constraint(equalToConstant: 36).isActive = true
+
+        let actions: [(String, TextConverter.LegacyEncoding)] = [
+            ("Sửa lỗi font → Unicode", .autoToUnicode),
+            ("Chuẩn hoá Unicode NFC", .nfdToNFC),
+            ("Bỏ dấu tiếng Việt", .stripAccents),
+            ("CHỮ HOA", .uppercase),
+            ("chữ thường", .lowercase),
+            ("Viết Hoa Đầu Từ", .titleCase),
+        ]
+        textToolsButton.menu = UIMenu(
+            title: "Công cụ chữ",
+            children: actions.map { title, mode in
+                UIAction(title: title) { [weak self] _ in
+                    self?.applyTextTransform(mode)
+                }
+            }
+        )
+    }
+
+    private func applyTextTransform(_ mode: TextConverter.LegacyEncoding) {
+        triggerFeedback()
+        let proxy = textDocumentProxy
+        if let selected = proxy.selectedText, !selected.isEmpty {
+            discardComposition()
+            proxy.insertText(TextConverter.convert(selected, mode: mode))
+            updateSuggestions()
+            return
+        }
+        if !displayed.isEmpty {
+            let converted = TextConverter.convert(displayed, mode: mode)
+            replaceDisplayed(with: converted, in: proxy)
+            session.discard()
+            displayed = ""
+            updateSuggestions()
+            return
+        }
+        guard let before = proxy.documentContextBeforeInput, !before.isEmpty else { return }
+        let token = String(before.reversed().prefix(while: { !$0.isWhitespace && !$0.isNewline }).prefix(64).reversed())
+        guard !token.isEmpty else { return }
+        for _ in token { proxy.deleteBackward() }
+        proxy.insertText(TextConverter.convert(token, mode: mode))
+        updateSuggestions()
+    }
+
+    // MARK: - Hardware Keyboard (iPadOS / iOS Magic Keyboard)
+
+    override func pressesBegan(_ presses: Set<UIPress>, with event: UIPressesEvent?) {
+        var unhandled = Set<UIPress>()
+        for press in presses {
+            guard let key = press.key else {
+                unhandled.insert(press)
+                continue
+            }
+            if !key.modifierFlags.intersection([.command, .control, .alternate]).isEmpty {
+                if session.engine.isComposing { handle(.boundary) }
+                unhandled.insert(press)
+                continue
+            }
+            if key.keyCode == .keyboardEscape {
+                if session.engine.isComposing, session.engine.composition != session.engine.rawKeys {
+                    let commands = session.restoreRawKeys()
+                    for case .insert(let raw) in commands {
+                        replaceDisplayed(with: raw, in: textDocumentProxy)
+                        displayed = ""
+                    }
+                    updateSuggestions()
+                } else {
+                    unhandled.insert(press)
+                }
+                continue
+            }
+            if key.keyCode == .keyboardDeleteOrBackspace {
+                if session.engine.isComposing {
+                    handle(.backspace)
+                } else {
+                    discardComposition()
+                    unhandled.insert(press)
+                }
+                continue
+            }
+            if key.keyCode == .keyboardReturnOrEnter || key.keyCode == .keyboardTab {
+                if session.engine.isComposing { handle(.boundary) }
+                unhandled.insert(press)
+                continue
+            }
+            if key.characters.count == 1, let ch = key.characters.first,
+               ch == " " || ch.isLetter || ch.isNumber || ch.isPunctuation || ch.isSymbol {
+                handle(.character(ch))
+                continue
+            }
+            if session.engine.isComposing { handle(.boundary) }
+            unhandled.insert(press)
+        }
+        if !unhandled.isEmpty {
+            super.pressesBegan(unhandled, with: event)
+        }
     }
 
     private func updateDockStripVisibility() {
@@ -1067,7 +1191,9 @@ final class KeyboardViewController: UIInputViewController {
             return
         }
         let showBar = settings.effectiveShowSuggestions
+        topBar.isHidden = !showBar
         suggestionBar.isHidden = !showBar
+        textToolsButton.isHidden = !showBar
         suggestionHeightConstraint?.constant = showBar ? 34 : 0
 
         let categories = EmojiSuggestions.categories
@@ -1125,7 +1251,9 @@ final class KeyboardViewController: UIInputViewController {
     }
 
     private func renderEmojiSearchKeyboard(spacing: CGFloat) {
+        topBar.isHidden = false
         suggestionBar.isHidden = false
+        textToolsButton.isHidden = true
         suggestionHeightConstraint?.constant = 34
 
         let headerRow = addRow(spacing: spacing)
