@@ -94,7 +94,7 @@ final class IOSKeyboardSettings {
         vietnameseEnabled = bool(.vietnameseEnabled, true)
         shortcutsInEnglishMode = bool(.shortcutsInEnglishMode, false)
         oneHandedMode = defaults.string(forKey: Key.oneHandedMode.rawValue).flatMap(OneHandedMode.init) ?? .full
-        splitLandscapeKeyboard = bool(.splitLandscapeKeyboard, true)
+        splitLandscapeKeyboard = bool(.splitLandscapeKeyboard, false)
         flickDownSymbols = bool(.flickDownSymbols, true)
         showSuggestions = bool(.showSuggestions, true)
         hapticFeedback = bool(.hapticFeedback, true)
@@ -202,7 +202,7 @@ final class IOSKeyboardSettings {
         vietnameseEnabled = bool(.vietnameseEnabled, true)
         shortcutsInEnglishMode = bool(.shortcutsInEnglishMode, false)
         oneHandedMode = defaults.string(forKey: Key.oneHandedMode.rawValue).flatMap(OneHandedMode.init) ?? .full
-        splitLandscapeKeyboard = bool(.splitLandscapeKeyboard, true)
+        splitLandscapeKeyboard = bool(.splitLandscapeKeyboard, false)
         flickDownSymbols = bool(.flickDownSymbols, true)
         showSuggestions = bool(.showSuggestions, true)
         hapticFeedback = bool(.hapticFeedback, true)

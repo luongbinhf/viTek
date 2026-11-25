@@ -4,6 +4,17 @@ Mọi bản phát hành của **viTek** sử dụng quy tắc phiên bản **`YY
 
 ---
 
+## `20261125.1.005` *(iOS `20261125.1.5`)*
+
+### Kiến trúc lại Bộ Render Bàn phím iOS 26 Liquid Glass & Tối ưu Tốc độ 120Hz
+- **Render trực tiếp `< 0,5 ms` không dùng Auto Layout (`KeyboardViewController`):** Thay thế toàn bộ 5 tầng `UIStackView` và hơn 150 ràng buộc Auto Layout bằng bộ nhớ đệm phím tái sử dụng (`LiquidKeyCapButton` + `SymbolCache` + `shadowPath` tính sẵn), xoá bỏ hoàn toàn việc huỷ/tạo lại `UIButton` khi gõ gợi ý từ hoặc chuyển trang `ABC ↔ 123 ↔ #+=`.
+- **Độ trễ chạm `0 ms` & Trượt chọn phím liền kề:** Xoá hiệu ứng mờ trễ `150 ms` của `UIButton.system`, bổ sung vùng nhận chạm mở rộng giữa khe phím (`hitSlop`) và theo dõi ngón tay trượt trực tiếp sang phím kế bên kèm bóng phóng đại **Liquid Glass (`UIGlassEffect`)** không bao giờ bị cắt ở hàng phím trên cùng.
+- **Loại bỏ nghẽn luồng chính khi đang gõ:** Chuyển toàn bộ truy vấn `UIPasteboard` sang bộ nhớ đệm sự kiện và đưa suy luận miền `CoreML` ra luồng nền bất đồng bộ để luồng chính luôn đạt 120Hz mượt mà.
+- **Bố cục chuẩn công thái học Apple iOS 26:** Đồng nhất tuyệt đối chiều rộng phím chữ trên cả 3 hàng (`Q–P`, `A–L`, `Z–M`), chuyển nút `VI/EN` và công cụ nhanh lên thanh viên nang Liquid Glass phía trên để trả lại phím **Dấu cách rộng chính giữa (~55% bề ngang)**.
+- **Thiết kế lại ứng dụng iOS (`ViTekApp` & `WritingView`) chuẩn iOS 26 Liquid Glass:** Thanh Tab thu gọn thông minh (`tabBarMinimizeBehavior(.onScrollDown)`), thẻ Hero `.glassEffect`, dải điều khiển `GlassEffectContainer`, ô gõ thử trực tiếp và hệ thống huy hiệu màu chuẩn Cài đặt iOS.
+
+---
+
 ## `20261125.1.004` *(iOS `20261125.1.4`)*
 
 ### Nhân gõ Tiếng Việt & Khử mơ hồ ngữ cảnh ANE

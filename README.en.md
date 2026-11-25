@@ -17,7 +17,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-0B66E4.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/Platform-macOS%2014%2B%20%7C%20iOS%20%26%20iPadOS%2026%2B-053A8F.svg)](#getting-started)
 [![Swift](https://img.shields.io/badge/Swift-6.0%20Strict-F05138.svg)](Package.swift)
-[![Release](https://img.shields.io/badge/Release-20261125.1.004-F7B529.svg)](https://github.com/luongbinhf/viTek/releases)
+[![Release](https://img.shields.io/badge/Release-20261125.1.005-F7B529.svg)](https://github.com/luongbinhf/viTek/releases)
 [![Live Demo](https://img.shields.io/badge/GitHub%20Pages-Try%20Live-16A34A.svg)](https://luongbinhf.github.io/viTek/)
 
 </div>
@@ -44,7 +44,7 @@ Try typing `vieetj vie65t reset server userName github.com ` → expected result
 | **1. Smart Bilingual & ANE Typing** | Per-word **Telex & VNI auto-detection** · Smooth **`uô ↔ ươ`** switching & **`viw` / `yw` / `uyw`** Quick Telex · Off-critical-path **ANE Core ML (`20 KB`)** sentence context disambiguation · Instant **`VI ↔ EN`** toggle (`⌥⌥` with macOS **Liquid Glass HUD** / `VI/EN` key on iOS) · Post-word mark editing & **`Esc`** raw-key undo · Per-app English auto-switch & **Apple Focus Filter** |
 | **2. Smart Macros, Semantic Ranking & Clipboard v2** | Automatic **collision-free shortcut mining** from repeated phrases (`cob → cảm ơn bạn`), case-preserving macros & **`{{date}}` / `{{time}}` / `{{datetime}}`** · **Trigram + `SemanticRanker`** prediction (`⌥ Space` / `⌥ 1–5`) · **Swift 27 Liquid Glass Clipboard** (`⌃⌥V` macOS & iOS **`📋`** / Smart Paste, URL/OTP/Phone/Hex/Code badges, concept-aware accent-insensitive search, **iCloud sync**) |
 | **3. Cursor Quick Actions (`⌃⌥A`) & Apple Intelligence** | Floating **`⌃⌥A`** Liquid Glass palette replacing selected text in-place · **5 on-device `@Generable` Apple Intelligence modes** (*Restore Vietnamese Diacritics*, *Homophone Proofreader*, *Professional*, *Friendly*, *Clipboard Analyzer*) · Pure-Swift `TextConverter` (**`VNI` / `TCVN3` → `Unicode NFC`**) & **Apple Shortcuts** |
-| **4. Adaptive iOS, iPadOS & Foldable (Duo) Keyboard** | Posture-aware **`KeyboardPosture`** engine: One-Handed mode, thumb **Split Keyboard**, and **3-mode Center Bridge** on wide/foldable displays (2D D-pad trackpad, `3×4` numpad, quick clipboard) · Flick-down symbols · **Hardware / Magic Keyboard** (`pressesBegan`) |
+| **4. 120Hz iOS 26 Liquid Glass Keyboard** | Zero-Auto-Layout **`< 0.5 ms`** direct frame renderer, **`0 ms`** touch-down response, slide-to-key & **`UIGlassEffect`** callout bubbles · Uniform key widths across Rows 1–3 with a **wide centered Spacebar** · Posture-aware **`KeyboardPosture`** (One-Handed, Split & 3-mode Center Bridge on iPad / Duo) · Flick-down symbols & **Magic Keyboard** |
 
 ## Getting Started
 
@@ -57,13 +57,13 @@ Try typing `vieetj vie65t reset server userName github.com ` → expected result
   brew tap luongbinhf/vitek https://github.com/luongbinhf/viTek
   brew install --cask luongbinhf/vitek/vitek
   ```
-- **macOS (Visual .DMG):** Download `viTek-20261125.1.004.dmg` from [GitHub Releases](https://github.com/luongbinhf/viTek/releases), drag **Cài viTek** to `Applications`, and open it once to register **viTek** (`🌐` or `⌃ Space`). See [macOS Install Guide](docs/INSTALL.md).
+- **macOS (Visual .DMG):** Download `viTek-20261125.1.005.dmg` from [GitHub Releases](https://github.com/luongbinhf/viTek/releases), drag **Cài viTek** to `Applications`, and open it once to register **viTek** (`🌐` or `⌃ Space`). See [macOS Install Guide](docs/INSTALL.md).
 - **Build from Source (macOS):** Run `CONFIGURATION=Release scripts/install_dev.sh` (Apple Silicon, Xcode with macOS 26+ SDK, XcodeGen).
 - **iPhone & iPad:** Run `xcodegen generate --spec Apps/iOS/project.yml`, build or follow [App Store / TestFlight Guide](docs/APPSTORE.md), and enable **viTek** in **Settings → General → Keyboard → Keyboards**.
 
 ## Versioning (`YYYYMMDD.X.YYY`) & Verification
 
-- **Format:** `YYYYMMDD` (release date) · `X` (major release counter) · `YYY` (3-digit padded build for macOS/GitHub Releases, e.g. **`20261125.1.004`**; unpadded **`20261125.1.4`** for iOS App Store Connect).
+- **Format:** `YYYYMMDD` (release date) · `X` (major release counter) · `YYY` (3-digit padded build for macOS/GitHub Releases, e.g. **`20261125.1.005`**; unpadded **`20261125.1.5`** for iOS App Store Connect).
 
 ```sh
 scripts/version.sh check                  # Verify macOS, iOS & Casks/vitek.rb versions match

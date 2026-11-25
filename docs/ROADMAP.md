@@ -4,6 +4,11 @@ Mỗi bản phát hành chính thức được gắn tag theo chuẩn [phiên b�
 
 ## Đã hoàn thành
 
+### `20261125.1.005` — Bộ Render Bàn phím iOS 26 Liquid Glass 120Hz & Thiết kế lại Ứng dụng iOS
+- [x] Kiến trúc lại `KeyboardViewController` sang render khung trực tiếp (`< 0,5 ms`, 0 Auto Layout), tái sử dụng bộ nhớ phím (`LiquidKeyCapButton` + `shadowPath`), phản hồi chạm `0 ms`, hỗ trợ trượt chọn phím và bóng phóng đại `UIGlassEffect`.
+- [x] Căn chỉnh công thái học chuẩn Apple iOS 26: đồng nhất bề rộng phím chữ cả 3 hàng, đưa viên nang `VI/EN` & công cụ nhanh lên thanh trên để mở rộng phím **Dấu cách chính giữa**, loại bỏ nghẽn IPC `UIPasteboard` và `CoreML` trên luồng chính.
+- [x] Thiết kế lại toàn diện ứng dụng `ViTekApp` & `WritingView` theo chuẩn iOS 26 Liquid Glass (`tabBarMinimizeBehavior(.onScrollDown)`, thẻ `.glassEffect`, `GlassEffectContainer` và huy hiệu màu Cài đặt).
+
 ### `20261125.1.004` — Nhân gõ nâng cao, ANE + Apple Intelligence trên máy, Clipboard Swift 27 & iPhone Duo
 - [x] Chuyển đổi hai chiều mượt `uô ↔ ươ`, gõ nhanh `yw`/`uyw` → `yê`/`uyê` và bộ đo lường chất lượng tự động `vitek-eval`.
 - [x] Tích hợp mô hình **ANE Core ML (`20 KB`)** phân loại ngữ cảnh câu song ngữ ngoài luồng phím nóng, `SemanticRanker` xếp hạng ngữ nghĩa dài hạn và 5 chế độ **Apple Intelligence `@Generable`**.
