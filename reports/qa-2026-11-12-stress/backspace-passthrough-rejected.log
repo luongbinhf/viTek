@@ -1,0 +1,27 @@
+Building for debugging...
+[Computing dependencies]
+[1 / 5] vitek-bench-product
+[2 / 7] VitekSessionTests-product
+[4 / 9] VitekSessionTests-product
+[8 / 11] VitekSessionTests-product
+[10 / 14] VitekSessionTests-product
+[12 / 14] VitekSessionTests-product
+Build complete! (6,72 secs)
+◇ Test run started.
+↳ Testing Library Version: 2403
+↳ Target Platform: arm64e-apple-macos14.0
+◇ Suite DocumentSessionTests started.
+◇ Test backspaceAfterSelectionReplacementUsesHostWhenOldSelectionIsUnreadable(_:) started.
+◇ Test case passing 1 argument selectionArrivesLate → false to backspaceAfterSelectionReplacementUsesHostWhenOldSelectionIsUnreadable(_:) started.
+◇ Test case passing 1 argument selectionArrivesLate → true to backspaceAfterSelectionReplacementUsesHostWhenOldSelectionIsUnreadable(_:) started.
+✘ Test backspaceAfterSelectionReplacementUsesHostWhenOldSelectionIsUnreadable(_:) recorded an issue with 1 argument selectionArrivesLate → false at DocumentSessionTests.swift:70:9: Expectation failed: host.view.string == "vt nam "
+↳ host.view.string == "vt nam " → false
+↳   host.view.string → "vt nam "
+✘ Test backspaceAfterSelectionReplacementUsesHostWhenOldSelectionIsUnreadable(_:) recorded an issue with 1 argument selectionArrivesLate → true at DocumentSessionTests.swift:70:9: Expectation failed: host.view.string == "vt nam "
+↳ host.view.string == "vt nam " → false
+↳   host.view.string → "vt nam "
+✘ Test backspaceAfterSelectionReplacementUsesHostWhenOldSelectionIsUnreadable(_:) with 2 test cases failed after 0.271 seconds with 2 issues.
+✘ Suite DocumentSessionTests failed after 0.271 seconds with 2 issues.
+✘ Test run with 1 test in 1 suite failed after 0.271 seconds with 2 issues.
+Note: Some test targets reported failures:
+  - VitekSessionTests (Swift Testing)

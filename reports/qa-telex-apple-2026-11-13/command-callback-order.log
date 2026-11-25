@@ -1,0 +1,22 @@
+19:36:27.339 [DEBUG-command] key time=35439.95858 cg=35439958580000 generation=34 latest=34 command=false
+19:36:27.341 [DEBUG-command] key time=35439.96073725 cg=35439960737250 generation=34 latest=34 command=false
+19:36:27.344 [DEBUG-command] key time=35439.96373325 cg=35439963733250 generation=34 latest=34 command=false
+19:36:27.348 [DEBUG-command] key time=35439.96691029167 cg=35439966910291 generation=34 latest=34 command=false
+19:36:27.365 [DEBUG-command] key time=35439.984394375 cg=35439984394375 generation=34 latest=34 command=false
+19:36:27.402 [DEBUG-command] flags time=35440.02186191667 cg=35440021861916 generation=35 latest=35 available=true down=true fresh=true
+19:36:27.403 [DEBUG-command] key time=35440.022564625004 cg=35440022564625 generation=35 latest=35 command=true
+19:36:27.405 [DEBUG-command] flags time=35440.024313875 cg=35440024313875 generation=35 latest=35 available=true down=false fresh=false
+19:36:27.405 [DEBUG-command] flags time=35440.024660375006 cg=35440024660375 generation=35 latest=35 available=true down=true fresh=false
+19:36:27.407 [DEBUG-command] flags time=35440.02596108334 cg=35440025961083 generation=35 latest=35 available=true down=false fresh=false
+19:36:27.419 [DEBUG-command] key time=35440.038704666666 cg=35440038704666 generation=35 latest=35 command=false
+19:36:27.453 [DEBUG-command] key time=35440.072204625 cg=35440072204625 generation=35 latest=35 command=false
+19:36:27.469 [DEBUG-command] key time=35440.08868075 cg=35440088680750 generation=35 latest=35 command=false
+19:36:27.473 [DEBUG-command] key time=35440.09235004167 cg=35440092350041 generation=35 latest=35 command=false
+19:36:27.476 [DEBUG-command] key time=35440.09552829167 cg=35440095528291 generation=35 latest=35 command=false
+19:36:27.486 [DEBUG-command] key time=35440.10532354167 cg=35440105323541 generation=36 latest=36 command=false
+19:36:27.489 [DEBUG-command] key time=35440.108658708334 cg=35440108658708 generation=36 latest=36 command=false
+19:36:27.493 [DEBUG-command] flags time=35440.11244120834 cg=35440112441208 generation=36 latest=36 available=true down=true fresh=false
+19:36:27.494 [DEBUG-command] flags time=35440.11349066667 cg=35440113490666 generation=36 latest=36 available=true down=true fresh=false
+19:36:27.503 [DEBUG-command] key time=35440.122207583336 cg=35440122207583 generation=36 latest=36 command=true
+19:36:27.506 [DEBUG-command] flags time=35440.12539291667 cg=35440125392916 generation=36 latest=36 available=true down=false fresh=false
+19:36:27.507 [DEBUG-command] flags time=35440.12626795834 cg=35440126267958 generation=36 latest=36 available=true down=false fresh=false

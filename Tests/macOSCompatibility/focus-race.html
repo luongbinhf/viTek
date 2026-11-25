@@ -1,0 +1,18 @@
+<!doctype html><meta charset="utf-8"><title>viTek-Focus-QA</title>
+<h1>viTek focus race QA</h1>
+<label>QA old <input id="old" title="QA-reset-0" autofocus></label>
+<label>QA new <input id="next"></label>
+<label>QA trace <textarea id="trace" readonly rows="15" cols="100"></textarea></label>
+<p>F4 reset; Tab native focus; F2 delayed focus (150ms); F3 export trace.</p>
+<script>
+const old = document.querySelector('#old'), next = document.querySelector('#next'), trace = document.querySelector('#trace');
+let events = [], start = performance.now(), timer, resetCount = 0;
+for (const field of [old,next]) for (const kind of ['keydown','focusin','focusout','beforeinput','input','compositionstart','compositionend']) {
+ field.addEventListener(kind, e => events.push({ms:+(performance.now()-start).toFixed(1), field:field.id, kind, key:e.key, meta:e.metaKey, composing:e.isComposing, selection:[field.selectionStart,field.selectionEnd], value:field.value}));
+}
+document.addEventListener('keydown', e => {
+ if (e.key === 'F4') {e.preventDefault(); clearTimeout(timer); old.value=''; next.value=''; events=[]; start=performance.now(); old.title='QA-reset-'+(++resetCount); old.focus();}
+ if (e.key === 'F2') {e.preventDefault(); timer=setTimeout(()=>next.focus(),150);}
+ if (e.key === 'F3') {e.preventDefault(); trace.value='QA:'+JSON.stringify({old:old.value,next:next.value,events});trace.focus();}
+});
+</script>

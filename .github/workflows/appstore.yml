@@ -1,0 +1,58 @@
+name: App Store Connect (iOS / iPadOS)
+
+on:
+  workflow_dispatch:
+    inputs:
+      upload:
+        description: 'Upload build to TestFlight / App Store Connect (requires Apple Developer secrets)'
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+jobs:
+  appstore:
+    name: Archive & Upload viTekMobile to App Store Connect
+    runs-on: macos-26
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify version and Swift tests
+        run: |
+          scripts/version.sh check
+          swift test
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Check secrets
+        if: ${{ inputs.upload }}
+        env:
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_PRIVATE_KEY_BASE64: ${{ secrets.ASC_PRIVATE_KEY_BASE64 }}
+        run: |
+          if [[ -z "$APPLE_TEAM_ID" || -z "$ASC_KEY_ID" || -z "$ASC_ISSUER_ID" || -z "$ASC_PRIVATE_KEY_BASE64" ]]; then
+            echo "::error::Missing required GitHub Secrets: APPLE_TEAM_ID, ASC_KEY_ID, ASC_ISSUER_ID, ASC_PRIVATE_KEY_BASE64 (see docs/APPSTORE.md)."
+            exit 1
+          fi
+
+      - name: Archive & Upload via App Store Connect API Key
+        if: ${{ inputs.upload }}
+        env:
+          DEVELOPMENT_TEAM: ${{ secrets.APPLE_TEAM_ID }}
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_PRIVATE_KEY_BASE64: ${{ secrets.ASC_PRIVATE_KEY_BASE64 }}
+        run: |
+          key_path="$RUNNER_TEMP/AuthKey_${ASC_KEY_ID}.p8"
+          echo "$ASC_PRIVATE_KEY_BASE64" | base64 --decode > "$key_path"
+          chmod 600 "$key_path"
+          ASC_KEY_PATH="$key_path" scripts/archive_ios.sh --upload
+
+      - name: Dry-run unsigned device archive
+        if: ${{ !inputs.upload }}
+        run: scripts/archive_ios.sh --dry-run

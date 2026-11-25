@@ -1,0 +1,3 @@
+timeout then reconnect: passed; cancelled expired deadline: passed; concurrent nonces: passed
+delayed responder: true, wrong version: false, wrong path: false
+Installer copy/update and connection handshake passed

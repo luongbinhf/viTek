@@ -1,0 +1,41 @@
+Building for debugging...
+[Computing dependencies]
+[1 / 2] RepositoryTests-product
+[4 / 15] VitekSession
+[7 / 19] VitekSession
+[13 / 19] vitek-bench-product
+[19 / 24] vitek-product
+[19 / 24] VitekSessionTests-product
+[23 / 26] VitekSessionTests-product
+[25 / 29] VitekSessionTests-product
+Build complete! (3,87 secs)
+◇ Test run started.
+↳ Testing Library Version: 2403
+↳ Target Platform: arm64e-apple-macos14.0
+◇ Suite DocumentSessionTests started.
+◇ Test backspaceAfterSelectionReplacementUsesHostWhenOldSelectionIsUnreadable(_:) started.
+◇ Test deletingLastNativeLetterDoesNotDependOnEmptyCommit(_:) started.
+◇ Test case passing 1 argument selectionArrivesLate → true to backspaceAfterSelectionReplacementUsesHostWhenOldSelectionIsUnreadable(_:) started.
+◇ Test case passing 1 argument selectionArrivesLate → false to backspaceAfterSelectionReplacementUsesHostWhenOldSelectionIsUnreadable(_:) started.
+◇ Test case passing 1 argument readable → false to deletingLastNativeLetterDoesNotDependOnEmptyCommit(_:) started.
+◇ Test case passing 1 argument readable → true to deletingLastNativeLetterDoesNotDependOnEmptyCommit(_:) started.
+✘ Test backspaceAfterSelectionReplacementUsesHostWhenOldSelectionIsUnreadable(_:) recorded an issue with 1 argument selectionArrivesLate → true at DocumentSessionTests.swift:71:9: Expectation failed: host.view.string == "vt nam "
+↳ host.view.string == "vt nam " → false
+↳   host.view.string → "vat nam "
+✘ Test deletingLastNativeLetterDoesNotDependOnEmptyCommit(_:) recorded an issue with 1 argument readable → false at DocumentSessionTests.swift:81:9: Expectation failed: host.view.string.isEmpty
+↳ host.view.string.isEmpty → false
+↳   host.view.string → "a"
+↳   isEmpty → false
+✘ Test backspaceAfterSelectionReplacementUsesHostWhenOldSelectionIsUnreadable(_:) recorded an issue with 1 argument selectionArrivesLate → false at DocumentSessionTests.swift:71:9: Expectation failed: host.view.string == "vt nam "
+↳ host.view.string == "vt nam " → false
+↳   host.view.string → "vat nam "
+✘ Test deletingLastNativeLetterDoesNotDependOnEmptyCommit(_:) recorded an issue with 1 argument readable → true at DocumentSessionTests.swift:81:9: Expectation failed: host.view.string.isEmpty
+↳ host.view.string.isEmpty → false
+↳   host.view.string → "a"
+↳   isEmpty → false
+✘ Test backspaceAfterSelectionReplacementUsesHostWhenOldSelectionIsUnreadable(_:) with 2 test cases failed after 0.142 seconds with 2 issues.
+✘ Test deletingLastNativeLetterDoesNotDependOnEmptyCommit(_:) with 2 test cases failed after 0.143 seconds with 2 issues.
+✘ Suite DocumentSessionTests failed after 0.143 seconds with 4 issues.
+✘ Test run with 2 tests in 1 suite failed after 0.144 seconds with 4 issues.
+Note: Some test targets reported failures:
+  - VitekSessionTests (Swift Testing)

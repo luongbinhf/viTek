@@ -1,0 +1,40 @@
+Building for debugging...
+[Computing dependencies]
+[Using on-disk description]
+[1 / 1]
+[2 / 13] VitekSession
+[4 / 15] VitekSession
+[9 / 20] vitek-bench-product
+[11 / 22] vitek-product
+[12 / 23] vitek-product
+[13 / 25] VitekSession
+[15 / 25] VitekSession
+[21 / 27] vitek-product
+[21 / 27] vitek-bench-product
+[26 / 31] vitek-bench-product
+[28 / 33] vitek-product
+[29 / 34] VitekSessionTests-product
+[33 / 36] VitekSessionTests-product
+[35 / 39] VitekSessionTests-product
+[37 / 39] VitekSessionTests-product
+Build complete! (26,69 secs)
+◇ Test run started.
+↳ Testing Library Version: 2403
+↳ Target Platform: arm64e-apple-macos14.0
+◇ Suite DocumentSessionTests started.
+◇ Test lateOldFieldCommitCannotDiscardTheNewNativePrefix(_:) started.
+◇ Test case passing 1 argument sample → ("n", "am", "nam") to lateOldFieldCommitCannotDiscardTheNewNativePrefix(_:) started.
+◇ Test case passing 1 argument sample → ("v", "ieetj ", "việt ") to lateOldFieldCommitCannotDiscardTheNewNativePrefix(_:) started.
+✘ Test lateOldFieldCommitCannotDiscardTheNewNativePrefix(_:) recorded an issue with 1 argument sample → ("n", "am", "nam") at DocumentSessionTests.swift:26:9: Expectation failed: host.view.string == sample.2
+↳ host.view.string == sample.2 → false
+↳   host.view.string → "am"
+↳   sample.2 → "nam"
+✘ Test lateOldFieldCommitCannotDiscardTheNewNativePrefix(_:) recorded an issue with 1 argument sample → ("v", "ieetj ", "việt ") at DocumentSessionTests.swift:26:9: Expectation failed: host.view.string == sample.2
+↳ host.view.string == sample.2 → false
+↳   host.view.string → "ieetj "
+↳   sample.2 → "việt "
+✘ Test lateOldFieldCommitCannotDiscardTheNewNativePrefix(_:) with 2 test cases failed after 0.963 seconds with 2 issues.
+✘ Suite DocumentSessionTests failed after 0.964 seconds with 2 issues.
+✘ Test run with 1 test in 1 suite failed after 0.964 seconds with 2 issues.
+Note: Some test targets reported failures:
+  - VitekSessionTests (Swift Testing)

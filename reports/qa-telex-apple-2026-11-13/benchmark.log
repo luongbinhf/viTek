@@ -1,0 +1,15 @@
+Building for production...
+[Pre-planning 1 / 94]
+[Planning deferred tasks]
+[6 / 16]
+[9 / 18] VitekEngine
+[17 / 23] VitekSession
+[23 / 26] vitek-bench-product
+[24 / 27] vitek-bench-product
+[26 / 27] vitek-bench-product
+[27 / 27] vitek-bench-product
+Build complete! (9,46 secs)
+keys: 52400  first five: 193.2 75.1 1.9 4.8 46.3 µs
+slowest after the first word: 62.79 µs
+mean: 0.85 µs  p50: 0.71 µs  p99: 2.96 µs  max: 193.21 µs
+within the 50 µs p99 budget

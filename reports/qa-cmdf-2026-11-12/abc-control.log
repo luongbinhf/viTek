@@ -1,0 +1,8 @@
+STRESS host=VSCode rounds=3 source=com.apple.keylayout.ABC HID=true
+BEGIN round=1 case=focus keyPauseUs=0
+PASS round=1 case=focus
+BEGIN round=2 case=focus keyPauseUs=1000
+PASS round=2 case=focus
+BEGIN round=3 case=focus keyPauseUs=5000
+PASS round=3 case=focus
+STRESS QA PASSED cases=3 assertions=14 accepted=0 physicalKeys=83 hostCommandRetries=0 elapsed=4.621991459 seconds

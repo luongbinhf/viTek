@@ -1,0 +1,10 @@
+STRESS host=VSCode rounds=50 source=io.github.luongbinhf.inputmethod.viTek eventTap=HID sourceState=private
+BEGIN round=1 case=prediction keyPauseUs=0
+PASS round=1 case=prediction
+BEGIN round=2 case=prediction keyPauseUs=1000
+PASS round=2 case=prediction
+BEGIN round=3 case=prediction keyPauseUs=5000
+PASS round=3 case=prediction
+BEGIN round=4 case=prediction keyPauseUs=0
+INTERRUPTED foregroundPID=1125 targetPID=10748 windowMatches=true
+QA FAILED: mismatch("QA foreground/window changed; stress interrupted")

@@ -1,0 +1,7 @@
+# Kiểm gạch chân và truy hồi ngày 18/11
+
+Chrome và VS Code đều được kiểm trong cửa sổ thử riêng bằng mã phím HID. Bộ chạy đối chứng Telex/VNI, gõ `Gawpj`, đọc được `Gặp`, chụp vùng chữ khi vẫn đang soạn, bấm mũi tên phải để chốt rồi chụp lại cùng dòng.
+
+- **VS Code.** Với màu mặc định, phép thử thấy một vạch trắng 42 × 2 pixel ở dưới chữ. Trong profile QA với `workbench.colorCustomizations.editor.compositionBorder` bằng `#00000000`, hai ảnh PNG lúc soạn và sau khi chốt giống hệt nhau. Phép thử màu trong suốt chạy với bản viTek có SHA-256 bắt đầu bằng `37d264f8`. Workspace viTek dùng cùng cấu hình màu. Thiết lập màu áp dụng cho các IME trong editor của workspace đó. [Khi soạn](vscode-composing.png) · [Sau khi chốt](vscode-committed.png) · [Nhật ký HID](vscode-input.log).
+- **Chrome.** Trong ô HTML cục bộ tắt spellcheck, thử đọc vùng bằng `string(from:actualRange:)` vẫn cho 296 pixel xanh khi soạn và 0 khi chốt. Thử đặt thuộc tính gạch chân ở ký tự cuối vẫn thấy vạch chạy dưới cả chữ. Đã khôi phục bản cài đã kiểm xoá/gõ lại. [Khi soạn](chrome-range-trial-composing.png) · [Sau khi chốt](chrome-range-trial-committed.png) · [Nhật ký HID](chrome-input.log).
+- **Truy hồi.** 10.461 lượt chấm trên 792 câu riêng biệt của tập test Vietnamese VTB r2.15 sau lọc trùng. Bộ nhớ có 16.513 ngữ cảnh từ 1.388 câu train. Lõi Swift, bộ nhớ hậu tố, vector và vector có ngưỡng đều được chấm trên đúng các vị trí đó. [Phương pháp và cách chạy](../../experiments/context-memory/README.md) · [Số đo](benchmark.json).

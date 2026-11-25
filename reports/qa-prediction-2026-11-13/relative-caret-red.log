@@ -1,0 +1,31 @@
+Building for debugging...
+[Computing dependencies]
+[1 / 3]
+[2 / 7] VitekSessionTests-product
+[4 / 9] VitekSessionTests-product
+[8 / 11] VitekSessionTests-product
+[10 / 14] VitekSessionTests-product
+[12 / 14] VitekSessionTests-product
+Build complete! (7,82 secs)
+◇ Test run started.
+↳ Testing Library Version: 2403
+↳ Target Platform: arm64e-apple-macos14.0
+◇ Suite DocumentSessionTests started.
+◇ Test repeatedModifiersAfterSpaceSurviveRelativeNativeCaret(_:_:) started.
+◇ Test case passing 2 arguments readable → false, firstMarkOnly → false to repeatedModifiersAfterSpaceSurviveRelativeNativeCaret(_:_:) started.
+◇ Test case passing 2 arguments readable → false, firstMarkOnly → true to repeatedModifiersAfterSpaceSurviveRelativeNativeCaret(_:_:) started.
+◇ Test case passing 2 arguments readable → true, firstMarkOnly → false to repeatedModifiersAfterSpaceSurviveRelativeNativeCaret(_:_:) started.
+◇ Test case passing 2 arguments readable → true, firstMarkOnly → true to repeatedModifiersAfterSpaceSurviveRelativeNativeCaret(_:_:) started.
+✘ Test repeatedModifiersAfterSpaceSurviveRelativeNativeCaret(_:_:) recorded an issue with 2 arguments readable → true, firstMarkOnly → false at DocumentSessionTests.swift:17:9: Expectation failed: host.view.string == String(repeating: "hợp đồng lao ", count: 5)
+↳ host.view.string == String(repeating: "hợp đồng lao ", count: 5) → false
+↳   host.view.string → "hợp   hợp   hợp   hợp   hợp   "
+↳   String(repeating: "hợp đồng lao ", count: 5) → "hợp đồng lao hợp đồng lao hợp đồng lao hợp đồng lao hợp đồng lao "
+✘ Test repeatedModifiersAfterSpaceSurviveRelativeNativeCaret(_:_:) recorded an issue with 2 arguments readable → true, firstMarkOnly → true at DocumentSessionTests.swift:17:9: Expectation failed: host.view.string == String(repeating: "hợp đồng lao ", count: 5)
+↳ host.view.string == String(repeating: "hợp đồng lao ", count: 5) → false
+↳   host.view.string → "hợp   hợp   hợp   hợp   hợp   "
+↳   String(repeating: "hợp đồng lao ", count: 5) → "hợp đồng lao hợp đồng lao hợp đồng lao hợp đồng lao hợp đồng lao "
+✘ Test repeatedModifiersAfterSpaceSurviveRelativeNativeCaret(_:_:) with 4 test cases failed after 0.629 seconds with 2 issues.
+✘ Suite DocumentSessionTests failed after 0.630 seconds with 2 issues.
+✘ Test run with 1 test in 1 suite failed after 0.630 seconds with 2 issues.
+Note: Some test targets reported failures:
+  - VitekSessionTests (Swift Testing)

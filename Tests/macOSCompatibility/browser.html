@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="vi">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>viTek — Kiểm thử nhập liệu trình duyệt</title>
+<style>
+  :root { color-scheme: light dark; font: 16px/1.6 system-ui, sans-serif; }
+  body { max-width: 860px; margin: 36px auto; padding: 0 20px; }
+  h1 { font-size: 1.6rem; }
+  label { display: block; font-weight: 600; margin-top: 20px; }
+  input, textarea, [contenteditable] { box-sizing: border-box; width: 100%; padding: 12px;
+    border: 1px solid #888; border-radius: 6px; font: inherit; }
+  textarea, [contenteditable] { min-height: 95px; }
+  :focus-visible { outline: 3px solid #4385e5; outline-offset: 3px; }
+  output { display: block; white-space: pre-wrap; overflow-wrap: anywhere; }
+  button { padding: 9px 16px; margin: 16px 8px 0 0; font: inherit; }
+  code { user-select: all; }
+  pre { max-height: 240px; overflow: auto; font-size: 12px; }
+  .pass { color: light-dark(#146b30, #7cda99); }
+</style>
+<h1>Kiểm thử gõ tiếng Việt trong trình duyệt</h1>
+<p>Chọn nguồn nhập <strong>viTek</strong> trong cửa sổ này. Gõ từng phím
+  <code>vieetj vie65t reset server </code> vào từng ô, gồm dấu cách cuối.
+  Kết quả mong đợi: <strong>việt việt reset server </strong>.</p>
+<p>Trang chỉ dùng dữ liệu thử trên máy, không gửi mạng hay lưu nội dung.
+  Dán văn bản hoặc điền bằng DOM chỉ kiểm tra trang, không kiểm tra bộ gõ macOS.</p>
+<label for="single">Ô văn bản một dòng</label>
+<input id="single" autocomplete="off" autocapitalize="off" spellcheck="false" aria-describedby="single-result">
+<output id="single-result" for="single">Chưa kiểm tra</output>
+<label for="multi">Ô văn bản nhiều dòng</label>
+<textarea id="multi" spellcheck="false" aria-describedby="multi-result"></textarea>
+<output id="multi-result" for="multi">Chưa kiểm tra</output>
+<label id="rich-label">Trình soạn thảo contenteditable</label>
+<div id="rich" contenteditable="true" role="textbox" aria-multiline="true" aria-labelledby="rich-label"
+  aria-describedby="rich-result" spellcheck="false"></div>
+<output id="rich-result">Chưa kiểm tra</output>
+<label for="controlled">Ô đồng bộ lại giá trị sau mỗi sự kiện input</label>
+<textarea id="controlled" spellcheck="false" aria-describedby="controlled-result"></textarea>
+<output id="controlled-result" for="controlled">Chưa kiểm tra</output>
+<p>Ô cuối mô phỏng trang quản lý giá trị bằng JavaScript; việc đồng bộ tạm dừng trong composition.
+  Đây không phải kiểm thử đầy đủ React, Monaco hay các trình soạn thảo bên thứ ba.</p>
+<label for="search">Tìm kiếm tức thì — kiểm trước khi bấm Space</label>
+<input id="search" type="search" autocomplete="off" spellcheck="false" aria-describedby="search-status">
+<output id="search-status">Chưa nhận chữ đã chốt</output>
+<ul id="search-suggestions" aria-label="Gợi ý tìm kiếm"></ul>
+<p>Gõ <code>vieetj</code> và dừng trước Space. Dòng trạng thái phải nhận <strong>việt</strong> ngay,
+  có gợi ý tìm kiếm và không còn composition đang chờ. Tab phải chuyển ô thay vì nhận gợi ý của viTek.</p>
+<button id="check" type="button">Đối chiếu cả bốn ô</button>
+<button id="reset" type="button">Xóa dữ liệu thử</button>
+<output id="summary" role="status">Chưa đối chiếu</output>
+<details>
+  <summary>80 sự kiện gần nhất (không ghi nội dung gõ)</summary>
+  <pre id="events"></pre>
+</details>
+<script>
+  const expected = 'việt việt reset server ';
+  const fields = [...document.querySelectorAll('#single, #multi, #rich, #controlled')];
+  const events = [];
+  const composing = new Set();
+  function value(field) { return field.isContentEditable ? field.textContent : field.value; }
+  function inspect(field) {
+    const text = value(field);
+    const result = document.getElementById(field.id + '-result');
+    const pass = text === expected;
+    result.className = pass ? 'pass' : '';
+    result.textContent = pass ? 'Đạt — khớp toàn bộ, gồm dấu cách cuối.'
+      : 'Chưa khớp — ' + JSON.stringify(text) + ' (' + text.length + ' đơn vị UTF-16)';
+    return pass;
+  }
+  for (const field of fields) {
+    for (const kind of ['focusin', 'focusout', 'keydown', 'keyup', 'compositionstart', 'compositionupdate', 'compositionend', 'beforeinput', 'input']) {
+      field.addEventListener(kind, event => {
+        if (kind === 'compositionstart') composing.add(field);
+        if (kind === 'compositionend') composing.delete(field);
+        if (field.id === 'controlled' && kind === 'input' && !event.isComposing && !composing.has(field)) {
+          const start = field.selectionStart, end = field.selectionEnd, direction = field.selectionDirection;
+          const model = field.value;
+          field.value = model;
+          field.setSelectionRange(start, end, direction);
+        }
+        events.push(performance.now().toFixed(1) + 'ms ' + field.id + ' ' + kind + ' ' + (event.inputType || '')
+          + ' composing=' + Boolean(event.isComposing) + ' utf16=' + value(field).length);
+        if (events.length > 80) events.shift();
+        document.getElementById('events').textContent = events.join('\n');
+        if (kind === 'input' || kind === 'compositionend') inspect(field);
+      });
+    }
+  }
+  const search = document.getElementById('search');
+  let searchComposing = false;
+  let committedUpdates = 0;
+  function searchUpdate() {
+    if (searchComposing) return;
+    committedUpdates++;
+    document.getElementById('search-status').textContent =
+      'Đã nhận: ' + search.value + ' · ' + committedUpdates + ' lần cập nhật · composition=false';
+    const suggestions = document.getElementById('search-suggestions');
+    suggestions.replaceChildren();
+    for (const word of ['việt', 'việc', 'viết', 'việt nam'].filter(word => search.value && word.startsWith(search.value))) {
+      const item = document.createElement('li');
+      item.textContent = word;
+      suggestions.append(item);
+    }
+  }
+  search.addEventListener('compositionstart', () => { searchComposing = true; });
+  search.addEventListener('compositionend', () => { searchComposing = false; searchUpdate(); });
+  search.addEventListener('input', event => {
+    if (!event.isComposing && !searchComposing) searchUpdate();
+  });
+  document.getElementById('check').addEventListener('click', () => {
+    const passed = fields.map(inspect).filter(Boolean).length;
+    document.getElementById('summary').textContent = passed + '/4 ô khớp chuỗi thử. '
+      + 'Chỉ ghi nhận kiểm thử IME nếu đã gõ từng phím với viTek đang bật.';
+  });
+  document.getElementById('reset').addEventListener('click', () => {
+    for (const field of fields) {
+      if (field.isContentEditable) field.textContent = '';
+      else field.value = '';
+      const result = document.getElementById(field.id + '-result');
+      result.textContent = 'Chưa kiểm tra'; result.className = '';
+    }
+    events.length = 0; composing.clear();
+    document.getElementById('events').textContent = '';
+    document.getElementById('summary').textContent = 'Đã xóa dữ liệu thử';
+  });
+</script>
+</html>

@@ -1,0 +1,26 @@
+Building for debugging...
+[Computing dependencies]
+[1 / 1]
+[2 / 7] VitekSessionTests-product
+[4 / 9] VitekSessionTests-product
+[8 / 11] VitekSessionTests-product
+[10 / 14] VitekSessionTests-product
+Build complete! (4,50 secs)
+◇ Test run started.
+↳ Testing Library Version: 2403
+↳ Target Platform: arm64e-apple-macos14.0
+◇ Suite DocumentSessionTests started.
+◇ Test lateOldFieldCommitWithStaleMarkOffsetKeepsTheNewPrefix(_:) started.
+◇ Test case passing 1 argument returnsPreMarkFrame → false to lateOldFieldCommitWithStaleMarkOffsetKeepsTheNewPrefix(_:) started.
+◇ Test case passing 1 argument returnsPreMarkFrame → true to lateOldFieldCommitWithStaleMarkOffsetKeepsTheNewPrefix(_:) started.
+✘ Test lateOldFieldCommitWithStaleMarkOffsetKeepsTheNewPrefix(_:) recorded an issue with 1 argument returnsPreMarkFrame → false at DocumentSessionTests.swift:29:9: Expectation failed: host.view.string == "việt "
+↳ host.view.string == "việt " → false
+↳   host.view.string → "vieetj "
+✘ Test lateOldFieldCommitWithStaleMarkOffsetKeepsTheNewPrefix(_:) recorded an issue with 1 argument returnsPreMarkFrame → true at DocumentSessionTests.swift:29:9: Expectation failed: host.view.string == "việt "
+↳ host.view.string == "việt " → false
+↳   host.view.string → "vieetj "
+✘ Test lateOldFieldCommitWithStaleMarkOffsetKeepsTheNewPrefix(_:) with 2 test cases failed after 0.207 seconds with 2 issues.
+✘ Suite DocumentSessionTests failed after 0.207 seconds with 2 issues.
+✘ Test run with 1 test in 1 suite failed after 0.207 seconds with 2 issues.
+Note: Some test targets reported failures:
+  - VitekSessionTests (Swift Testing)

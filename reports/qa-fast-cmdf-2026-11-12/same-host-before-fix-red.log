@@ -1,0 +1,8 @@
+STRESS host=VSCode rounds=10 source=io.github.luongbinhf.inputmethod.viTek eventTap=HID sourceState=private
+BEGIN round=1 case=focus keyPauseUs=0
+PASS round=1 case=focus
+BEGIN round=2 case=focus keyPauseUs=1000
+PASS round=2 case=focus
+BEGIN round=3 case=focus keyPauseUs=5000
+HOST Find did not open; focus=viTek-System-QA.txt value="viêt"
+QA FAILED: mismatch("Find did not receive focus before new input")

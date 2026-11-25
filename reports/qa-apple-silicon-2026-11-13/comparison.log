@@ -1,0 +1,16 @@
+COMPUTE DEVICE: ANE cores=16 (capability only)
+COMPUTE DEVICE: GPU Apple M5
+COMPUTE DEVICE: CPU
+THERMAL: 1 LOW POWER: false
+SAMPLE 0 warm=false prepared=false lead=2.5e-07 seconds first=3.662387125 seconds total=3.663124959 seconds partials=4 characters=43
+SAMPLE 1 warm=true prepared=true lead=2.038623834 seconds first=1.494208208 seconds total=1.49570975 seconds partials=4 characters=61
+SAMPLE 2 warm=true prepared=true lead=2.060548208 seconds first=1.720695458 seconds total=1.721112583 seconds partials=4 characters=39
+SAMPLE 3 warm=false prepared=false lead=4.2e-08 seconds first=1.931487833 seconds total=1.932216 seconds partials=4 characters=42
+SAMPLE 4 warm=false prepared=false lead=4.2e-08 seconds first=1.927880916 seconds total=1.929751083 seconds partials=4 characters=42
+SAMPLE 5 warm=true prepared=true lead=2.063946958 seconds first=1.571578375 seconds total=1.57286225 seconds partials=4 characters=48
+SAMPLE 6 warm=true prepared=true lead=2.019938333 seconds first=1.636379208 seconds total=1.637098708 seconds partials=4 characters=57
+SAMPLE 7 warm=false prepared=false lead=4.2e-08 seconds first=1.844222 seconds total=1.844665625 seconds partials=4 characters=42
+SAMPLE 8 warm=false prepared=false lead=4.2e-08 seconds first=1.834196584 seconds total=1.834601375 seconds partials=4 characters=42
+SAMPLE 9 warm=true prepared=true lead=2.008233834 seconds first=1.179106375 seconds total=1.1794485 seconds partials=3 characters=32
+SAMPLE 10 warm=true prepared=true lead=2.008045625 seconds first=1.535213333 seconds total=1.535757542 seconds partials=4 characters=57
+SAMPLE 11 warm=false prepared=false lead=4.2e-08 seconds first=1.851355625 seconds total=1.851742958 seconds partials=4 characters=43

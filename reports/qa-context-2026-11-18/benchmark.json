@@ -1,0 +1,47 @@
+{
+  "train_sentences": 1388,
+  "test_sentences": 792,
+  "removed_overlap": 2,
+  "contexts": 16513,
+  "dimensions": 64,
+  "source_sha256": {
+    "train.conllu": "1df180722db99b724f7368aca50597133bee28606de3394cd8d12a57da89978d",
+    "test.conllu": "abc1b0ea98661bbb494a8c0da123ba2fe1a3ef71322c380fe66468884d9b4285"
+  },
+  "baseline": {
+    "queries": 10461,
+    "offered": 816,
+    "top1": 102,
+    "top5": 115,
+    "precision_when_offered": 0.125,
+    "p50_us": 39.042,
+    "p95_us": 63.916
+  },
+  "suffix": {
+    "queries": 10461,
+    "offered": 9936,
+    "top1": 1069,
+    "top5": 1763,
+    "precision_when_offered": 0.10758856682769727,
+    "p50_us": 59.75,
+    "p95_us": 111.917
+  },
+  "vector": {
+    "queries": 10461,
+    "offered": 10169,
+    "top1": 479,
+    "top5": 866,
+    "precision_when_offered": 0.04710394335726227,
+    "p50_us": 3298.6259999999997,
+    "p95_us": 6257.0
+  },
+  "vector_agreement": {
+    "queries": 10461,
+    "offered": 981,
+    "top1": 175,
+    "top5": 188,
+    "precision_when_offered": 0.1783893985728848,
+    "p50_us": 3283.875,
+    "p95_us": 6194.375
+  }
+}

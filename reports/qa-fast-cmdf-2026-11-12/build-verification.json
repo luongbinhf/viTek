@@ -1,0 +1,14 @@
+{
+  "configuration": "Release",
+  "warningsAsErrors": true,
+  "buildSucceeded": true,
+  "payload": "/tmp/vitek-telex-fastcmd-final3/viTek.app/Contents/MacOS/viTek",
+  "installed": "/Users/luongthebinh/Library/Input Methods/viTek.app/Contents/MacOS/viTek",
+  "sha256": "836975c44d72708e2898ccfa665cf39827359b3e684e1e8fde8a670ca7489ee8",
+  "hostVersions": {
+    "VSCode": "1.146.0",
+    "Chrome": "157.0.8103.52"
+  },
+  "diagnostics": false,
+  "showSuggestions": true
+}

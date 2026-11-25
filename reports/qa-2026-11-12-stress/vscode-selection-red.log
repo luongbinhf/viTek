@@ -1,0 +1,6 @@
+STRESS host=VSCode rounds=10 source=io.github.luongbinhf.inputmethod.viTek HID=true
+BEGIN round=1 case=burst keyPauseUs=0
+PASS round=1 case=burst
+BEGIN round=1 case=selection keyPauseUs=0
+FAIL delete replacement preserving neighbours expected="vt nam " actual="vat nam "
+QA FAILED: mismatch("delete replacement preserving neighbours")

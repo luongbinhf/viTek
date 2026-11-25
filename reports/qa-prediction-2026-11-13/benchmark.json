@@ -1,0 +1,102 @@
+{
+  "checksum" : 15000,
+  "entries" : 749,
+  "examples" : [
+    {
+      "context" : "ngư",
+      "prefix" : "ngư",
+      "words" : [
+        "người",
+        "ngữ",
+        "ngược"
+      ]
+    },
+    {
+      "context" : "chuy",
+      "prefix" : "chuy",
+      "words" : [
+        "chuyển",
+        "chuyện",
+        "chuyên"
+      ]
+    },
+    {
+      "context" : "cơ sở d",
+      "prefix" : "d",
+      "words" : [
+        "dữ"
+      ]
+    },
+    {
+      "context" : "co so du ",
+      "prefix" : "",
+      "words" : [
+        "liệu"
+      ]
+    },
+    {
+      "context" : "bảo vệ môi ",
+      "prefix" : "",
+      "words" : [
+        "trường"
+      ]
+    },
+    {
+      "context" : "hợp đồng lao ",
+      "prefix" : "",
+      "words" : [
+        "động"
+      ]
+    },
+    {
+      "context" : "chăm sóc sức ",
+      "prefix" : "",
+      "words" : [
+        "khỏe"
+      ]
+    },
+    {
+      "context" : "TypeS",
+      "prefix" : "TypeS",
+      "words" : [
+        "TypeScript"
+      ]
+    },
+    {
+      "context" : "WebS",
+      "prefix" : "WebS",
+      "words" : [
+        "WebSocket"
+      ]
+    },
+    {
+      "context" : "JSON.par",
+      "prefix" : "par",
+      "words" : [
+        "parse"
+      ]
+    },
+    {
+      "context" : "const userName = value; const result = us",
+      "prefix" : "us",
+      "words" : [
+        "userName"
+      ]
+    },
+    {
+      "context" : "https:\/\/example.com\/ng",
+      "prefix" : "ng",
+      "words" : [
+
+      ]
+    }
+  ],
+  "initialization_us" : 7217.5829999999996,
+  "max_us" : 7511.1660000000002,
+  "p50_us" : 31.834,
+  "p99_us" : 170.958,
+  "queries" : 12000,
+  "rejected" : 0,
+  "scope" : "Local lookup, synthetic cases, warm process; excludes host, drawing and NSSpellChecker",
+  "words" : 617
+}

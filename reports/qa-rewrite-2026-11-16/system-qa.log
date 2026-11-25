@@ -1,0 +1,111 @@
+vitek-1116-checked-chrome-prediction.log
+STRESS host=Chrome rounds=5 source=io.github.luongbinhf.inputmethod.viTek eventTap=HID sourceState=private
+BEGIN round=1 case=prediction keyPauseUs=0
+PASS round=1 case=prediction
+BEGIN round=2 case=prediction keyPauseUs=1000
+PASS round=2 case=prediction
+BEGIN round=3 case=prediction keyPauseUs=5000
+PASS round=3 case=prediction
+BEGIN round=4 case=prediction keyPauseUs=0
+PASS round=4 case=prediction
+BEGIN round=5 case=prediction keyPauseUs=1000
+PASS round=5 case=prediction
+STRESS QA PASSED cases=5 assertions=88 accepted=20 physicalKeys=329 hostCommandRetries=0 modifierEvents=124 elapsed=11.387601792 seconds
+
+vitek-1116-checked-chrome-rewrite.log
+STRESS host=Chrome rounds=5 source=io.github.luongbinhf.inputmethod.viTek eventTap=HID sourceState=private
+BEGIN round=1 case=rewrite keyPauseUs=0
+PASS round=1 case=rewrite
+BEGIN round=2 case=rewrite keyPauseUs=1000
+PASS round=2 case=rewrite
+BEGIN round=3 case=rewrite keyPauseUs=5000
+PASS round=3 case=rewrite
+BEGIN round=4 case=rewrite keyPauseUs=0
+PASS round=4 case=rewrite
+BEGIN round=5 case=rewrite keyPauseUs=1000
+PASS round=5 case=rewrite
+STRESS QA PASSED cases=5 assertions=38 accepted=0 physicalKeys=164 hostCommandRetries=0 modifierEvents=34 elapsed=5.868102708 seconds
+
+vitek-1116-checked-vscode-prediction.log
+STRESS host=VSCode rounds=5 source=io.github.luongbinhf.inputmethod.viTek eventTap=HID sourceState=private
+BEGIN round=1 case=prediction keyPauseUs=0
+PASS round=1 case=prediction
+BEGIN round=2 case=prediction keyPauseUs=1000
+PASS round=2 case=prediction
+BEGIN round=3 case=prediction keyPauseUs=5000
+PASS round=3 case=prediction
+BEGIN round=4 case=prediction keyPauseUs=0
+PASS round=4 case=prediction
+BEGIN round=5 case=prediction keyPauseUs=1000
+PASS round=5 case=prediction
+STRESS QA PASSED cases=5 assertions=67 accepted=20 physicalKeys=370 hostCommandRetries=0 modifierEvents=164 elapsed=10.414135875000001 seconds
+
+vitek-1116-checked-vscode-rewrite.log
+STRESS host=VSCode rounds=5 source=io.github.luongbinhf.inputmethod.viTek eventTap=HID sourceState=private
+BEGIN round=1 case=rewrite keyPauseUs=0
+PASS round=1 case=rewrite
+BEGIN round=2 case=rewrite keyPauseUs=1000
+PASS round=2 case=rewrite
+BEGIN round=3 case=rewrite keyPauseUs=5000
+PASS round=3 case=rewrite
+BEGIN round=4 case=rewrite keyPauseUs=0
+PASS round=4 case=rewrite
+BEGIN round=5 case=rewrite keyPauseUs=1000
+PASS round=5 case=rewrite
+STRESS QA PASSED cases=5 assertions=32 accepted=0 physicalKeys=175 hostCommandRetries=0 modifierEvents=44 elapsed=5.159405208 seconds
+
+vitek-1116-more-chrome-caret.log
+STRESS host=Chrome rounds=3 source=io.github.luongbinhf.inputmethod.viTek eventTap=HID sourceState=private
+BEGIN round=1 case=caret keyPauseUs=0
+PASS round=1 case=caret
+BEGIN round=2 case=caret keyPauseUs=1000
+PASS round=2 case=caret
+BEGIN round=3 case=caret keyPauseUs=5000
+PASS round=3 case=caret
+STRESS QA PASSED cases=3 assertions=12 accepted=0 physicalKeys=52 hostCommandRetries=0 modifierEvents=10 elapsed=4.101410792 seconds
+
+vitek-1116-more-chrome-relevance.log
+STRESS host=Chrome rounds=3 source=io.github.luongbinhf.inputmethod.viTek eventTap=HID sourceState=private
+BEGIN round=1 case=relevance keyPauseUs=0
+PASS round=1 case=relevance
+BEGIN round=2 case=relevance keyPauseUs=1000
+PASS round=2 case=relevance
+BEGIN round=3 case=relevance keyPauseUs=5000
+PASS round=3 case=relevance
+STRESS QA PASSED cases=3 assertions=33 accepted=3 physicalKeys=199 hostCommandRetries=0 modifierEvents=40 elapsed=12.375230083 seconds
+
+vitek-1116-more-vscode-caret.log
+STRESS host=VSCode rounds=3 source=io.github.luongbinhf.inputmethod.viTek eventTap=HID sourceState=private
+BEGIN round=1 case=caret keyPauseUs=0
+PASS round=1 case=caret
+BEGIN round=2 case=caret keyPauseUs=1000
+PASS round=2 case=caret
+BEGIN round=3 case=caret keyPauseUs=5000
+PASS round=3 case=caret
+STRESS QA PASSED cases=3 assertions=8 accepted=0 physicalKeys=59 hostCommandRetries=0 modifierEvents=16 elapsed=3.343607625 seconds
+
+vitek-1116-more-vscode-relevance.log
+STRESS host=VSCode rounds=3 source=io.github.luongbinhf.inputmethod.viTek eventTap=HID sourceState=private
+BEGIN round=1 case=relevance keyPauseUs=0
+PASS round=1 case=relevance
+BEGIN round=2 case=relevance keyPauseUs=1000
+PASS round=2 case=relevance
+BEGIN round=3 case=relevance keyPauseUs=5000
+PASS round=3 case=relevance
+STRESS QA PASSED cases=3 assertions=23 accepted=3 physicalKeys=218 hostCommandRetries=0 modifierEvents=58 elapsed=11.490317167 seconds
+
+vitek-1116-shipped-appearance.log
+STRESS host=Chrome rounds=1 source=io.github.luongbinhf.inputmethod.viTek eventTap=HID sourceState=private
+BEGIN round=1 case=appearance keyPauseUs=0
+CAPTURE composing
+CAPTURE committed
+PASS round=1 case=appearance
+STRESS QA PASSED cases=1 assertions=7 accepted=0 physicalKeys=27 hostCommandRetries=0 modifierEvents=6 elapsed=6.717635834 seconds
+
+vitek-1116-shipped-appearance-sentence.log
+STRESS host=Chrome rounds=1 source=io.github.luongbinhf.inputmethod.viTek eventTap=HID sourceState=private
+BEGIN round=1 case=appearance-sentence keyPauseUs=0
+CAPTURE composing
+CAPTURE committed
+PASS round=1 case=appearance-sentence
+STRESS QA PASSED cases=1 assertions=8 accepted=0 physicalKeys=31 hostCommandRetries=0 modifierEvents=6 elapsed=7.0336658750000005 seconds

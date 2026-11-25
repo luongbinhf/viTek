@@ -1,0 +1,66 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  package:
+    name: Version and Swift Package tests
+    runs-on: macos-26
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Toolchain
+        run: |
+          swift --version
+          xcodebuild -version
+      - name: Version format
+        run: scripts/version.sh check
+      - name: Test
+        run: swift test
+
+  app:
+    name: macOS installer and input method build
+    runs-on: macos-26
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install XcodeGen
+        run: brew install xcodegen
+      - name: Generate project
+        run: xcodegen generate --spec Apps/macOS/project.yml
+      - name: Build (warnings are errors)
+        run: |
+          xcodebuild -project Apps/macOS/viTek.xcodeproj -scheme viTekInstaller -configuration Debug \
+            -derivedDataPath build/DerivedData \
+            CODE_SIGNING_ALLOWED=NO SWIFT_TREAT_WARNINGS_AS_ERRORS=YES GCC_TREAT_WARNINGS_AS_ERRORS=YES build
+      - name: Check installer payload, icons and per-user install/update
+        run: |
+          swiftc -swift-version 6 Apps/macOS/Installer/Installation.swift Apps/Shared/InputMethodConnection.swift Tests/InstallerSmoke/Check.swift -o "$RUNNER_TEMP/installer-smoke"
+          "$RUNNER_TEMP/installer-smoke" build/DerivedData/Build/Products/Debug/viTekInstaller.app
+
+  ios:
+    name: iOS app, keyboard extension, widget and UI tests build
+    runs-on: macos-26
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install XcodeGen
+        run: brew install xcodegen
+      - name: Generate iOS project
+        run: xcodegen generate --spec Apps/iOS/project.yml
+      - name: Build iOS Simulator & UI tests (warnings are errors)
+        run: |
+          xcodebuild -project Apps/iOS/viTekMobile.xcodeproj -scheme viTekMobile -configuration Debug \
+            -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath build/DerivedData-iOS \
+            CODE_SIGNING_ALLOWED=NO SWIFT_TREAT_WARNINGS_AS_ERRORS=YES GCC_TREAT_WARNINGS_AS_ERRORS=YES build-for-testing

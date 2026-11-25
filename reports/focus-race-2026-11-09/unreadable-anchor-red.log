@@ -1,0 +1,26 @@
+Building for debugging...
+[Computing dependencies]
+[Starting]
+[1 / 1]
+[1 / 19] vitek-bench-product
+[2 / 7] VitekSessionTests-product
+[4 / 9] VitekSessionTests-product
+[8 / 11] VitekSessionTests-product
+[10 / 14] VitekSessionTests-product
+[11 / 14] VitekSessionTests-product
+Build complete! (12,42 secs)
+◇ Test run started.
+↳ Testing Library Version: 2403
+↳ Target Platform: arm64e-apple-macos14.0
+◇ Suite DocumentSessionTests started.
+◇ Test freshNativeAnchorWithStaleMarkOffsetUsesVerifiedCaretText(_:) started.
+◇ Test case passing 1 argument readable → true to freshNativeAnchorWithStaleMarkOffsetUsesVerifiedCaretText(_:) started.
+◇ Test case passing 1 argument readable → false to freshNativeAnchorWithStaleMarkOffsetUsesVerifiedCaretText(_:) started.
+✘ Test freshNativeAnchorWithStaleMarkOffsetUsesVerifiedCaretText(_:) recorded an issue with 1 argument readable → false at DocumentSessionTests.swift:40:9: Expectation failed: host.view.string == "việt "
+↳ host.view.string == "việt " → false
+↳   host.view.string → "vieetj "
+✘ Test freshNativeAnchorWithStaleMarkOffsetUsesVerifiedCaretText(_:) with 2 test cases failed after 0.751 seconds with 1 issue.
+✘ Suite DocumentSessionTests failed after 0.752 seconds with 1 issue.
+✘ Test run with 1 test in 1 suite failed after 0.752 seconds with 1 issue.
+Note: Some test targets reported failures:
+  - VitekSessionTests (Swift Testing)

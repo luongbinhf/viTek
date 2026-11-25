@@ -1,0 +1,4 @@
+STRESS host=VSCode rounds=3 source=io.github.luongbinhf.inputmethod.viTek eventTap=HID sourceState=private
+BEGIN round=1 case=prediction keyPauseUs=0
+FAIL code completion has no trailing space expected="JSON.par" actual="JSON.pars" focus=viTek-System-QA.txt
+QA FAILED: mismatch("code completion has no trailing space")

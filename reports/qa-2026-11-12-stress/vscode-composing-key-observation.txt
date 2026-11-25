@@ -1,0 +1,4 @@
+Installed VS Code 1.145.2
+Source: /Applications/Visual Studio Code.app/Contents/Resources/app/out/vs/workbench/workbench.desktop.main.js
+Keyboard event normalization: this.keyCode=e.isComposing?114:Mxr(e)
+A composing event is assigned the composition key code before keybinding resolution. This is supporting host-side evidence; no VS Code files were changed.

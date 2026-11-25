@@ -1,0 +1,8 @@
+STRESS host=Chrome rounds=5 source=io.github.luongbinhf.inputmethod.viTek HID=true
+BEGIN round=1 case=focus keyPauseUs=0
+PASS round=1 case=focus
+BEGIN round=2 case=focus keyPauseUs=1000
+PASS round=2 case=focus
+BEGIN round=3 case=focus keyPauseUs=5000
+FAIL immediate new field conversion expected="việt " actual="ệt " focus=
+QA FAILED: mismatch("immediate new field conversion")

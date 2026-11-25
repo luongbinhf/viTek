@@ -1,0 +1,35 @@
+name: KeyboardLab
+options:
+  deploymentTarget:
+    iOS: "26.0"
+settings:
+  base:
+    GENERATE_INFOPLIST_FILE: YES
+    SWIFT_VERSION: "6.0"
+    TARGETED_DEVICE_FAMILY: "1,2"
+targets:
+  KeyboardLab:
+    type: application
+    platform: iOS
+    sources: [Host]
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: local.vitek.KeyboardLab
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
+  KeyboardLabUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources: [UITests]
+    dependencies:
+      - target: KeyboardLab
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: local.vitek.KeyboardLabUITests
+schemes:
+  KeyboardLab:
+    build:
+      targets:
+        KeyboardLab: all
+    test:
+      targets: [KeyboardLabUITests]

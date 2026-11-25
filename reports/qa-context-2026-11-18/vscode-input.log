@@ -1,0 +1,6 @@
+STRESS host=VSCode rounds=1 source=io.github.luongbinhf.inputmethod.viTek eventTap=HID sourceState=private
+BEGIN round=1 case=appearance keyPauseUs=0
+CAPTURE composing
+CAPTURE committed
+PASS round=1 case=appearance
+STRESS QA PASSED cases=1 assertions=5 accepted=0 physicalKeys=31 hostCommandRetries=0 modifierEvents=10 elapsed=7.080343459000001 seconds

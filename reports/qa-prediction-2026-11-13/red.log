@@ -1,0 +1,79 @@
+Building for debugging...
+[Computing dependencies]
+[Constructing description]
+[Pre-planning 1 / 298]
+[Planning deferred tasks]
+[9 / 51]
+[11 / 53] VitekEngine
+[13 / 54] VitekEngine
+[19 / 55] VitekSession
+[21 / 57] VitekSession
+[25 / 61] VitekSession
+[34 / 59] VitekSession
+[37 / 60] VitekSessionTests-product
+[37 / 60] vitek-product
+[39 / 62] vitek-bench-product
+[41 / 64] vitek-wordlist-product
+[42 / 63] RepositoryTests-product
+[45 / 64] vitek-product
+[48 / 65] RepositoryTests-product
+[48 / 64] vitek-bench-product
+[58 / 76] VitekSessionTests-product
+[59 / 76] vitek-bench-product
+[61 / 76] vitek-bench-product
+[62 / 76] VitekEngineTests-product
+[65 / 77] VitekEngineTests-product
+[67 / 77] VitekEngineTests-product
+[69 / 78] vitek-product
+[70 / 81] VitekSessionTests-product
+[74 / 80] VitekSessionTests-product
+[76 / 80] VitekSessionTests-product
+Build complete! (16,22 secs)
+◇ Test run started.
+↳ Testing Library Version: 2403
+↳ Target Platform: arm64e-apple-macos14.0
+◇ Suite WordPredictionTests started.
+◇ Test completesCodeWithoutVietnameseCaseConversion() started.
+◇ Test completesVietnameseWithoutSystemSpellchecker() started.
+◇ Test supportsTechnicalVocabulary() started.
+◇ Test ranksContextBeforeGenericVocabulary() started.
+✘ Test supportsTechnicalVocabulary() recorded an issue at WordPredictionTests.swift:17:9: Expectation failed: WordPrediction.words(context: "WebS", prefix: "WebS").contains("WebSocket")
+↳ WordPrediction.words(context: "WebS", prefix: "WebS").contains("WebSocket") → false
+↳   WordPrediction.words(context: "WebS", prefix: "WebS") → []
+✘ Test supportsTechnicalVocabulary() recorded an issue at WordPredictionTests.swift:18:9: Expectation failed: WordPrediction.words(context: "TypeS", prefix: "TypeS").contains("TypeScript")
+↳ WordPrediction.words(context: "TypeS", prefix: "TypeS").contains("TypeScript") → false
+↳   WordPrediction.words(context: "TypeS", prefix: "TypeS") → []
+✘ Test ranksContextBeforeGenericVocabulary() recorded an issue at WordPredictionTests.swift:11:9: Expectation failed: WordPrediction.words(context: "bảo vệ môi ", prefix: "").first == "trường"
+↳ WordPrediction.words(context: "bảo vệ môi ", prefix: "").first == "trường" → false
+↳   WordPrediction.words(context: "bảo vệ môi ", prefix: "").first → nil
+↳     some → "trường"
+✘ Test ranksContextBeforeGenericVocabulary() recorded an issue at WordPredictionTests.swift:12:9: Expectation failed: WordPrediction.words(context: "hợp đồng lao ", prefix: "").first == "động"
+↳ WordPrediction.words(context: "hợp đồng lao ", prefix: "").first == "động" → false
+↳   WordPrediction.words(context: "hợp đồng lao ", prefix: "").first → nil
+↳     some → "động"
+✘ Test ranksContextBeforeGenericVocabulary() recorded an issue at WordPredictionTests.swift:13:9: Expectation failed: WordPrediction.words(context: "co so du ", prefix: "").first == "liệu"
+↳ WordPrediction.words(context: "co so du ", prefix: "").first == "liệu" → false
+↳   WordPrediction.words(context: "co so du ", prefix: "").first → nil
+↳     some → "liệu"
+✘ Test completesVietnameseWithoutSystemSpellchecker() recorded an issue at WordPredictionTests.swift:6:9: Expectation failed: WordPrediction.words(context: "ngư", prefix: "ngư").contains("người")
+↳ WordPrediction.words(context: "ngư", prefix: "ngư").contains("người") → false
+↳   WordPrediction.words(context: "ngư", prefix: "ngư") → []
+✘ Test supportsTechnicalVocabulary() failed after 0.003 seconds with 2 issues.
+✘ Test ranksContextBeforeGenericVocabulary() failed after 0.003 seconds with 3 issues.
+✘ Test completesVietnameseWithoutSystemSpellchecker() recorded an issue at WordPredictionTests.swift:7:9: Expectation failed: WordPrediction.words(context: "chuy", prefix: "chuy").contains("chuyển")
+↳ WordPrediction.words(context: "chuy", prefix: "chuy").contains("chuyển") → false
+↳   WordPrediction.words(context: "chuy", prefix: "chuy") → []
+✘ Test completesCodeWithoutVietnameseCaseConversion() recorded an issue at WordPredictionTests.swift:22:9: Expectation failed: WordPrediction.words(context: "let result = JSON.par", prefix: "par").first == "parse"
+↳ WordPrediction.words(context: "let result = JSON.par", prefix: "par").first == "parse" → false
+↳   WordPrediction.words(context: "let result = JSON.par", prefix: "par").first → nil
+↳     some → "parse"
+✘ Test completesVietnameseWithoutSystemSpellchecker() failed after 0.003 seconds with 2 issues.
+✘ Test completesCodeWithoutVietnameseCaseConversion() recorded an issue at WordPredictionTests.swift:23:9: Expectation failed: WordPrediction.words(context: "const userName = value; const result = us", prefix: "us").first == "userName"
+↳ WordPrediction.words(context: "const userName = value; const result = us", prefix: "us").first == "userName" → false
+↳   WordPrediction.words(context: "const userName = value; const result = us", prefix: "us").first → nil
+↳     some → "userName"
+✘ Test completesCodeWithoutVietnameseCaseConversion() failed after 0.004 seconds with 2 issues.
+✘ Suite WordPredictionTests failed after 0.004 seconds with 9 issues.
+✘ Test run with 4 tests in 1 suite failed after 0.004 seconds with 9 issues.
+Note: Some test targets reported failures:
+  - VitekSessionTests (Swift Testing)

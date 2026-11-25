@@ -1,0 +1,60 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - '20*.*.*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build & Publish viTek macOS DMG and verify iOS
+    runs-on: macos-26
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify version and run Swift tests
+        run: |
+          scripts/version.sh check
+          swift test
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Build macOS DMG
+        env:
+          DEVELOPER_ID_APPLICATION: ${{ secrets.DEVELOPER_ID_APPLICATION }}
+          DEVELOPMENT_TEAM: ${{ secrets.DEVELOPMENT_TEAM }}
+          NOTARY_PROFILE: ${{ secrets.NOTARY_PROFILE }}
+        run: |
+          if [[ -n "${DEVELOPER_ID_APPLICATION:-}" ]]; then
+            scripts/release.sh
+          else
+            scripts/release.sh --local
+          fi
+
+      - name: Verify iOS Simulator build
+        run: |
+          xcodegen generate --spec Apps/iOS/project.yml
+          xcodebuild -project Apps/iOS/viTekMobile.xcodeproj -scheme viTekMobile -configuration Release \
+            -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath build/DerivedData-iOS \
+            CODE_SIGNING_ALLOWED=NO SWIFT_TREAT_WARNINGS_AS_ERRORS=YES GCC_TREAT_WARNINGS_AS_ERRORS=YES build
+
+      - name: Upload DMG to GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version="$(scripts/version.sh check)"
+          tag="${GITHUB_REF_NAME:-$version}"
+          if gh release view "$tag" >/dev/null 2>&1; then
+            gh release upload "$tag" dist/viTek-*.dmg dist/viTek-*.dmg.sha256 --clobber
+          else
+            gh release create "$tag" dist/viTek-*.dmg dist/viTek-*.dmg.sha256 \
+              --title "viTek $version" \
+              --generate-notes
+          fi

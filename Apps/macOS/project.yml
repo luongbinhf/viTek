@@ -1,0 +1,88 @@
+# XcodeGen spec for the macOS input method. Generate with:
+#   xcodegen generate --spec Apps/macOS/project.yml
+# The .xcodeproj is not committed.
+name: viTek
+options:
+  deploymentTarget:
+    macOS: "14.0"
+  createIntermediateGroups: true
+configFiles:
+  Debug: Config/Version.xcconfig
+  Release: Config/Version.xcconfig
+packages:
+  viTek:
+    path: ../..
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    SWIFT_STRICT_CONCURRENCY: complete
+    ARCHS: arm64
+    MACOSX_DEPLOYMENT_TARGET: "14.0"
+    ENABLE_HARDENED_RUNTIME: YES
+    CODE_SIGN_STYLE: Automatic
+    CODE_SIGN_IDENTITY: "-"
+    DEAD_CODE_STRIPPING: YES
+targets:
+  viTek:
+    type: application
+    platform: macOS
+    sources:
+      - path: viTek
+        excludes: [Info.plist]
+      - path: ../Shared
+    settings:
+      base:
+        PRODUCT_NAME: viTek
+        # macOS lists a bundle as an input method only if its identifier contains "inputmethod".
+        PRODUCT_BUNDLE_IDENTIFIER: io.github.luongbinhf.inputmethod.viTek
+        INFOPLIST_FILE: viTek/Info.plist
+        GENERATE_INFOPLIST_FILE: NO
+        INSTALL_PATH: $(HOME)/Library/Input Methods
+    dependencies:
+      - package: viTek
+        product: VitekEngine
+      - package: viTek
+        product: VitekSession
+  viTekInstaller:
+    type: application
+    platform: macOS
+    sources:
+      - path: Installer
+        excludes: [Info.plist]
+      - path: ../Shared/MacAppIcon.swift
+      - path: ../Shared/BrandMascot.swift
+      - path: ../Shared/BrandMascot.png
+        buildPhase: resources
+      - path: ../Shared/InputMethodConnection.swift
+      - path: ../Shared/Localizable.xcstrings
+      - path: ../Shared/PrivacyInfo.xcprivacy
+      - path: viTek/AppIcon.icns
+        buildPhase: resources
+    settings:
+      base:
+        PRODUCT_NAME: viTekInstaller
+        PRODUCT_BUNDLE_IDENTIFIER: io.github.luongbinhf.viTek.installer
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_FILE: Installer/Info.plist
+        INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.utilities
+    dependencies:
+      - target: viTek
+        link: false
+        embed: true
+        codeSign: false
+        copy:
+          destination: wrapper
+          subpath: Contents/Helpers
+schemes:
+  viTekInstaller:
+    build:
+      targets:
+        viTekInstaller: all
+  viTek:
+    build:
+      targets:
+        viTek: all
+    run:
+      config: Debug
+    archive:
+      config: Release

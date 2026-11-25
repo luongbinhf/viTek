@@ -1,0 +1,134 @@
+{
+  "macOS": {
+    "actions": [
+      "ContinueWritingIntent",
+      "OpenWritingIntent"
+    ],
+    "shortcuts": [
+      {
+        "actionIdentifier": "OpenWritingIntent",
+        "availabilityAnnotations": {
+          "LNPlatformNameIOS": {
+            "introducedVersion": "26"
+          },
+          "LNPlatformNameMACOS": {
+            "introducedVersion": "26"
+          },
+          "LNPlatformNameWildcard": {
+            "introducedVersion": "*"
+          }
+        },
+        "phraseTemplates": [
+          {
+            "alternatives": [],
+            "key": "Mở gợi ý viết trong ${applicationName}"
+          },
+          {
+            "alternatives": [],
+            "key": "Open writing in ${applicationName}"
+          }
+        ],
+        "shortTitle": {
+          "alternatives": [],
+          "key": "Mở Gợi ý viết"
+        },
+        "systemImageName": "square.and.pencil"
+      },
+      {
+        "actionIdentifier": "ContinueWritingIntent",
+        "availabilityAnnotations": {
+          "LNPlatformNameIOS": {
+            "introducedVersion": "26"
+          },
+          "LNPlatformNameMACOS": {
+            "introducedVersion": "26"
+          },
+          "LNPlatformNameWildcard": {
+            "introducedVersion": "*"
+          }
+        },
+        "phraseTemplates": [
+          {
+            "alternatives": [],
+            "key": "Viết tiếp với ${applicationName}"
+          },
+          {
+            "alternatives": [],
+            "key": "Continue writing with ${applicationName}"
+          }
+        ],
+        "shortTitle": {
+          "alternatives": [],
+          "key": "Gợi ý câu tiếp theo"
+        },
+        "systemImageName": "text.append"
+      }
+    ]
+  },
+  "iOS": {
+    "actions": [
+      "ContinueWritingIntent",
+      "OpenWritingIntent"
+    ],
+    "shortcuts": [
+      {
+        "actionIdentifier": "OpenWritingIntent",
+        "availabilityAnnotations": {
+          "LNPlatformNameIOS": {
+            "introducedVersion": "26"
+          },
+          "LNPlatformNameMACOS": {
+            "introducedVersion": "26"
+          },
+          "LNPlatformNameWildcard": {
+            "introducedVersion": "*"
+          }
+        },
+        "phraseTemplates": [
+          {
+            "alternatives": [],
+            "key": "Mở gợi ý viết trong ${applicationName}"
+          },
+          {
+            "alternatives": [],
+            "key": "Open writing in ${applicationName}"
+          }
+        ],
+        "shortTitle": {
+          "alternatives": [],
+          "key": "Mở Gợi ý viết"
+        },
+        "systemImageName": "square.and.pencil"
+      },
+      {
+        "actionIdentifier": "ContinueWritingIntent",
+        "availabilityAnnotations": {
+          "LNPlatformNameIOS": {
+            "introducedVersion": "26"
+          },
+          "LNPlatformNameMACOS": {
+            "introducedVersion": "26"
+          },
+          "LNPlatformNameWildcard": {
+            "introducedVersion": "*"
+          }
+        },
+        "phraseTemplates": [
+          {
+            "alternatives": [],
+            "key": "Viết tiếp với ${applicationName}"
+          },
+          {
+            "alternatives": [],
+            "key": "Continue writing with ${applicationName}"
+          }
+        ],
+        "shortTitle": {
+          "alternatives": [],
+          "key": "Gợi ý câu tiếp theo"
+        },
+        "systemImageName": "text.append"
+      }
+    ]
+  }
+}

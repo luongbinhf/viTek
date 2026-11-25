@@ -1,0 +1,26 @@
+STRESS host=VSCode rounds=3 source=io.github.luongbinhf.inputmethod.viTek eventTap=session
+PROBE flags time=14297881622791 command=true source=94312 tag=5511
+PROBE flags time=14298034057125 command=false source=94312 tag=5511
+BEGIN round=1 case=focus keyPauseUs=0
+PROBE flags time=14298115710541 command=true source=94312 tag=5511
+PROBE flags time=14298268132916 command=false source=94312 tag=5511
+PROBE flags time=14300642420208 command=true source=94312 tag=5511
+PROBE flags time=14300643612875 command=false source=94312 tag=5511
+PROBE flags time=14300741653166 command=true source=94312 tag=5511
+PROBE flags time=14300741778208 command=false source=94312 tag=5511
+PROBE flags time=14300775393666 command=true source=94312 tag=5511
+PROBE flags time=14300776625541 command=false source=94312 tag=5511
+PROBE flags time=14300946980666 command=true source=94312 tag=5511
+PROBE flags time=14300948252000 command=false source=94312 tag=5511
+PASS round=1 case=focus
+BEGIN round=2 case=focus keyPauseUs=1000
+PROBE flags time=14301075433458 command=true source=94312 tag=5511
+PROBE flags time=14301077806208 command=false source=94312 tag=5511
+PROBE flags time=14301158772958 command=true source=94312 tag=5511
+PROBE flags time=14301161141041 command=false source=94312 tag=5511
+PROBE flags time=14301253016416 command=true source=94312 tag=5511
+PROBE flags time=14301257786083 command=false source=94312 tag=5511
+PROBE flags time=14301274997458 command=true source=94312 tag=5511
+PROBE flags time=14301275966041 command=false source=94312 tag=5511
+FAIL immediate new field conversion expected="việt " actual="viêtj " focus=Find
+QA FAILED: mismatch("immediate new field conversion")

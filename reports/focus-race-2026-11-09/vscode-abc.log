@@ -1,0 +1,14 @@
+host=VSCode source=com.apple.keylayout.ABC
+PASS conversion control
+race gap=0.0 iteration=1 focusBefore=false findFocused=true duration=0.014722417 seconds find="nam" editor="\n"
+race gap=0.0 iteration=2 focusBefore=false findFocused=true duration=0.011880667 seconds find="nam" editor="\n"
+race gap=0.0 iteration=3 focusBefore=false findFocused=true duration=0.013283125 seconds find="nam" editor="\n"
+race gap=0.02 iteration=1 focusBefore=true findFocused=true duration=0.032609333 seconds find="nam" editor="\n"
+race gap=0.02 iteration=2 focusBefore=true findFocused=true duration=0.033525 seconds find="nam" editor="\n"
+race gap=0.02 iteration=3 focusBefore=true findFocused=true duration=0.032890666 seconds find="nam" editor="\n"
+race gap=0.1 iteration=1 focusBefore=true findFocused=true duration=0.113500583 seconds find="nam" editor="\n"
+race gap=0.1 iteration=2 focusBefore=true findFocused=true duration=0.112731875 seconds find="nam" editor="\n"
+race gap=0.1 iteration=3 focusBefore=true findFocused=true duration=0.113944291 seconds find="nam" editor="\n"
+race gap=0.3 iteration=1 focusBefore=true findFocused=true duration=0.314543417 seconds find="nam" editor="\n"
+race gap=0.3 iteration=2 focusBefore=true findFocused=true duration=0.316069458 seconds find="nam" editor="\n"
+race gap=0.3 iteration=3 focusBefore=true findFocused=true duration=0.315693292 seconds find="nam" editor="\n"

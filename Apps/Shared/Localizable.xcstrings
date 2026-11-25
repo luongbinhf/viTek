@@ -1,0 +1,348 @@
+{
+  "sourceLanguage" : "vi",
+  "strings" : {
+    "1. Chọn nguồn nhập" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "1. Select Input Source" } } }
+    },
+    "1. Thêm viTek" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "1. Add viTek" } } }
+    },
+    "2. Gõ thử" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "2. Try Typing" } } }
+    },
+    "2. Gõ tiếng Việt" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "2. Type Vietnamese" } } }
+    },
+    "3. Viết xen tiếng Anh" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "3. Mix English Naturally" } } }
+    },
+    "Âm thanh bấm phím hệ thống" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "System Key Click Sound" } } }
+    },
+    "Bàn phím" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Keyboard" } } }
+    },
+    "Bàn phím viTek" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "viTek Keyboard" } } }
+    },
+    "Bạn có thể để tắt “Cho phép truy cập đầy đủ”." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "You can leave “Allow Full Access” turned off." } } }
+    },
+    "Bạn có thể gõ cả hai ngôn ngữ trong cùng một câu." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "You can type both languages in the same sentence." } } }
+    },
+    "Bảng gõ tắt" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Shortcut Table" } } }
+    },
+    "Bảng phím Telex" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Telex Key Map" } } }
+    },
+    "Bảng phím VNI" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "VNI Key Map" } } }
+    },
+    "Bắt đầu" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Welcome" } } }
+    },
+    "Bật gõ tắt" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Enable Shortcuts" } } }
+    },
+    "Bộ gõ tiếng Việt cho Mac" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Vietnamese Input Method for Mac" } } }
+    },
+    "Cài đặt" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Settings" } } }
+    },
+    "Cài đặt hiện tại" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Current Settings" } } }
+    },
+    "Cài đặt viTek" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "viTek Settings" } } }
+    },
+    "Cài viTek" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Install viTek" } } }
+    },
+    "Cấp quyền…" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Grant Access…" } } }
+    },
+    "Chạm vào ô nhập, giữ phím quả địa cầu rồi chọn viTek." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Tap the field, hold the globe key, and choose viTek." } } }
+    },
+    "Chỉ đồng bộ tuỳ chọn kiểu gõ và bảng gõ tắt giữa Mac, iPhone và iPad. Không đồng bộ văn bản đang gõ." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Only syncs typing options and shortcuts across Mac, iPhone, and iPad. Never syncs typed text." } } }
+    },
+    "Chưa có gõ tắt nào." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "No shortcuts yet." } } }
+    },
+    "Chưa có từ ngoại lệ nào." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "No custom exception words yet." } } }
+    },
+    "Chưa có ứng dụng nào được đặt mặc định tiếng Anh." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "No apps are set to default to English." } } }
+    },
+    "Chữ tắt" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Abbreviation" } } }
+    },
+    "Chữ tắt (vd: ko)" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Abbreviation (e.g. ko)" } } }
+    },
+    "Đã bật viTek" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "viTek Enabled" } } }
+    },
+    "Đã cấp" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Granted" } } }
+    },
+    "Đã gõ được tiếng Việt" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Vietnamese typing is working" } } }
+    },
+    "Dán bảng gõ tắt theo định dạng viTek (Tab), UniKey/OpenKey (chữ:thay bằng) hoặc CSV:" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Paste shortcuts in viTek (Tab), UniKey/OpenKey (abbr:expansion), or CSV format:" } } }
+    },
+    "Đoạn nháp quá dài. Hãy chọn một đoạn ngắn hơn." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Draft is too long. Please shorten it." } } }
+    },
+    "Đồng bộ cài đặt & gõ tắt qua iCloud" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Sync Settings & Shortcuts via iCloud" } } }
+    },
+    "Đồng bộ iCloud" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "iCloud Sync" } } }
+    },
+    "Giữ nguyên từ tiếng Anh thông dụng" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Preserve Common English Words" } } }
+    },
+    "Giữ phím Xoá để xoá liên tục; kéo ngang trên phím Dấu cách để di chuyển con trỏ." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Hold Backspace to delete continuously; drag across Space to move the cursor." } } }
+    },
+    "Gõ tắt" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Shortcuts" } } }
+    },
+    "Gõ thử ở đây" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Type here to test" } } }
+    },
+    "Gõ vieetj hoặc vie65t rồi bấm dấu cách. Cả hai cách đều cho ra “việt”." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Type vieetj or vie65t then press Space. Both produce “việt”." } } }
+    },
+    "Gợi ý câu tiếp theo" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Suggest Next Sentence" } } }
+    },
+    "Gợi ý viết" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Writing Suggestions" } } }
+    },
+    "Gợi ý viết bằng viTek" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Continue Writing with viTek" } } }
+    },
+    "Giới thiệu" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "About" } } }
+    },
+    "Hiển thị hàng phím số phía trên" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Show Top Number Row" } } }
+    },
+    "Hỗ trợ nhập từ viTek, UniKey, OpenKey hoặc CSV và giữ nguyên kiểu viết hoa." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Supports importing from viTek, UniKey, OpenKey, or CSV while preserving capitalization." } } }
+    },
+    "Huỷ" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Cancel" } } }
+    },
+    "Kết nối lại bộ gõ" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Reconnect Input Method" } } }
+    },
+    "Khôi phục từ không hợp lệ" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Restore Invalid Words" } } }
+    },
+    "Kiểm tra chính tả tiếng Việt" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Vietnamese Spell Check" } } }
+    },
+    "Kiểm tra lại Apple Intelligence" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Recheck Apple Intelligence" } } }
+    },
+    "Kiểu cũ (hòa, thúy)" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Traditional (hòa, thúy)" } } }
+    },
+    "Kiểu đặt dấu" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Tone Placement" } } }
+    },
+    "Kiểu gõ" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Typing" } } }
+    },
+    "Kiểu mới (hoà, thuý)" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Modern (hoà, thuý)" } } }
+    },
+    "Mở cài đặt Bàn phím" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Open Keyboard Settings" } } }
+    },
+    "Mở cài đặt của viTek" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Open viTek Settings" } } }
+    },
+    "Mở Gợi ý viết" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Open Writing Suggestions" } } }
+    },
+    "Nhấn đúp dấu cách chèn dấu chấm" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Double-Space Period" } } }
+    },
+    "Nhập" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Import" } } }
+    },
+    "Nhập…" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Import…" } } }
+    },
+    "Nhập đoạn đang viết để Apple Intelligence gợi ý câu tiếp theo trên thiết bị." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Enter your draft so Apple Intelligence can suggest the next sentence on-device." } } }
+    },
+    "Nhập gõ tắt" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Import Shortcuts" } } }
+    },
+    "Nhập từ tệp…" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Import from File…" } } }
+    },
+    "Phản hồi rung nhẹ khi nhấn phím" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Key Haptic Feedback" } } }
+    },
+    "Sao chép gợi ý" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Copy Suggestion" } } }
+    },
+    "Thanh gợi ý từ trên bàn phím" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Keyboard Suggestion Bar" } } }
+    },
+    "Thay bằng" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Replacement" } } }
+    },
+    "Thay bằng (vd: không)" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Replacement (e.g. không)" } } }
+    },
+    "Thêm" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Add" } } }
+    },
+    "Thêm gõ tắt" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Add Shortcut" } } }
+    },
+    "Thêm từ không đặt dấu" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Add Word to Preserve" } } }
+    },
+    "Thêm ứng dụng…" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Add App…" } } }
+    },
+    "Thói quen gõ" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Typing Habits" } } }
+    },
+    "Thử lại" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Try Again" } } }
+    },
+    "Tra từ tiếng Anh" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Search English Words" } } }
+    },
+    "Trải nghiệm bàn phím" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Keyboard Experience" } } }
+    },
+    "Trong Cài đặt, mở Cài đặt chung → Bàn phím → Bàn phím → Thêm bàn phím mới, rồi chọn viTek." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "In Settings, open General → Keyboard → Keyboards → Add New Keyboard, then select viTek." } } }
+    },
+    "Tự viết hoa đầu câu" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Auto-Capitalization" } } }
+    },
+    "Từ điển" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Dictionary" } } }
+    },
+    "Từ ngoại lệ cá nhân" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Personal Exception Words" } } }
+    },
+    "Từ/cụm cá nhân đã học" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Learned Personal Words" } } }
+    },
+    "Ứng dụng đã học" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Learned Apps" } } }
+    },
+    "Ứng dụng luôn gõ tiếng Anh" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Apps Defaulting to English" } } }
+    },
+    "viTek tự nhận Telex và VNI theo từng từ, xử lý hoàn toàn trên thiết bị." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "viTek automatically detects Telex and VNI per word, processed entirely on-device." } } }
+    },
+    "Xóa thói quen của mọi ứng dụng" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Reset All App Habits" } } }
+    },
+    "Xóa từ đã học" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Clear Learned Words" } } }
+    },
+    "Xong" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Done" } } }
+    },
+    "Xuất ra tệp…" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Export to File…" } } }
+    },
+    "Ẩn thanh gợi ý từ" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Hide Suggestion Bar" } } }
+    },
+    "Bỏ dấu tiếng Việt" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Strip Vietnamese Accents" } } }
+    },
+    "Chế độ gõ viTek" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "viTek Typing Mode" } } }
+    },
+    "Chuẩn hoá Unicode dựng sẵn (NFC)" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Normalize Precomposed Unicode (NFC)" } } }
+    },
+    "Chuyển mã & Chuẩn hoá tiếng Việt" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Convert & Normalize Vietnamese Text" } } }
+    },
+    "Chuyển mã TCVN3 (ABC) → Unicode" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Convert TCVN3 (ABC) → Unicode" } } }
+    },
+    "Chuyển mã VNI Windows → Unicode" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Convert VNI Windows → Unicode" } } }
+    },
+    "Công cụ Clipboard" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Clipboard Tools" } } }
+    },
+    "Đang dùng bản mới nhất" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Up to Date" } } }
+    },
+    "Gõ tắt phụ âm cuối (g→ng, h→nh, k→ch)" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Quick Final Consonants (g→ng, h→nh, k→ch)" } } }
+    },
+    "Gõ tắt phụ âm đầu (cc, gg, kk, nn, pp, qq, tt)" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Quick Initial Consonants (cc, gg, kk, nn, pp, qq, tt)" } } }
+    },
+    "Gõ tắt phụ âm đầu (cc→ch, gg→gi, kk→kh, nn→ng, pp→ph, qq→qu, tt→th)" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Quick Initial Consonants (cc→ch, gg→gi, kk→kh, nn→ng, pp→ph, qq→qu, tt→th)" } } }
+    },
+    "Kiểm tra bản cập nhật…" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Check for Updates…" } } }
+    },
+    "Tạm chuyển sang gõ tiếng Anh" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Temporarily Switch to English Mode" } } }
+    },
+    "Bố cục gõ một tay (dọc)" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "One-Handed Layout (Portrait)" } } }
+    },
+    "Chia đôi bàn phím khi xoay ngang & iPad" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Split Keyboard in Landscape & iPad" } } }
+    },
+    "Đầy đủ" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Full Width" } } }
+    },
+    "Giao diện & Trải nghiệm bàn phím" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Keyboard Layout & Experience" } } }
+    },
+    "Gõ tắt cả khi tắt tiếng Việt" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Expand Shortcuts in English Mode" } } }
+    },
+    "Nhấn đúp phím ⌥ Option để chuyển nhanh Việt ↔ Anh" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Double-Tap ⌥ Option to Toggle Vietnamese ↔ English" } } }
+    },
+    "Tay phải" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Right Hand" } } }
+    },
+    "Tay trái" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Left Hand" } } }
+    },
+    "Tự động sửa lỗi font → Unicode" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Auto-Fix Legacy Font → Unicode" } } }
+    },
+    "Viết Hoa Đầu Từ" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Title Case" } } }
+    },
+    "Vuốt xuống phím chữ để gõ nhanh số & ký hiệu" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Flick Down Letter Keys for Numbers & Symbols" } } }
+    }
+  },
+  "version" : "1.0"
+}

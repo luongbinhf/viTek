@@ -1,0 +1,9 @@
+accessibility=true postEvents=true
+targetPID=1319 fixtureWindow=true
+focusDescription=viTek-System-QA.txt
+focusedRole=AXTextArea fixtureEditor=true
+selectedSource=io.github.luongbinhf.inputmethod.viTek frontmost=com.microsoft.VSCode
+sourceAfterTyping=io.github.luongbinhf.inputmethod.viTek
+PASS positive control Telex/VNI
+mismatch expectedLength=3 actualLength=2
+QA FAILED: mismatch("Find at 0us")

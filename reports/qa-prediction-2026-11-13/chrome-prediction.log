@@ -1,0 +1,42 @@
+STRESS host=Chrome rounds=20 source=io.github.luongbinhf.inputmethod.viTek eventTap=HID sourceState=private
+BEGIN round=1 case=prediction keyPauseUs=0
+PASS round=1 case=prediction
+BEGIN round=2 case=prediction keyPauseUs=1000
+PASS round=2 case=prediction
+BEGIN round=3 case=prediction keyPauseUs=5000
+PASS round=3 case=prediction
+BEGIN round=4 case=prediction keyPauseUs=0
+PASS round=4 case=prediction
+BEGIN round=5 case=prediction keyPauseUs=1000
+PASS round=5 case=prediction
+BEGIN round=6 case=prediction keyPauseUs=5000
+PASS round=6 case=prediction
+BEGIN round=7 case=prediction keyPauseUs=0
+PASS round=7 case=prediction
+BEGIN round=8 case=prediction keyPauseUs=1000
+PASS round=8 case=prediction
+BEGIN round=9 case=prediction keyPauseUs=5000
+PASS round=9 case=prediction
+BEGIN round=10 case=prediction keyPauseUs=0
+PASS round=10 case=prediction
+BEGIN round=11 case=prediction keyPauseUs=1000
+PASS round=11 case=prediction
+BEGIN round=12 case=prediction keyPauseUs=5000
+PASS round=12 case=prediction
+BEGIN round=13 case=prediction keyPauseUs=0
+PASS round=13 case=prediction
+BEGIN round=14 case=prediction keyPauseUs=1000
+PASS round=14 case=prediction
+BEGIN round=15 case=prediction keyPauseUs=5000
+PASS round=15 case=prediction
+BEGIN round=16 case=prediction keyPauseUs=0
+PASS round=16 case=prediction
+BEGIN round=17 case=prediction keyPauseUs=1000
+PASS round=17 case=prediction
+BEGIN round=18 case=prediction keyPauseUs=5000
+PASS round=18 case=prediction
+BEGIN round=19 case=prediction keyPauseUs=0
+PASS round=19 case=prediction
+BEGIN round=20 case=prediction keyPauseUs=1000
+PASS round=20 case=prediction
+STRESS QA PASSED cases=20 assertions=343 accepted=80 physicalKeys=1258 hostCommandRetries=0 modifierEvents=482 elapsed=44.240949459 seconds

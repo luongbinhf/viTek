@@ -1,0 +1,37 @@
+accessibility=true postEvents=true
+targetPID=32805 fixtureWindow=true
+initialFocus=viTek-System-QA.txt
+focusedRole=AXTextArea fixtureEditor=true
+selectedSource=io.github.luongbinhf.inputmethod.viTek frontmost=com.microsoft.VSCode
+PASS fixture cleared
+sourceAfterTyping=io.github.luongbinhf.inputmethod.viTek
+PASS positive control Telex/VNI
+PASS Find at 0us
+PASS fixture cleared
+PASS caret deletion at 0us
+PASS Find at 5000us
+PASS fixture cleared
+PASS caret deletion at 5000us
+PASS Find at 20000us
+PASS fixture cleared
+PASS caret deletion at 20000us
+PASS Find at 0us
+PASS fixture cleared
+PASS caret deletion at 0us
+PASS Find at 5000us
+PASS fixture cleared
+PASS caret deletion at 5000us
+PASS Find at 20000us
+PASS fixture cleared
+PASS caret deletion at 20000us
+PASS Find at 0us
+PASS fixture cleared
+PASS caret deletion at 0us
+PASS Find at 5000us
+PASS fixture cleared
+PASS caret deletion at 5000us
+PASS Find at 20000us
+PASS fixture cleared
+PASS caret deletion at 20000us
+PASS new editor immediate typing
+SYSTEM KEYBOARD QA PASSED

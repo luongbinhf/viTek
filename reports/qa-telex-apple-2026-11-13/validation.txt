@@ -1,0 +1,20 @@
+Final installed executable SHA-256:
+bb5a6955a52558ae4942420073bf476bc99c172bc3cbf809e5b00c3b51904984
+Payload: /tmp/vitek-telex-1113-release-final/viTek.app
+Installed: /Users/luongthebinh/Library/Input Methods/viTek.app
+Installed and payload executable hashes match.
+codesign --verify --deep --strict: passed
+macOS Release viTekInstaller build: BUILD SUCCEEDED (Swift/GCC warnings as errors)
+Build log: /tmp/vitek-1113-mac-final-build.log
+Swift package: 178 passed
+Command gate: 20017 assertions passed
+Final host UI: 180 cases / 1990 assertions / 80 suggestions / 0 shortcut retries
+Final Cmd+F: 30 first-attempt successes
+Installer smoke on final built payload: passed
+Apple runtime smoke + ContinueWritingIntent.perform(): passed
+macOS writing UI: generated result, editing clears old result
+Simulator navigation: 3 passed (iOS 27.0)
+Simulator result: /Users/luongthebinh/Library/Developer/XcodeBuildMCP/workspaces/vitek-next-98104ee6c636/result-bundles/test_sim_2026-11-12T19-23-24-212Z_pid28407_69e8a444.xcresult
+Diagnostics: OFF
+Suggestions: ON
+No GitHub push or PR.

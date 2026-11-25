@@ -1,0 +1,11 @@
+accessibility=true postEvents=true
+targetPID=4811 fixtureWindow=true
+focusedRole=AXTextArea fixtureEditor=true
+selectedSource=io.github.luongbinhf.inputmethod.viTek frontmost=com.microsoft.VSCode
+PASS fixture cleared
+sourceAfterTyping=io.github.luongbinhf.inputmethod.viTek
+PASS positive control Telex/VNI
+PASS Find at 0us
+PASS fixture cleared
+mismatch expectedLength=3 actualLength=5
+QA FAILED: mismatch("caret deletion at 0us")

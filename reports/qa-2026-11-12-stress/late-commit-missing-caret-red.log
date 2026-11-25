@@ -1,0 +1,22 @@
+Building for debugging...
+[Using on-disk description]
+[2 / 7] VitekSessionTests-product
+[4 / 9] VitekSessionTests-product
+[8 / 11] VitekSessionTests-product
+[10 / 14] VitekSessionTests-product
+Build complete! (2,58 secs)
+◇ Test run started.
+↳ Testing Library Version: 2403
+↳ Target Platform: arm64e-apple-macos14.0
+◇ Suite DocumentSessionTests started.
+◇ Test lateFocusCommitWithMatchingProvisionalCaretPreservesPrefix(_:) started.
+◇ Test case passing 1 argument missingCaret → true to lateFocusCommitWithMatchingProvisionalCaretPreservesPrefix(_:) started.
+◇ Test case passing 1 argument missingCaret → false to lateFocusCommitWithMatchingProvisionalCaretPreservesPrefix(_:) started.
+✘ Test lateFocusCommitWithMatchingProvisionalCaretPreservesPrefix(_:) recorded an issue with 1 argument missingCaret → true at DocumentSessionTests.swift:35:9: Expectation failed: host.view.string == "việt "
+↳ host.view.string == "việt " → false
+↳   host.view.string → "ẹt "
+✘ Test lateFocusCommitWithMatchingProvisionalCaretPreservesPrefix(_:) with 2 test cases failed after 0.092 seconds with 1 issue.
+✘ Suite DocumentSessionTests failed after 0.092 seconds with 1 issue.
+✘ Test run with 1 test in 1 suite failed after 0.093 seconds with 1 issue.
+Note: Some test targets reported failures:
+  - VitekSessionTests (Swift Testing)

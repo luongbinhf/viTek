@@ -1,0 +1,6 @@
+STRESS host=VSCode rounds=50 source=io.github.luongbinhf.inputmethod.viTek eventTap=HID sourceState=private
+BEGIN round=1 case=prediction keyPauseUs=0
+PASS round=1 case=prediction
+BEGIN round=2 case=prediction keyPauseUs=1000
+FAIL business phrase prefix expected="hợp đồng lao " actual="hợp òng lao " focus=viTek-System-QA.txt
+QA FAILED: mismatch("business phrase prefix")

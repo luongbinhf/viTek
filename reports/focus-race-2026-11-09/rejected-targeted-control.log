@@ -1,0 +1,4 @@
+targetForeground=false
+host=Chrome targeted=true source=io.github.luongbinhf.inputmethod.viTek
+controlValue=" "
+QA FAILED: mismatch("control expected length 5, actual 1")

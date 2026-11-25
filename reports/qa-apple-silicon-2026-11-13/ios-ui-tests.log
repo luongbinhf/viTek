@@ -1,0 +1,105 @@
+Test Suite 'All tests' started at 2026-11-13 09:36:46.543.
+Test Suite 'viTekMobileUITests.xctest' started at 2026-11-13 09:36:46.549.
+Test Suite 'WritingNavigation' started at 2026-11-13 09:36:46.555.
+Test Case '-[viTekMobileUITests.WritingNavigation testUnknownRouteDoesNotNavigate]' started.
+    t =     0.16s Start Test at 2026-11-13 09:36:46.716
+    t =     0.53s Set Up
+    t =     0.53s     Open io.github.luongbinhf.viTek.mobile
+    t =     0.53s         Launch io.github.luongbinhf.viTek.mobile
+2026-11-13 09:36:47.567 xcodebuild[95306:1981200] [MT] IDELaunchParametersSnapshot: debugger version lookup failed for path '<nil>': noURL
+2026-11-13 09:36:47.567 xcodebuild[95306:1981200] [MT] IDELaunchParametersSnapshot: no debugger version
+objc[95882]: Class UIAccessibilityLoaderWebShared is implemented in both /private/var/run/com.apple.security.cryptexd/mnt/com.apple.iPhoneOS.SimulatorRuntime-v24.1.434.0.vBxSZ9/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 27.0.simruntime/Contents/Resources/RuntimeRoot/System/Library/AccessibilityBundles/WebKit.axbundle/WebKit (0x1088c8398) and /private/var/run/com.apple.security.cryptexd/mnt/com.apple.iPhoneOS.SimulatorRuntime-v24.1.434.0.vBxSZ9/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 27.0.simruntime/Contents/Resources/RuntimeRoot/System/Library/AccessibilityBundles/WebCore.axbundle/WebCore (0x108a00310). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
+    t =     4.58s             Setting up automation session
+    t =    10.82s             Wait for io.github.luongbinhf.viTek.mobile to idle
+    t =    13.10s Open io.github.luongbinhf.viTek.mobile with URL vitek://writing?draft=untrusted
+    t =    13.10s     Launch io.github.luongbinhf.viTek.mobile
+2026-11-13 09:36:59.666 xcodebuild[95306:1981200] [MT] IDELaunchParametersSnapshot: debugger version lookup failed for path '<nil>': noURL
+2026-11-13 09:36:59.666 xcodebuild[95306:1981200] [MT] IDELaunchParametersSnapshot: no debugger version
+    t =    13.89s         Setting up automation session
+    t =    19.79s         Wait for io.github.luongbinhf.viTek.mobile to idle
+    t =    21.74s Waiting 5.0s for "Thử gõ vieetj" TextField to exist
+    t =    22.78s     Checking `Expect predicate `existsNoRetry == 1` for object "Thử gõ vieetj" TextField`
+    t =    22.78s         Checking existence of `"Thử gõ vieetj" TextField`
+    t =    23.20s Checking existence of `"writing.readiness" StaticText`
+    t =    23.26s Tear Down
+Test Case '-[viTekMobileUITests.WritingNavigation testUnknownRouteDoesNotNavigate]' passed (23.348 seconds).
+Test Case '-[viTekMobileUITests.WritingNavigation testWidgetURLColdAndWarmLaunch]' started.
+    t =     0.00s Start Test at 2026-11-13 09:37:10.065
+    t =     0.03s Set Up
+    t =     0.03s     Open io.github.luongbinhf.viTek.mobile
+    t =     0.03s         Launch io.github.luongbinhf.viTek.mobile
+    t =     0.03s             Terminate io.github.luongbinhf.viTek.mobile:97596
+2026-11-13 09:37:11.184 xcodebuild[95306:1981200] [MT] IDELaunchParametersSnapshot: debugger version lookup failed for path '<nil>': noURL
+2026-11-13 09:37:11.184 xcodebuild[95306:1981200] [MT] IDELaunchParametersSnapshot: no debugger version
+    t =     1.34s             Setting up automation session
+    t =     7.53s             Wait for io.github.luongbinhf.viTek.mobile to idle
+    t =     9.52s Terminate io.github.luongbinhf.viTek.mobile:97807
+    t =    10.68s Open io.github.luongbinhf.viTek.mobile with URL vitek://writing
+    t =    10.68s     Launch io.github.luongbinhf.viTek.mobile
+2026-11-13 09:37:20.749 xcodebuild[95306:1981200] [MT] IDELaunchParametersSnapshot: debugger version lookup failed for path '<nil>': noURL
+2026-11-13 09:37:20.749 xcodebuild[95306:1981200] [MT] IDELaunchParametersSnapshot: no debugger version
+    t =    10.90s         Setting up automation session
+    t =    17.70s         Wait for io.github.luongbinhf.viTek.mobile to idle
+    t =    20.96s Waiting 5.0s for "writing.readiness" StaticText to exist
+    t =    22.03s     Checking `Expect predicate `existsNoRetry == 1` for object "writing.readiness" StaticText`
+    t =    22.04s         Checking existence of `"writing.readiness" StaticText`
+    t =    22.56s Tap "Bàn phím" Button
+    t =    22.56s     Wait for io.github.luongbinhf.viTek.mobile to idle
+    t =    22.58s     Find the "Bàn phím" Button
+    t =    22.67s     Check for interrupting elements affecting "keyboard" Button
+    t =    22.79s     Synthesize event
+    t =    23.44s     Wait for io.github.luongbinhf.viTek.mobile to idle
+    t =    25.35s Waiting 5.0s for "Thử gõ vieetj" TextField to exist
+    t =    26.38s     Checking `Expect predicate `existsNoRetry == 1` for object "Thử gõ vieetj" TextField`
+    t =    26.39s         Checking existence of `"Thử gõ vieetj" TextField`
+    t =    26.50s Open io.github.luongbinhf.viTek.mobile with URL vitek://writing
+    t =    26.50s     Launch io.github.luongbinhf.viTek.mobile
+2026-11-13 09:37:36.570 xcodebuild[95306:1981200] [MT] IDELaunchParametersSnapshot: debugger version lookup failed for path '<nil>': noURL
+2026-11-13 09:37:36.570 xcodebuild[95306:1981200] [MT] IDELaunchParametersSnapshot: no debugger version
+    t =    27.08s         Setting up automation session
+    t =    34.18s         Wait for io.github.luongbinhf.viTek.mobile to idle
+    t =    36.86s Waiting 5.0s for "writing.readiness" StaticText to exist
+    t =    37.89s     Checking `Expect predicate `existsNoRetry == 1` for object "writing.readiness" StaticText`
+    t =    37.89s         Checking existence of `"writing.readiness" StaticText`
+    t =    38.20s Tear Down
+Test Case '-[viTekMobileUITests.WritingNavigation testWidgetURLColdAndWarmLaunch]' passed (39.641 seconds).
+Test Case '-[viTekMobileUITests.WritingNavigation testWritingTabShowsModelState]' started.
+    t =     0.00s Start Test at 2026-11-13 09:37:49.706
+    t =     0.03s Set Up
+    t =     0.03s     Open io.github.luongbinhf.viTek.mobile
+    t =     0.03s         Launch io.github.luongbinhf.viTek.mobile
+    t =     0.03s             Terminate io.github.luongbinhf.viTek.mobile:98001
+2026-11-13 09:38:00.813 xcodebuild[95306:1981200] [MT] IDELaunchParametersSnapshot: debugger version lookup failed for path '<nil>': noURL
+2026-11-13 09:38:00.813 xcodebuild[95306:1981200] [MT] IDELaunchParametersSnapshot: no debugger version
+    t =    11.90s             Setting up automation session
+    t =    20.09s             Wait for io.github.luongbinhf.viTek.mobile to idle
+    t =    22.34s Tap "Gợi ý viết" Button
+    t =    22.34s     Wait for io.github.luongbinhf.viTek.mobile to idle
+    t =    22.34s     Find the "Gợi ý viết" Button
+    t =    22.98s     Check for interrupting elements affecting "Gợi ý viết" Button
+    t =    23.05s     Synthesize event
+    t =    23.52s     Wait for io.github.luongbinhf.viTek.mobile to idle
+    t =    25.71s Waiting 5.0s for "writing.readiness" StaticText to exist
+    t =    26.75s     Checking `Expect predicate `existsNoRetry == 1` for object "writing.readiness" StaticText`
+    t =    26.75s         Checking existence of `"writing.readiness" StaticText`
+    t =    26.80s Find the "writing.readiness" StaticText
+    t =    26.83s Checking existence of `"writing.draft" TextView`
+    t =    26.86s Find the "writing.generate" Button
+    t =    26.89s Tear Down
+Test Case '-[viTekMobileUITests.WritingNavigation testWritingTabShowsModelState]' passed (30.213 seconds).
+Test Suite 'WritingNavigation' passed at 2026-11-13 09:38:19.919.
+	 Executed 3 tests, with 0 failures (0 unexpected) in 93.202 (93.364) seconds
+Test Suite 'viTekMobileUITests.xctest' passed at 2026-11-13 09:38:19.920.
+	 Executed 3 tests, with 0 failures (0 unexpected) in 93.202 (93.371) seconds
+Test Suite 'All tests' passed at 2026-11-13 09:38:19.921.
+	 Executed 3 tests, with 0 failures (0 unexpected) in 93.202 (93.378) seconds
+2026-11-13 09:38:20.282 xcodebuild[95306:1981200] [MT] IDETestOperationsObserverDebug: 212.949 elapsed -- Testing started completed.
+2026-11-13 09:38:20.282 xcodebuild[95306:1981200] [MT] IDETestOperationsObserverDebug: 0.000 sec, +0.000 sec -- start
+2026-11-13 09:38:20.282 xcodebuild[95306:1981200] [MT] IDETestOperationsObserverDebug: 212.949 sec, +212.949 sec -- end
+
+Test session results, code coverage, and logs:
+	/Users/luongthebinh/Library/Developer/XcodeBuildMCP/workspaces/vitek-next-98104ee6c636/result-bundles/test_sim_2026-11-13T02-33-59-243Z_pid88575_9e63ab9c.xcresult
+
+** TEST EXECUTE SUCCEEDED **
+
+Testing started

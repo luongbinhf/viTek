@@ -1,0 +1,119 @@
+name: viTekMobile
+options:
+  deploymentTarget:
+    iOS: "26.0"
+configFiles:
+  Debug: Config/Version.xcconfig
+  Release: Config/Version.xcconfig
+packages:
+  viTek:
+    path: ../..
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    SWIFT_STRICT_CONCURRENCY: complete
+    DEAD_CODE_STRIPPING: YES
+targets:
+  viTekMobileUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources: [UITests]
+    dependencies:
+      - target: viTekMobile
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: io.github.luongbinhf.viTek.mobile.uitests
+        GENERATE_INFOPLIST_FILE: YES
+        SWIFT_VERSION: "6.0"
+  viTekMobile:
+    type: application
+    platform: iOS
+    sources:
+      - path: viTek
+        excludes: [Info.plist]
+      - ../Shared
+    dependencies:
+      - package: viTek
+        product: VitekEngine
+      - package: viTek
+        product: VitekSession
+      - target: viTekKeyboard
+        embed: true
+      - target: viTekWidgets
+        embed: true
+    entitlements:
+      path: viTek/viTekMobile.entitlements
+      properties:
+        com.apple.developer.ubiquity-kvstore-identifier: $(TeamIdentifierPrefix)$(CFBundleIdentifier)
+        com.apple.security.application-groups:
+          - group.io.github.luongbinhf.viTek
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: io.github.luongbinhf.viTek.mobile
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_FILE: viTek/Info.plist
+        INFOPLIST_KEY_CFBundleDisplayName: viTek
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
+        INFOPLIST_KEY_UISupportedInterfaceOrientations: "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortraitUpsideDown"
+        SWIFT_VERSION: "6.0"
+        TARGETED_DEVICE_FAMILY: "1,2"
+
+  viTekKeyboard:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: Keyboard
+        excludes: [Info.plist]
+      - path: ../Shared/IOSKeyboardSettings.swift
+      - path: ../Shared/PrivacyInfo.xcprivacy
+    dependencies:
+      - package: viTek
+        product: VitekEngine
+      - package: viTek
+        product: VitekSession
+    entitlements:
+      path: Keyboard/viTekKeyboard.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.io.github.luongbinhf.viTek
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: io.github.luongbinhf.viTek.mobile.keyboard
+        INFOPLIST_FILE: Keyboard/Info.plist
+        APPLICATION_EXTENSION_API_ONLY: YES
+        SKIP_INSTALL: YES
+        SWIFT_VERSION: "6.0"
+        TARGETED_DEVICE_FAMILY: "1,2"
+
+  viTekWidgets:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: Widgets
+        excludes: [Info.plist, viTekWidgets.entitlements]
+      - ../Shared/WritingLink.swift
+      - ../Shared/PrivacyInfo.xcprivacy
+    entitlements:
+      path: Widgets/viTekWidgets.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.io.github.luongbinhf.viTek
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: io.github.luongbinhf.viTek.mobile.widgets
+        INFOPLIST_FILE: Widgets/Info.plist
+        GENERATE_INFOPLIST_FILE: YES
+        APPLICATION_EXTENSION_API_ONLY: YES
+        SKIP_INSTALL: YES
+        SWIFT_VERSION: "6.0"
+        TARGETED_DEVICE_FAMILY: "1,2"
+
+schemes:
+  viTekMobile:
+    build:
+      targets:
+        viTekMobile: all
+    test:
+      targets: [viTekMobileUITests]

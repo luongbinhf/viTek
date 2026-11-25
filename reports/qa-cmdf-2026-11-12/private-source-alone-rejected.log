@@ -1,0 +1,6 @@
+STRESS host=VSCode rounds=20 source=io.github.luongbinhf.inputmethod.viTek HID=true
+BEGIN round=1 case=focus keyPauseUs=0
+PASS round=1 case=focus
+BEGIN round=2 case=focus keyPauseUs=1000
+FAIL immediate new field conversion expected="việt " actual="viêtj " focus=Find
+QA FAILED: mismatch("immediate new field conversion")
