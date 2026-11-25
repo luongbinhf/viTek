@@ -126,14 +126,14 @@ xcodegen generate --spec Apps/macOS/project.yml
 xcodebuild -project Apps/macOS/viTek.xcodeproj -scheme viTek -configuration Debug \
   -derivedDataPath build/DerivedData.noindex build
 
-scripts/install_dev.sh        # build Debug, cài vào ~/Library/Input Methods, dừng tiến trình đang chạy
+scripts/install_dev.sh            # build Debug, cài vào ~/Library/Input Methods, dừng tiến trình đang chạy
 # Lần đầu: đăng xuất/đăng nhập lại, rồi System Settings → Keyboard → Input Sources → + → Vietnamese → viTek
-scripts/version.sh bump build # 2026.0.001 → 2026.0.002, ghi VERSION và Version.xcconfig
+scripts/version.sh bump build     # 20261125.1.001 → 20261125.1.002, ghi VERSION và Version.xcconfig
 ```
 
 Cài đặt: menu nguồn nhập trên thanh menu → "Cài đặt viTek…". Thay đổi có hiệu lực từ từ tiếp theo, không cần chuyển nguồn nhập.
 Icon nguồn nhập là PDF vector dạng template (giống icon nguồn nhập của chính macOS), vẽ bằng `swift scripts/make_input_icon.swift Apps/macOS/viTek/InputIconTemplate.pdf`. Không dùng ảnh bitmap: macOS co giãn icon theo từng chỗ hiển thị, bitmap sẽ nhoè.
-Logo ứng dụng (`CFBundleIconFile = AppIcon`) vẽ bằng `swift scripts/make_app_icon.swift Apps/macOS/viTek/AppIcon.icns key` (chạy từ gốc repo; `blue` là phương án nền xanh); thiếu logo thì Finder, System Settings và bảng chọn nguồn nhập hiện icon dự phòng của macOS.
+Logo ứng dụng (`CFBundleIconFile = AppIcon`), iOS AppIcon (`viTek.png`), linh vật Cú Lạc (`BrandMascot.png`) và nền DMG Retina (`dmg-background.tiff`) được tạo bằng `swift scripts/make_brand_assets.swift <logo-source> <mascot-source>`.
 Danh sách từ tiếng Anh sinh lại bằng `swift run vitek-wordlist /usr/share/dict/web2 > /tmp/list && mv /tmp/list Sources/VitekEngine/EnglishWordList.swift` (ghi ra tệp tạm trước, vì công cụ cần chính tệp đó để build).
 
 ## 7. Cổng chất lượng
@@ -143,9 +143,9 @@ Danh sách từ tiếng Anh sinh lại bằng `swift run vitek-wordlist /usr/sha
 | Test | `swift test` xanh; mỗi PR thêm hành vi phải thêm test |
 | Concurrency | Swift 6, `SWIFT_STRICT_CONCURRENCY: complete`, không warning |
 | Đầu ra | NFC dựng sẵn; property test 8.000 chuỗi ngẫu nhiên không crash, Backspace luôn về rỗng |
-| Hiệu năng | < 50 µs/phím p99 qua `InputSession`, đo bằng `swift run -c release vitek-bench` (52.400 phím Telex, VNI và ngẫu nhiên). Lần đo 2026-11-02 trên Apple Silicon: p50 0,3–0,5 µs, p99 1,3–2,2 µs. Phím đầu tiên dựng bảng tra (tới ~0,5 ms), nên host gõ thử một câu lúc khởi động |
+| Hiệu năng | < 50 µs/phím p99 qua `InputSession`, đo bằng `swift run -c release vitek-bench` (52.400 phím Telex, VNI và ngẫu nhiên) |
 | Nguồn gốc | checklist trong [SOURCES.md](../SOURCES.md) cho mọi PR |
-| Phiên bản | `VERSION` đúng `YYYY.X.XXX` và khớp `Version.xcconfig` (`RepositoryTests`) |
+| Phiên bản | `VERSION` đúng `YYYYMMDD.X.YYY` và khớp `Version.xcconfig` + `Casks/vitek.rb` (`RepositoryTests`) |
 
 ## 8. Phiên bản
 

@@ -5,13 +5,13 @@ Mọi thứ vào repo này phải có nguồn gốc rõ ràng. Quy tắc áp d�
 ## Không được dùng
 
 * Mã nguồn hoặc dữ liệu của bất kỳ bộ gõ tiếng Việt nào khác (bất kể giấy phép), kể cả bảng mã, bộ test hay danh sách từ của chúng.
-* Dữ liệu, asset hoặc thư viện mà giấy phép không cho phân phối trong phần mềm đóng.
+* Dữ liệu, asset hoặc thư viện mà giấy phép không cho phân phối theo giấy phép MIT mã nguồn mở và trên App Store.
 
 ## Được dùng
 
 * Kiến thức chính tả tiếng Việt, sách giáo khoa, từ điển và tài liệu ngôn ngữ học công khai (để suy ra quy tắc, không chép bảng có bản quyền).
 * Tài liệu công khai của Apple (InputMethodKit, Text Input Sources, Human Interface Guidelines), Swift Evolution, Unicode (UCD, CLDR) theo giấy phép của chúng.
-* Dữ liệu có giấy phép cho phép phân phối trong phần mềm đóng (CC0, public domain, MIT, Apache-2.0, ODC-By kèm ghi công). **Không** dùng CC BY-SA, CC BY-NC hoặc "chỉ dùng cho nghiên cứu" trong sản phẩm.
+* Dữ liệu có giấy phép cho phép phân phối theo giấy phép MIT mã nguồn mở và trên App Store (CC0, public domain, MIT, Apache-2.0, ODC-By kèm ghi công). **Không** dùng CC BY-SA, CC BY-NC hoặc "chỉ dùng cho nghiên cứu" trong sản phẩm.
 * Thư viện bên thứ ba khai báo bằng Swift Package Manager, giấy phép permissive, ghi vào bảng bên dưới.
 
 ## Bảng nguồn
@@ -23,7 +23,7 @@ Mỗi dữ liệu, asset hoặc thư viện bên ngoài là một dòng. PR thi�
 | Bảng vần, phụ âm đầu, quy tắc đặt dấu (`Orthography.swift`) | soạn trong dự án từ chính tả tiếng Việt | thuộc dự án | kiểm bằng `OrthographyTests` |
 | Bảng ký tự dựng sẵn (`Glyphs.swift`) | Unicode Character Database | Unicode License v3 | kiểm bằng phân rã chuẩn trong `GlyphsTests` |
 | Danh sách từ tiếng Anh (`EnglishWordList.swift`, `EnglishWords.swift`) | 143 từ do dự án chọn, kiểm bằng `/usr/share/dict/web2` (Webster's Second International, 1934) có sẵn trong macOS | web2: hết hạn bản quyền (public domain); danh sách chọn: thuộc dự án | 69 mục có cách đọc Telex mang dấu và 74 mục khôi phục chữ sau thao tác huỷ dấu |
-| Logo ứng dụng và bộ cài (`AppIcon.icns`, `AppIcon.appiconset/viTek.png`) | vẽ trong dự án bằng `scripts/make_app_icon.swift`: hình vector theo lưới icon macOS, chữ là đường viền glyph của font hệ thống | thuộc dự án | sinh lại được từ script |
+| Bộ nhận diện thương hiệu, linh vật Cú Lạc & Logo (`AppIcon.icns`, `viTek.png`, `BrandMascot.png`, `assets/brand/*`) | tạo trong dự án và đóng gói qua `scripts/make_brand_assets.swift` | thuộc dự án (MIT) | sinh lại được từ nguồn gốc |
 | Icon nguồn nhập (`InputIconTemplate.pdf`) | vẽ trong dự án bằng `scripts/make_input_icon.swift`: PDF vector, chữ là đường viền glyph của font hệ thống | thuộc dự án | sinh lại được từ script |
 | Tín hiệu thói quen gõ (`TypingHabits.swift`) | Ví dụ từ mơ hồ và từ tiếng Anh do dự án chọn cho chế độ tự động | thuộc dự án | chỉ lưu điểm số theo ứng dụng |
 | Gợi ý viết | Foundation Models của Apple, gọi `SystemLanguageModel.default` | thuộc hệ điều hành | mô hình trên thiết bị, không đóng gói trọng số |

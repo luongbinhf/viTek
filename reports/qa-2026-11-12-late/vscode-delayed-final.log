@@ -1,7 +1,0 @@
-host=VSCode forcedDelayMs=2000 physicalHID=true
-PASS delayed positive control: visible panel and Option+1 accepted liệu
-PASS field switch: delayed completion arrived cancelled; panel stayed hidden; text preserved
-PASS caret moved: delayed completion arrived cancelled; panel stayed hidden; text preserved
-PASS caret returned to same position: delayed completion arrived cancelled; panel stayed hidden; text preserved
-PASS out-of-order response: 300ms result stayed visible after cancelled 2000ms result; accepted once
-DELAYED SUGGESTION UI QA PASSED

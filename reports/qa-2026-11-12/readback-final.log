@@ -1,7 +1,0 @@
-PASS reject unavailable/out-of-bounds document length 9223372036854775807
-PASS reject unavailable/out-of-bounds document length -1
-PASS reject unavailable/out-of-bounds document length 7
-PASS verified document substring
-PASS reject truncated substring
-PASS reject selected-text fallback for empty range
-PASS verified empty insertion point

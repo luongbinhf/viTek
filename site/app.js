@@ -269,6 +269,127 @@
     });
   }
 
+  // --- Bilingual VI <-> EN switch for GitHub Pages UI ---
+  const translations = {
+    vi: {
+      skip: 'Bỏ qua điều hướng, tới nội dung chính',
+      navAdvantages: 'Ưu điểm',
+      navFeatures: 'Tính năng',
+      navInstall: 'Cài đặt',
+      perfPill: '0,88 µs p50 · Apple Silicon',
+      heroTitle: 'Bộ gõ tiếng Việt <span class="gradient-text">100% Swift Native</span> cho hệ sinh thái Apple',
+      heroLead: 'Lõi Swift 6 dùng chung cho <strong>macOS 14+</strong> và <strong>iOS / iPadOS 26+</strong>. Tự nhận Telex &amp; VNI theo từng từ, không cần quyền Trợ năng để gõ, không thu thập dữ liệu.',
+      ctaDownload: 'Tải viTek cho macOS (.DMG)',
+      ctaGithub: 'Xem mã nguồn trên GitHub',
+      playHeading: 'Gõ thử Telex & VNI trực tiếp',
+      playHint: 'Thử gõ Telex, VNI và từ tiếng Anh / code trong cùng một câu.',
+      presetMix: 'Mẫu chuẩn',
+      presetTone: 'Dấu mới/cũ',
+      presetCode: 'Pha Việt–Anh',
+      presetClear: 'Xoá',
+      playNote: 'Nhấn <kbd>Esc</kbd> khi đang gõ một từ để hoàn tác ngay về phím gốc.',
+      advTitle: 'Vì sao chọn viTek? — 6 Ưu điểm cốt lõi',
+      adv1Title: '100% Swift 6 Native',
+      adv1Desc: 'Một lõi thuần Swift dùng chung cho macOS, iOS và iPadOS; kiểm tra strict concurrency 0 cảnh báo.',
+      adv2Title: 'Không cần Trợ năng để gõ',
+      adv2Desc: 'Không cài global CGEventTap trên macOS và chạy sạch trên iOS kể cả khi tắt Truy cập đầy đủ.',
+      adv3Title: 'Bảo vệ Tiếng Anh & Code',
+      adv3Desc: 'Khử mơ hồ ngữ cảnh (been, soon, noon, lose) và Smart Bypass cho camelCase, snake_case, URL.',
+      adv4Title: 'Ổn định trên Web & Electron',
+      adv4Desc: 'DocumentSession xác minh vùng sửa trước khi chèn, không gửi Backspace giả trên Chrome và VS Code.',
+      adv5Title: 'Tốc độ dưới micro-giây',
+      adv5Desc: 'Chỉ mục vần O(1) đạt 0,88 µs p50 phím và 20,5 µs p50 gợi ý cục bộ trên Apple Silicon.',
+      adv6Title: 'MIT Mở & Dữ liệu sạch',
+      adv6Desc: 'Nguồn gốc sạch 100%, không sao chép từ bộ gõ khác, hỗ trợ cập nhật 1 chạm xác minh SHA-256.',
+      featTitle: '4 Nhóm Tính năng Chuẩn hoá',
+      feat1Title: '1. Bộ gõ Song ngữ Thông minh',
+      feat1Desc: 'Tự nhận Telex & VNI từng từ, chuyển VI ↔ EN 0 ms (HUD Liquid Glass macOS), đặt dấu mới/cũ, gõ tắt phụ âm, sửa từ vừa chốt, phím Esc hoàn tác thô và tự tắt dấu theo ứng dụng / Focus Filter.',
+      feat2Title: '2. Gõ tắt, Gợi ý & Đồng bộ iCloud',
+      feat2Desc: 'Giữ kiểu chữ hoa (ko/Ko/KO), biến {{date}}/{{time}}/{{datetime}}, nhập tệp UniKey/OpenKey/CSV, tìm Emoji tiếng Việt có dấu hoặc không dấu, học tần suất cá nhân và đồng bộ iCloud.',
+      feat3Title: '3. Công cụ Chuyển mã & Apple AI',
+      feat3Desc: 'TextConverter tự sửa lỗi font VNI Windows / TCVN3 sang Unicode NFC, bỏ dấu, đổi HOA/thường qua menu macOS, nút Aa trên iOS và Apple Shortcuts; hỗ trợ Apple Intelligence & Widgets.',
+      feat4Title: '4. Bàn phím iOS & iPadOS Thích ứng',
+      feat4Desc: 'Bố cục một tay trái/phải khi cầm dọc, chia đôi Split Keyboard khi xoay ngang & iPad, vuốt xuống phím chữ gõ số/ký hiệu, hỗ trợ bàn phím cứng / Magic Keyboard và kéo Dấu cách di chuyển con trỏ.',
+      benchTitle: 'Hiệu năng đo thực tế trên Apple Silicon',
+      benchCore: 'Lõi gõ phím viTek (p99)',
+      benchPred: 'Gợi ý từ & Emoji cục bộ (p99)',
+      benchFrame: 'Ngân sách 1 khung hình 120Hz (8.330 µs)',
+      dmgTitle: 'Cài đặt macOS trực quan & Bắt đầu nhanh',
+      dmgDesc: 'Khung cài đặt <code>.DMG</code> thiết kế trực quan phong cách Apple / Docker / GitHub: kéo <strong>Cài viTek</strong> vào <strong>Applications</strong>, mở lên để cài nguyên tử vào <code>~/Library/Input Methods</code> và bật nguồn nhập tức thì.',
+      linkMac: 'Hướng dẫn macOS (DMG & Homebrew) →',
+      linkIOS: 'Hướng dẫn iOS / iPadOS & TestFlight →',
+      dmgCaption: 'Khung kéo thả DMG Retina đi kèm linh vật Cú Lạc viTek.',
+      footerLicense: '<strong>viTek</strong> — Phát hành mã nguồn mở theo <a href="https://github.com/luongbinhf/viTek/blob/main/LICENSE">Giấy phép MIT</a>.',
+      footerSec: 'Bảo mật',
+      footerContrib: 'Đóng góp',
+    },
+    en: {
+      skip: 'Skip navigation, go to main content',
+      navAdvantages: 'Advantages',
+      navFeatures: 'Features',
+      navInstall: 'Install',
+      perfPill: '0.88 µs p50 · Apple Silicon',
+      heroTitle: '100% <span class="gradient-text">Swift Native</span> Vietnamese Input Method for Apple',
+      heroLead: 'Shared pure Swift 6 core for <strong>macOS 14+</strong> and <strong>iOS / iPadOS 26+</strong>. Automatic per-word Telex &amp; VNI detection, zero Accessibility required to type, zero telemetry.',
+      ctaDownload: 'Download viTek for macOS (.DMG)',
+      ctaGithub: 'View Source on GitHub',
+      playHeading: 'Live Telex & VNI Playground',
+      playHint: 'Mix Telex, VNI, and English/code tokens freely inside a single sentence.',
+      presetMix: 'Mix Sample',
+      presetTone: 'Tone Style',
+      presetCode: 'Mixed Code',
+      presetClear: 'Clear',
+      playNote: 'Press <kbd>Esc</kbd> mid-word to immediately revert to the raw typed keys.',
+      advTitle: 'Why viTek? — 6 Core Advantages',
+      adv1Title: '100% Swift 6 Native',
+      adv1Desc: 'One shared pure-Swift core across macOS, iOS, and iPadOS under strict concurrency with zero warnings.',
+      adv2Title: 'No Accessibility Required',
+      adv2Desc: 'Zero global CGEventTap keyloggers on macOS; runs offline on iOS even with Full Access turned off.',
+      adv3Title: 'English & Code Protection',
+      adv3Desc: 'Context disambiguation (been, soon, noon, lose) and Smart Token Bypass for camelCase, snake_case, and URLs.',
+      adv4Title: 'Rock-Solid on Web & Electron',
+      adv4Desc: 'DocumentSession verifies UTF-16 ranges before editing — no synthetic Backspace hacks in Chrome or VS Code.',
+      adv5Title: 'Sub-Microsecond Speed',
+      adv5Desc: 'O(1) rime indexing achieves 0.88 µs keystroke p50 and 20.5 µs local prediction p50 on Apple Silicon.',
+      adv6Title: 'MIT Open Source & SHA-256',
+      adv6Desc: '100% clean-room provenance with zero copied code/wordlists, plus 1-click SHA-256 verified updates.',
+      featTitle: '4 Standardized Feature Groups',
+      feat1Title: '1. Smart Bilingual Engine',
+      feat1Desc: 'Per-word Telex & VNI detection, 0 ms VI ↔ EN toggle (with macOS Liquid Glass HUD), Modern/Traditional tone styles, optional quick consonants, post-word editing, Esc raw undo, and per-app / Focus auto-switch.',
+      feat2Title: '2. Macros, Predictions & iCloud',
+      feat2Desc: 'Case-preserving shortcuts (ko/Ko/KO), dynamic {{date}}/{{time}}/{{datetime}}, UniKey/OpenKey/CSV import, bilingual Vietnamese Emoji search, adaptive local ranking, and iCloud sync.',
+      feat3Title: '3. Text Converter & Apple AI',
+      feat3Desc: 'Pure-Swift TextConverter auto-repairs VNI Windows / TCVN3 to Unicode NFC, strips accents, and converts case via macOS menu, iOS Aa button, and Apple Shortcuts, plus Apple Intelligence & Widgets.',
+      feat4Title: '4. Adaptive iOS & iPadOS Keyboard',
+      feat4Desc: 'Portrait left/right One-Handed layout, landscape & iPad Split Keyboard, flick-down number/symbol keys, Hardware / Magic Keyboard support (pressesBegan), and Spacebar cursor trackpad.',
+      benchTitle: 'Measured Apple Silicon Performance',
+      benchCore: 'viTek Core Engine (p99)',
+      benchPred: 'Local Word & Emoji Prediction (p99)',
+      benchFrame: '120Hz ProMotion Frame Budget (8,330 µs)',
+      dmgTitle: 'Visual macOS Installer & Quick Start',
+      dmgDesc: 'Intuitive Apple / Docker / GitHub style <code>.DMG</code>: drag <strong>Cài viTek</strong> into <strong>Applications</strong> and launch once to atomically install into <code>~/Library/Input Methods</code>.',
+      linkMac: 'macOS Guide (DMG & Homebrew) →',
+      linkIOS: 'iOS / iPadOS & TestFlight Guide →',
+      dmgCaption: 'Retina drag-and-drop DMG installer featuring the viTek Lac Owl mascot.',
+      footerLicense: '<strong>viTek</strong> — Open source under the <a href="https://github.com/luongbinhf/viTek/blob/main/LICENSE">MIT License</a>.',
+      footerSec: 'Security',
+      footerContrib: 'Contributing',
+    },
+  };
+
+  let pageLang = 'vi';
+  const siteLangBtn = document.getElementById('site-lang-toggle');
+  siteLangBtn?.addEventListener('click', () => {
+    pageLang = pageLang === 'vi' ? 'en' : 'vi';
+    document.documentElement.lang = pageLang;
+    siteLangBtn.textContent = pageLang === 'vi' ? 'EN' : 'VI';
+    const dict = translations[pageLang];
+    document.querySelectorAll('[data-i18n]').forEach((el) => {
+      const key = el.getAttribute('data-i18n');
+      if (key && dict[key]) el.innerHTML = dict[key];
+    });
+  });
+
   toggleLangBtn?.addEventListener('click', () => {
     vietnameseEnabled = !vietnameseEnabled;
     toggleLangBtn.textContent = vietnameseEnabled ? 'VI' : 'EN';

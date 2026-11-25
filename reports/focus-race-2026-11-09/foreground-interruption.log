@@ -1,4 +1,0 @@
-activationSucceeded=true
-targetForeground=true
-host=Chrome source=io.github.luongbinhf.inputmethod.viTek
-QA FAILED: mismatch("lost QA target: foreground=false, windowAvailable=true")

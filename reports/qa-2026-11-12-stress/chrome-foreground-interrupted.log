@@ -1,3 +1,0 @@
-STRESS host=Chrome rounds=20 source=io.github.luongbinhf.inputmethod.viTek HID=true
-INTERRUPTED foregroundPID=1125 targetPID=29044 windowMatches=true
-QA FAILED: mismatch("QA foreground/window changed; stress interrupted")

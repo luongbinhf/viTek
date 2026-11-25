@@ -9,7 +9,7 @@ import Foundation
 //   3. assets/brand/vitek-logo.png (512x512 squircle PNG with transparent background)
 //   4. assets/brand/vitek-mascot.png (640x640 crisp mascot PNG)
 //   5. Apps/Shared/BrandMascot.png (512x512 bundled mascot for macOS & iOS UI)
-//   6. assets/brand/dmg-background.png (660x440) & dmg-background@2x.png (1320x880) + dmg-background.tiff (multi-res @1x/@2x)
+//   6. assets/brand/dmg-background@2x.png (1320x880) + assets/brand/dmg-background.tiff (multi-res @1x/@2x)
 
 guard CommandLine.arguments.count == 3 else {
     fputs("usage: swift scripts/make_brand_assets.swift <logo-source-image> <mascot-source-image>\n", stderr)
@@ -382,10 +382,11 @@ writePNG(mascotTransparent640, to: root.appendingPathComponent("assets/brand/vit
 let mascotTransparent512 = makeTransparentMascot(from: mascotRawCG, size: 512)
 writePNG(mascotTransparent512, to: root.appendingPathComponent("Apps/Shared/BrandMascot.png"))
 
-// 4. Retina DMG Installer Backgrounds (@1x 660x440, @2x 1320x880, and multi-resolution TIFF for Finder)
+// 4. Retina DMG Installer Backgrounds (@1x temporary + @2x 1320x880 → multi-resolution TIFF for Finder)
 let dmg1x = renderDMGBackground(mascot: mascotTransparent512, logo: logoCG, scale: 1)
 let dmg2x = renderDMGBackground(mascot: mascotTransparent512, logo: logoCG, scale: 2)
-let dmg1xURL = root.appendingPathComponent("assets/brand/dmg-background.png")
+let dmg1xURL = URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent("dmg-background-\(UUID().uuidString).png")
+defer { try? fm.removeItem(at: dmg1xURL) }
 let dmg2xURL = root.appendingPathComponent("assets/brand/dmg-background@2x.png")
 let dmgTiffURL = root.appendingPathComponent("assets/brand/dmg-background.tiff")
 writePNG(dmg1x, to: dmg1xURL, opaque: true)

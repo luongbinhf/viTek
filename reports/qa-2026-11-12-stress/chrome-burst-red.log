@@ -1,4 +1,0 @@
-STRESS host=Chrome rounds=20 source=io.github.luongbinhf.inputmethod.viTek HID=true
-BEGIN round=1 case=burst keyPauseUs=0
-FAIL ten consecutive fast words expected="việt việt việt việt việt việt việt việt việt việt " actual="việt việt việt  tj việt việt việt việt việt " focus=
-QA FAILED: mismatch("ten consecutive fast words")

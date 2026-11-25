@@ -1,9 +1,0 @@
-STRESS host=Chrome rounds=10 source=io.github.luongbinhf.inputmethod.viTek eventTap=HID sourceState=private
-BEGIN round=1 case=burst keyPauseUs=0
-PASS round=1 case=burst
-BEGIN round=1 case=quick keyPauseUs=0
-PASS round=1 case=quick
-BEGIN round=1 case=english keyPauseUs=0
-FAIL fixture reset expected="" actual="vie" focus=
-FIXTURE TRACE QA:{"old":"vie","next":"","events":[{"ms":0.3,"field":"old","kind":"beforeinput","value":""},{"ms":0.5,"field":"old","kind":"input","value":"vie"},{"ms":2028.5,"field":"old","kind":"keydown","key":"F3","value":"vie"}]}
-QA FAILED: mismatch("fixture reset")

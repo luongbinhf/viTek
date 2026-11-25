@@ -1,3 +1,0 @@
-STRESS host=Chrome rounds=10 source=io.github.luongbinhf.inputmethod.viTek eventTap=HID sourceState=private
-FAIL input-source positive control expected="việt việt " actual="tj việt " focus=
-QA FAILED: mismatch("input-source positive control")

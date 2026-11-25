@@ -1,8 +1,0 @@
-STRESS host=Chrome rounds=3 source=io.github.luongbinhf.inputmethod.viTek eventTap=HID sourceState=private
-BEGIN round=1 case=prediction-pause keyPauseUs=0
-PASS round=1 case=prediction-pause
-BEGIN round=2 case=prediction-pause keyPauseUs=1000
-PASS round=2 case=prediction-pause
-BEGIN round=3 case=prediction-pause keyPauseUs=5000
-PASS round=3 case=prediction-pause
-STRESS QA PASSED cases=3 assertions=18 accepted=3 physicalKeys=87 hostCommandRetries=0 modifierEvents=14 elapsed=6.463945875 seconds

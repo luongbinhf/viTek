@@ -1,3 +1,0 @@
-STRESS host=VSCode rounds=20 source=io.github.luongbinhf.inputmethod.viTek eventTap=HID sourceState=private
-FAIL input-source positive control expected="việt việt " actual="vieệt " focus=viTek-System-QA.txt
-QA FAILED: mismatch("input-source positive control")
