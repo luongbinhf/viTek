@@ -37,6 +37,6 @@ Ví dụ:
 
 Dữ liệu khởi đầu gồm từ/cụm và token, chưa có định nghĩa từ, từ loại, phân tích cú pháp, phân đoạn từ tiếng Việt đầy đủ, corpus tần suất hoặc mô hình ngôn ngữ học đã huấn luyện. Chất lượng được kiểm trên fixture tự soạn; chưa có số đo chất lượng ngoài mẫu trên corpus độc lập. Cần dữ liệu có giấy phép phù hợp và đánh giá riêng trước khi tuyên bố độ phủ lớn.
 
-Lõi thuần Swift dùng chung macOS/iOS/Linux. Thanh gợi ý mới nối vào host macOS; bàn phím iOS hiện chưa có thanh nhận ứng viên này. Các phím Telex vẫn đi qua engine hiện tại, nên identifier có phím dấu mơ hồ có thể cần chuyển nguồn nhập hoặc nhận ứng viên trước phím đó. Tích hợp ngữ nghĩa code cần editor extension/LSP thay vì đoán từ tên ứng dụng. Apple Intelligence vẫn dùng cho yêu cầu viết rõ ràng; đường hoàn tất từng phím không gọi mô hình sinh.
+Lõi thuần Swift dùng chung cho macOS, iOS, iPadOS và Linux; cả macOS (`SuggestionPanel`, nhận nhanh bằng `⌥ Space` hoặc `⌥ 1–5`) lẫn bàn phím iOS/iPadOS đều dùng chung thanh gợi ý từ, `PersonalFrequency` (unigram/bigram/trigram 1–3 từ có đồng bộ iCloud tuỳ chọn) và gợi ý mở rộng gõ tắt trực tiếp. Các phím Telex vẫn đi qua engine hiện tại, nên identifier có phím dấu mơ hồ có thể cần chuyển nguồn nhập hoặc nhận ứng viên trước phím đó. Tích hợp ngữ nghĩa code chuyên sâu cần editor extension/LSP thay vì đoán từ tên ứng dụng. Apple Intelligence chỉ dùng cho yêu cầu viết chủ động; đường hoàn tất từng phím luôn xử lý cục bộ.
 
-Kiểm: `swift test`; đo: `swift run -c release vitek-prediction-bench`. [Báo cáo lần nâng cấp](QA-PREDICTION-2026-11-13.md).
+Kiểm thử: `swift test`; đo hiệu năng gợi ý: `swift run -c release vitek-prediction-bench`.

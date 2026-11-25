@@ -4,11 +4,6 @@ Mỗi bản phát hành chính thức được gắn tag theo chuẩn [phiên b�
 
 ## Đã hoàn thành
 
-### `20261125.1.001` — Khởi chạy Open Source (MIT) & Bộ nhận diện mới
-- [x] Chuyển sang giấy phép **MIT Open Source** với lịch sử commit sạch tại kho công khai `luongbinhf/viTek`.
-- [x] Lõi **Swift 6 Native** dùng chung (`VitekEngine` + `VitekSession`), không cầu nối FFI, hỗ trợ Telex/VNI tự động, Smart Token Bypass, `DocumentSession` xác minh UTF-16, gõ tắt động, gợi ý từ/Emoji cục bộ, `TextConverter` và tích hợp Apple Intelligence / Widgets / Focus Filter.
-- [x] Thiết kế linh vật **Cú Lạc viTek**, biểu tượng ứng dụng macOS/iOS mới, khung cài đặt `.DMG` Retina kéo thả trực quan và làm mới giao diện macOS / iOS / iPadOS.
-
 ### `20261125.1.003` — Quản lý Clipboard, Đồng bộ iCloud mở rộng & Tiên đoán 3-từ
 - [x] `ClipboardHistory` thuần Swift tìm kiếm không dấu, `ClipboardMonitor` bỏ qua mật khẩu, popup Liquid Glass **`⌃⌥V`** macOS, tab Clipboard + phím **`📋`** trên bàn phím iOS.
 - [x] Mở rộng `CloudSettingsSync`: đồng bộ mẫu Clipboard ghim, tuỳ chọn Clipboard gần đây và bộ nhớ từ vựng cá nhân `1–3` từ qua iCloud.
@@ -22,11 +17,16 @@ Mỗi bản phát hành chính thức được gắn tag theo chuẩn [phiên b�
 - [x] **Công cụ chữ nhanh (`Aa`)** và hỗ trợ **bàn phím cứng / Magic Keyboard** (`pressesBegan`) trên bàn phím iOS/iPadOS.
 - [x] Mở rộng từ vựng gợi ý (`BuiltinVocabulary`) và khử mơ hồ Anh–Việt theo ngữ cảnh (`been`, `soon`, `noon`, `lose`).
 
+### `20261125.1.001` — Khởi chạy Open Source (MIT) & Bộ nhận diện mới
+- [x] Chuyển sang giấy phép **MIT Open Source** với lịch sử commit sạch tại kho công khai `luongbinhf/viTek`.
+- [x] Lõi **Swift 6 Native** dùng chung (`VitekEngine` + `VitekSession`), không cầu nối FFI, hỗ trợ Telex/VNI tự động, Smart Token Bypass, `DocumentSession` xác minh UTF-16, gõ tắt động, gợi ý từ/Emoji cục bộ, `TextConverter` và tích hợp Apple Intelligence / Widgets / Focus Filter.
+- [x] Thiết kế linh vật **Cú Lạc viTek**, biểu tượng ứng dụng macOS/iOS mới, khung cài đặt `.DMG` Retina kéo thả trực quan và làm mới giao diện macOS / iOS / iPadOS.
+
 ---
 
 ## Lộ trình tiếp theo
 
 - [ ] **Ký số & Notarization macOS chính thức:** Cấu hình Apple Developer ID + `notarytool` trên GitHub Actions để tệp `.DMG` mở trực tiếp trên macOS mà không hiện cảnh báo Gatekeeper.
-- [ ] **Phát hành TestFlight & App Store (iOS / iPadOS):** Kết nối chứng chỉ `Apple Distribution` và khóa App Store Connect API cho quy trình [APPSTORE.md](APPSTORE.md) để đẩy bản `20261125.1.2` lên TestFlight và App Store.
+- [ ] **Phát hành TestFlight & App Store (iOS / iPadOS):** Kết nối chứng chỉ `Apple Distribution` và khóa App Store Connect API cho quy trình [APPSTORE.md](APPSTORE.md) để đẩy bản phát hành mới nhất lên TestFlight và App Store.
 - [ ] **Từ điển tần suất tiếng Việt giấy phép sạch:** Tích hợp thêm dữ liệu tần suất hợp chuẩn để tăng độ chính xác khi khử mơ hồ giữa từ tiếng Anh ngắn và tiếng Việt có dấu.
 - [ ] **Tự động hóa ảnh chụp App Store & kiểm thử mở rộng:** Tự động xuất ảnh màn hình từ UI Tests (iPhone dọc/ngang, iPad Pro Split Keyboard) và mở rộng kiểm thử trên nhiều trình soạn thảo Chromium/Electron hơn ([COMPATIBILITY.md](COMPATIBILITY.md)).

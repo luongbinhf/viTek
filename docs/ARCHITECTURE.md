@@ -1,6 +1,6 @@
 # viTek — Kiến trúc
 
-viTek là bộ gõ tiếng Việt cho macOS (sau đó iOS).
+viTek là bộ gõ tiếng Việt 100% Swift 6 Native cho macOS, iOS và iPadOS.
 Đọc kèm: [ENGINE.md](ENGINE.md) (đặc tả engine) · [UX.md](UX.md) (giao diện) · [ROADMAP.md](ROADMAP.md) · [SOURCES.md](../SOURCES.md).
 
 ---
@@ -26,7 +26,7 @@ viTek là bộ gõ tiếng Việt cho macOS (sau đó iOS).
  │   VitekInputController   NSEvent → HostEvent (KeyMap), HostCommand → client                  │
  │   SettingsStore          UserDefaults ↔ EngineOptions, gõ tắt; đổi là áp dụng ngay           │
  │   menu()                 menu nguồn nhập: kiểu dấu, chính tả, gõ tắt              │
- │   SettingsWindow         cửa sổ cài đặt SwiftUI, thanh bên 6 mục (docs/UX.md)                │
+ │   SettingsWindow         cửa sổ cài đặt SwiftUI, thanh bên 7 mục (docs/UX.md)                │
  │   TypingHabits           điểm ưu tiên của ứng dụng, lưu bằng SettingsStore                       │
  └──────────────────────────────────────┬───────────────────────────────────────────────────────┘
                                         │ HostEvent ↓   ↑ SessionOutput { commands, passThrough }
@@ -94,7 +94,7 @@ Gợi ý bất đồng bộ dùng `SuggestionRequest` để gắn kết quả v�
 ```text
 viTek/
 ├── Package.swift            # VitekEngine, VitekSession, vitek (CLI), test targets
-├── VERSION                  # nguồn duy nhất của số phiên bản (YYYY.X.XXX)
+├── VERSION                  # nguồn duy nhất của số phiên bản (YYYYMMDD.X.YYY)
 ├── Sources/
 │   ├── VitekEngine/         # engine thuần Swift
 │   ├── VitekSession/        # giao thức host-agnostic
@@ -166,20 +166,20 @@ Ví dụ: `20261125.1.001` → `20261125.1.002` (sửa lỗi cùng ngày) → `2
 
 `defaults write io.github.luongbinhf.inputmethod.viTek diagnostics -bool YES` bật nhật ký `~/Library/Logs/viTek/diagnostics.log`: ứng dụng nào kích hoạt viTek, có dùng marked text không, loại và độ dài lệnh gửi đi, vị trí con trỏ. Không ghi ký tự người dùng gõ. Tắt bằng `defaults delete io.github.luongbinhf.inputmethod.viTek diagnostics`.
 
-Gợi ý cần ngữ cảnh: văn bản trước con trỏ khi ứng dụng đọc lại được, nếu không thì `typedContext`, những gì viTek đã gõ vào ô này kể từ lần con trỏ nhảy gần nhất. Vị trí con trỏ: `firstRect` ở con trỏ, rồi khung của ký tự ngay trước nó, chỉ nhận khung nằm trên màn hình. Chromium và Electron (nhận ra qua `chrome_crashpad_handler` trong framework, `AppCompatibility.isChromium`) chỉ báo vị trí khi có marked text; khi gõ trực tiếp, `firstRect` trả rác và khung dòng chỉ một chỗ bất kỳ (đã đo trong DeepSeek Harness: có lúc là chỗ bấm vào ô, có lúc là góc trên màn hình). Với các ứng dụng này viTek hỏi vị trí qua Trợ năng (`AccessibilityCaret`: bật `AXManualAccessibility`, đọc `AXSelectedTextMarkerRange` → `AXBoundsForTextMarkerRange`, hoặc `AXBoundsForRange` của ký tự trước con trỏ), chờ 0,12 giây sau phím cuối để cây trợ năng kịp cập nhật. Nếu ứng dụng trả `kAXErrorNoValue` khi hỏi ô đang nhập, viTek chờ thêm 0,12 giây rồi hỏi lại một lần. Phím mới hoặc việc rời ô nhập sẽ huỷ lượt hẹn cũ. Chưa có quyền Trợ năng thì không hiện thanh gợi ý.
+Gợi ý cần ngữ cảnh: văn bản trước con trỏ khi ứng dụng đọc lại được, nếu không thì `typedContext`, những gì viTek đã gõ vào ô này kể từ lần con trỏ nhảy gần nhất. Vị trí con trỏ: `firstRect` ở con trỏ, rồi khung của ký tự ngay trước nó, chỉ nhận khung nằm trên màn hình. Chromium và Electron (nhận ra qua `chrome_crashpad_handler` trong framework, `AppCompatibility.isChromium`) chỉ báo vị trí khi có marked text; khi gõ trực tiếp, `firstRect` trả rác và khung dòng chỉ một chỗ bất kỳ (có thể trả về vị trí lúc mới bấm vào ô hoặc góc màn hình). Với các ứng dụng này viTek hỏi vị trí qua Trợ năng (`AccessibilityCaret`: bật `AXManualAccessibility`, đọc `AXSelectedTextMarkerRange` → `AXBoundsForTextMarkerRange`, hoặc `AXBoundsForRange` của ký tự trước con trỏ), chờ 0,12 giây sau phím cuối để cây trợ năng kịp cập nhật. Nếu ứng dụng trả `kAXErrorNoValue` khi hỏi ô đang nhập, viTek chờ thêm 0,12 giây rồi hỏi lại một lần. Phím mới hoặc việc rời ô nhập sẽ huỷ lượt hẹn cũ. Chưa có quyền Trợ năng thì không hiện thanh gợi ý.
 
-Điều đã biết về Chromium/Electron (Claude, Slack, VS Code): mỗi cửa sổ giữ nguồn nhập riêng, nên phải chọn viTek **trong chính cửa sổ đó** (⌃ Space hoặc menu nguồn nhập); sau khi viTek khởi động lại, cửa sổ đó cần chọn lại viTek. Chữ đang soạn có lúc hiện chậm một nhịp khi độ dài không đổi (`viêt` → `việt`), chữ được chốt vẫn đúng.
+Điều đã biết về Chromium/Electron (Chrome, Slack, VS Code): mỗi cửa sổ giữ nguồn nhập riêng, nên phải chọn viTek **trong chính cửa sổ đó** (⌃ Space hoặc menu nguồn nhập); sau khi viTek khởi động lại, cửa sổ đó cần chọn lại viTek. Chữ đang soạn có lúc hiện chậm một nhịp khi độ dài không đổi (`viêt` → `việt`), chữ được chốt vẫn đúng.
 
 ## 10. Tệp gõ tắt
 
-Nhập và xuất trong tab Gõ tắt của cửa sổ cài đặt (`ShortcutFile` trong `VitekSession`, có test riêng).
+Nhập và xuất trong tab Gõ tắt của cửa sổ cài đặt (`ShortcutFile` trong `VitekSession`, có test riêng). Hỗ trợ định dạng gốc của viTek (`chữ tắt<TAB>cụm thay thế` hoặc dấu cách), định dạng dấu hai chấm (`chữ:thay bằng`) và CSV.
 
-* Văn bản UTF-8, mỗi dòng một gõ tắt: chữ tắt, rồi Tab (hoặc một hay nhiều dấu cách), rồi cụm thay thế.
+* Văn bản UTF-8, mỗi dòng một gõ tắt.
 * Trong cụm thay thế, `\n`, `\r`, `\t`, `\\` là LF, CR, Tab và dấu `\`; CRLF xuất thành `\r\n` để giữ nguyên mẫu nhiều dòng.
-* Dòng trống và dòng bắt đầu bằng `#` bị bỏ qua; dòng thiếu một trong hai phần được báo lại theo số dòng.
+* Dòng trống và dòng bắt đầu bằng `#` hoặc `;` bị bỏ qua; dòng thiếu một trong hai phần được báo lại theo số dòng.
 * Nhập là gộp: chữ tắt đã có thì cập nhật cụm thay thế, chữ tắt mới thì thêm vào cuối danh sách.
 
-## 10. Cập nhật và kết nối nguồn nhập (2026.0.003)
+## 11. Cập nhật và kết nối nguồn nhập
 
 Bộ cài GUI và `scripts/install_dev.sh` dùng chung `Installation.update`: kiểm payload trước, chuyển sang nguồn ASCII nếu cần, yêu cầu tiến trình cũ dừng bình thường, chờ dừng thành công rồi thay bundle nguyên tử. Không force-kill bộ gõ hoặc `TextInputMenuAgent`, không xóa bundle đang chạy trước khi bản mới sẵn sàng. Công cụ cài dòng lệnh báo lỗi với exit code, không để lỗi Swift thoát lên thành crash.
 

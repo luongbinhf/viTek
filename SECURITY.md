@@ -14,7 +14,7 @@
 | Phiên bản | Trạng thái |
 |---|---|
 | Mới nhất (`YYYYMMDD.X.YYY` trên nhánh `main`) | Được hỗ trợ & vá lỗi bảo mật |
-| Kho lưu trữ cũ (`viTek-legacy`) | Đã ngừng bảo trì (chỉ lưu trữ) |
+| Các bản phát hành cũ hơn | Không còn nhận bản vá riêng (vui lòng cập nhật bản mới nhất) |
 
 ## Báo cáo lỗ hổng bảo mật
 

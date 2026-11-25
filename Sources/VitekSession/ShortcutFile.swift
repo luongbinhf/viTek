@@ -13,7 +13,7 @@ public struct ShortcutEntry: Sendable, Equatable {
 ///
 /// Supported import formats:
 /// - viTek native: `ko<TAB>không` or `vn   Việt Nam` (`\n`, `\r`, `\t`, `\\` unescaped)
-/// - UniKey / OpenKey: `ko:không` (skips `#DO NOT DELETE THIS LINE***` and `;` comments)
+/// - Colon-separated macro format: `ko:không` (skips `#` and `;` comment lines)
 /// - CSV (RFC 4180): `ko,không` or `"dc","Hà Nội, Việt Nam"` (skips `abbreviation,expansion` header)
 public enum ShortcutFile {
     public struct Parsed: Sendable, Equatable {
@@ -72,7 +72,7 @@ public enum ShortcutFile {
         if line.first == "\"", let fields = parseCSVRow(line), fields.count == 2 {
             return validated(abbreviation: fields[0].trimmingSpaces(), expansion: fields[1])
         }
-        // UniKey / OpenKey macro format: `abbr:expansion` (only when `:` precedes any space or comma).
+        // Colon-separated macro format: `abbr:expansion` (only when `:` precedes any space or comma).
         if let colon = line.firstIndex(of: ":") {
             let head = line[..<colon]
             if !head.isEmpty, !head.contains(" "), !head.contains(",") {

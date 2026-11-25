@@ -1,6 +1,6 @@
 # Nguồn gốc và giấy phép
 
-Mọi thứ vào repo này phải có nguồn gốc rõ ràng. Quy tắc áp dụng cho người và cho cả agent AI.
+Mọi đóng góp đưa vào kho mã nguồn viTek phải có nguồn gốc và giấy phép rõ ràng.
 
 ## Không được dùng
 

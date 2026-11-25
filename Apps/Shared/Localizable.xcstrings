@@ -94,8 +94,8 @@
     "Đã gõ được tiếng Việt" : {
       "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Vietnamese typing is working" } } }
     },
-    "Dán bảng gõ tắt theo định dạng viTek (Tab), UniKey/OpenKey (chữ:thay bằng) hoặc CSV:" : {
-      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Paste shortcuts in viTek (Tab), UniKey/OpenKey (abbr:expansion), or CSV format:" } } }
+    "Dán bảng gõ tắt theo định dạng viTek (Tab), dấu hai chấm (chữ:thay bằng) hoặc CSV:" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Paste shortcuts in viTek (Tab), colon (abbr:expansion), or CSV format:" } } }
     },
     "Đoạn nháp quá dài. Hãy chọn một đoạn ngắn hơn." : {
       "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Draft is too long. Please shorten it." } } }
@@ -136,8 +136,8 @@
     "Hiển thị hàng phím số phía trên" : {
       "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Show Top Number Row" } } }
     },
-    "Hỗ trợ nhập từ viTek, UniKey, OpenKey hoặc CSV và giữ nguyên kiểu viết hoa." : {
-      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Supports importing from viTek, UniKey, OpenKey, or CSV while preserving capitalization." } } }
+    "Hỗ trợ nhập định dạng viTek (Tab), dấu hai chấm (chữ:thay bằng), CSV và giữ nguyên kiểu viết hoa." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Supports importing viTek (Tab), colon (abbr:expansion), or CSV formats while preserving capitalization." } } }
     },
     "Huỷ" : {
       "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Cancel" } } }

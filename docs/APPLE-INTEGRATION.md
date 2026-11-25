@@ -2,7 +2,7 @@
 
 viTek dùng các API hệ thống cho công việc viết chủ động; xử lý từng phím Telex/VNI vẫn chạy bằng engine cục bộ, không đợi mô hình AI.
 
-Màn hình viết hiện chuẩn bị trước một session khi người dùng mở/bắt đầu nhập, tự bỏ phần chuẩn bị sau 30 giây và khi rời màn hình/background. Không chuẩn bị trước ở Low Power Mode hoặc thermal state serious/critical. Mỗi lần sinh câu lấy một session chưa dùng; không tái dùng transcript bản nháp trước. Trên M5 đã đo giảm trung vị thời gian chờ sau nút bấm từ 1,890 xuống 1,553 giây, với khoảng chuẩn bị 2 giây trong benchmark. Xem [phương pháp, kết quả và giới hạn ANE](QA-APPLE-SILICON-2026-11-13.md).
+Màn hình viết hiện chuẩn bị trước một session khi người dùng mở/bắt đầu nhập, tự bỏ phần chuẩn bị sau 30 giây và khi rời màn hình/background. Không chuẩn bị trước ở Low Power Mode hoặc thermal state serious/critical. Mỗi lần sinh câu lấy một session chưa dùng; không tái dùng transcript bản nháp trước.
 
 ## Gợi ý viết và Shortcuts
 
@@ -29,7 +29,7 @@ Widget được đóng gói trong ứng dụng iOS. Cần mở ứng dụng đã
 
 Foundation Models quản lý việc chạy mô hình hệ thống. viTek không tuyên bố ép mọi phép tính lên Apple Neural Engine và không thêm một mô hình Core ML chỉ để bật tùy chọn phần cứng. `MLComputeUnits.cpuAndNeuralEngine` áp dụng cho mô hình Core ML tương ứng, không phải một cờ bật cho `SystemLanguageModel`.
 
-Ngày 13/11/2026 đã kiểm sinh câu và cập nhật từng phần trên máy Mac thật, thực thi `ContinueWritingIntent.perform()`, metadata hai App Shortcuts trên hai nền tảng, và ba XCTest UI trên Simulator: tab viết, đường dẫn mở khi app tắt/đang chạy, từ chối URL chứa query. Kiểm Simulator không xác nhận Siri bằng giọng nói, widget trên Home Screen hay hiệu năng Neural Engine trên iPhone thật. Xem [báo cáo QA](QA-TELEX-APPLE-2026-11-13.md) để biết môi trường và bằng chứng.
+Bộ kiểm tích hợp gồm `AppleIntegrationCheck` (`ContinueWritingIntent`, URL điều hướng `vitek://writing`, từ chối URL chứa query) và XCTest UI trên iOS Simulator. Kiểm thử Simulator không thay thế cho việc xác nhận Siri bằng giọng nói, widget trên Home Screen hay hiệu năng Neural Engine trên thiết bị thật.
 
 ## Tài liệu Apple
 

@@ -150,7 +150,7 @@ Layout bàn phím gõ thẳng `ư`, `ệ`… được nhận như chữ kèm d�
 * Từ tiếng Anh ngoài danh sách vẫn có thể thành chữ Việt (`seem` → `sêm`, `wow` → `uơ`), và người quen gõ dấu thanh giữa từ phải gõ dấu ở cuối với 69 từ trong danh sách (`lits` → `lít`). Các ca này được ghim trong `RestoreTests.knownAmbiguities` và `EnglishWordsTests` để thay đổi nào cũng phải có chủ đích.
 * `â`, `ă` đứng một mình không phải âm tiết nên hết từ sẽ về phím gốc (`aa` → `aa`).
 * Sửa từ đã chốt dựa vào việc ứng dụng trả đúng văn bản quanh con trỏ (`attributedSubstring`). Ứng dụng tự sửa chính tả (TextEdit với "Correct spelling automatically") có thể đã đổi từ trước khi viTek đọc lại, và Backspace ngay sau một lần tự sửa sẽ hoàn tác lần sửa đó.
-* Chưa có gợi ý từ.
+* Gợi ý từ và mở rộng gõ tắt được xử lý ở tầng `VitekSession` (xem [PREDICTION.md](PREDICTION.md)), không nằm trong `VitekEngine`.
 
 ## 5. Kiểm thử
 

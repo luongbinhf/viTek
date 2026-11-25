@@ -41,9 +41,9 @@ import VitekSession
         #expect(ShortcutFile.parse(text).entries == Array(entries.prefix(2)))
     }
 
-    @Test func importsUniKeyAndOpenKeyFormat() {
-        let unikey = "#DO NOT DELETE THIS LINE*** version=1 ***\n; comment\nko:không\nvn:Việt Nam\nmail:hello@example.com\n"
-        let parsed = ShortcutFile.parse(unikey)
+    @Test func importsColonSeparatedMacroFormat() {
+        let macroText = "# macro header v1\n; comment\nko:không\nvn:Việt Nam\nmail:hello@example.com\n"
+        let parsed = ShortcutFile.parse(macroText)
         #expect(parsed.entries == [
             ShortcutEntry(abbreviation: "ko", expansion: "không"),
             ShortcutEntry(abbreviation: "vn", expansion: "Việt Nam"),

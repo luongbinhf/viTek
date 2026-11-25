@@ -5,7 +5,7 @@ import AppKit
 enum AppCompatibility {
     private static var chromium: [String: Bool] = [:]
 
-    /// True when `bundleID` is built on Chromium (Chrome, Edge, Electron apps such as Claude, Slack,
+    /// True when `bundleID` is built on Chromium (Chrome, Edge, Electron apps such as Slack,
     /// VS Code). Such apps tell an input method where the caret is only while there is marked text
     /// (see `AccessibilityCaret`). Every Chromium build ships `chrome_crashpad_handler` in its
     /// framework, which is how they are recognised.

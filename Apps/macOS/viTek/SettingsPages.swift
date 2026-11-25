@@ -115,7 +115,7 @@ struct CaretAccessRow: View {
                     .glassButton()
             }
         } label: {
-            Text("Thanh gợi ý theo con trỏ trong Chrome, Claude, Slack, VS Code")
+            Text("Thanh gợi ý theo con trỏ trong Chrome, Slack, VS Code")
             Text("Cần quyền Trợ năng: các ứng dụng này chỉ báo vị trí con trỏ qua Trợ năng. Chưa cấp thì không hiện thanh gợi ý trong chúng.")
         }
         .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
@@ -396,7 +396,7 @@ struct ShortcutsPage: View {
     private func importFile() {
         let panel = NSOpenPanel()
         panel.allowedContentTypes = [.plainText, .commaSeparatedText]
-        panel.message = "Hỗ trợ định dạng viTek (Tab/dấu cách), UniKey/OpenKey (chữ:thay bằng) và CSV."
+        panel.message = "Hỗ trợ định dạng viTek (Tab/dấu cách), dấu hai chấm (chữ:thay bằng) và CSV."
         guard panel.runModal() == .OK, let url = panel.url else { return }
         let alert = NSAlert()
         do {

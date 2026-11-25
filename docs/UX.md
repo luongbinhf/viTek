@@ -16,12 +16,13 @@ viTek là bộ gõ: phần lớn thời gian người dùng không nhìn thấy 
 |---|---|---|
 | Nhãn thanh menu | khi viTek là nguồn nhập | macOS tự vẽ nhãn "VI" từ `TISIntendedLanguage = vi`, giống Telex của Apple |
 | Icon nguồn nhập | danh sách Input Sources, menu nguồn nhập | `InputIconTemplate.pdf`: ô 22 × 16 pt chữ "Vi" khoét rỗng, PDF vector template như nhãn "A"/"VI" của hệ thống |
-| Logo ứng dụng | Finder, trang Giới thiệu, các danh sách ứng dụng của System Settings | `AppIcon.icns`: nền trắng, một phím "Vi" màu xanh (`make_app_icon.swift ... key`) |
-| Menu nguồn nhập | bấm icon | Đặt dấu kiểu mới · Kiểm tra chính tả · Gõ tắt · Gợi ý từ · Gợi ý viết… (macOS 26+) · Hướng dẫn nhanh… · Cài đặt viTek… |
+| Logo ứng dụng | Finder, trang Giới thiệu, các danh sách ứng dụng của System Settings | `AppIcon.icns`: biểu tượng squircle xanh ngọc & linh vật Cú Lạc viTek (`scripts/make_brand_assets.swift`) |
+| Menu nguồn nhập | bấm icon | Chế độ gõ `VI/EN` · Đặt dấu kiểu mới · Kiểm tra chính tả · Gõ tắt · Gợi ý từ · Clipboard nhanh · Chuyển mã nhanh · Gợi ý viết… (macOS 26+) · Hướng dẫn nhanh… · Cài đặt viTek… |
 | Thanh bên cài đặt | cửa sổ cài đặt | khối Liquid Glass bo góc, thụt vào trong cửa sổ (macOS 26+) |
 | Chữ đang soạn | khi gõ | ưu tiên chữ đã chốt với vùng sửa đã xác minh; marked text chỉ là đường tương thích, một số ứng dụng vẫn tự vẽ gạch chân trên đường này |
-| Thanh gợi ý | khi đang gõ dở hoặc ngay sau dấu cách | viên nang Liquid Glass, tối đa 5 từ, từ đầu tô nhạt màu nhấn, mỗi từ kèm phím chọn (⌥1–⌥5). Ở cuối dòng, thanh nằm **cùng dòng, ngay sau con trỏ**, nơi không có chữ nào để che; giữa dòng thì xuống dưới dòng. Trong Chrome và ứng dụng Electron, vị trí con trỏ lấy qua Trợ năng: cần quyền Trợ năng (nút "Cấp quyền…" trong Kiểu gõ), chưa có thì không hiện thanh. Không nhận chuột, không lấy focus |
-| Cửa sổ cài đặt | từ menu nguồn nhập | thanh bên 6 mục, xem §3 |
+| Thanh gợi ý | khi đang gõ dở hoặc ngay sau dấu cách | viên nang Liquid Glass, tối đa 5 từ, từ đầu tô nhạt màu nhấn, kèm phím chọn nhanh `⌥Space` (chọn đầu) và `⌥1–⌥5`. Ở cuối dòng, thanh nằm **cùng dòng, ngay sau con trỏ**, nơi không có chữ nào để che; giữa dòng thì xuống dưới dòng. Trong Chrome và ứng dụng Electron, vị trí con trỏ lấy qua Trợ năng: cần quyền Trợ năng (nút "Cấp quyền…" trong Kiểu gõ), chưa có thì không hiện thanh. Không nhận chuột, không lấy focus |
+| Bảng dán nhanh Clipboard | bấm `⌃⌥V` | bảng nổi Liquid Glass (`ClipboardPanel`), hiển thị tối đa 9 mục (ghim ở trên, gần đây ở dưới), hỗ trợ bấm số `1–9` hoặc click để dán, `Esc` để đóng |
+| Cửa sổ cài đặt | từ menu nguồn nhập | thanh bên 7 mục, xem §3 |
 
 ## 3. Cửa sổ cài đặt
 
@@ -47,7 +48,8 @@ Cửa sổ mở ở 780 × 560 pt và cho phép đổi kích thước. Bố cụ
 | Thói quen gõ | `globe`, xanh lá | Số ứng dụng đã học và nút xóa điểm ưu tiên. |
 | Gõ tắt | `text.badge.plus`, cam | Sửa trực tiếp hai cột hoặc xóa ở cuối mỗi dòng. Chọn “Thêm gõ tắt”, nhập cả hai trường rồi lưu. Có thể quản lý và nhập/xuất danh sách cả khi tạm tắt gõ tắt. |
 | Từ điển | `character.book.closed`, chàm | Bật/tắt giữ từ tiếng Anh và tra danh sách theo một phần của từ. Ô tìm kiếm vẫn dùng được khi tắt tùy chọn. |
-| Giới thiệu | `info`, xám | phiên bản, nguồn nhập, bản quyền. |
+| Clipboard | `doc.on.clipboard`, xanh cổ vịt | Quản lý lịch sử sao chép và mẫu ghim cố định, tìm kiếm tiếng Việt không dấu, chuyển mã nhanh và cấu hình đồng bộ iCloud. |
+| Giới thiệu | `info`, xám | Phiên bản, kiểm tra & cập nhật 1 chạm SHA-256, nguồn nhập, bản quyền MIT. |
 
 Menu "Hướng dẫn nhanh…" mở thẳng trang Bắt đầu; "Cài đặt viTek…" mở trang xem lần trước.
 
@@ -72,8 +74,8 @@ Bàn phím iOS có [bộ kiểm thử trên Simulator](../Apps/iOS/KeyboardTests
 * Mở cài đặt từ menu nguồn nhập thật, kiểm cửa sổ hiện ra phía trước và gõ được vào ô gõ tắt.
 * Thử gõ Telex, VNI và tiếng Anh trong cùng một câu, kiểm tra lại sau khi đổi ứng dụng.
 
-### Nhập liệu từ 2026.0.003
+### Quy tắc nhập liệu & gợi ý
 
-Chữ được chèn ở trạng thái đã chốt khi ứng dụng cho xác minh vùng sửa, nên ô tìm kiếm có thể gợi ý trước Space. Gạch chân chỉ áp dụng khi phải dùng đường tương thích marked text, không đổi đường sửa chữ. Tab, Return, mũi tên và phím tắt luôn thuộc ứng dụng; chỉ ⌥1–⌥5 nhận gợi ý viTek. Cấu hình mới mặc định tắt gợi ý; lựa chọn đã lưu của người dùng được giữ.
+Chữ được chèn ở trạng thái đã chốt khi ứng dụng cho xác minh vùng sửa, nên ô tìm kiếm có thể gợi ý trước Space. Gạch chân chỉ áp dụng khi phải dùng đường tương thích marked text, không đổi đường sửa chữ. Tab, Return, mũi tên và phím tắt luôn thuộc ứng dụng; `⌥Space` nhận nhanh từ đầu và `⌥1–⌥5` nhận theo vị trí trên thanh gợi ý viTek. Cấu hình mới mặc định tắt gợi ý; lựa chọn đã lưu của người dùng được giữ.
 
 Khi click, đổi ô hoặc điều hướng, giữ nguyên cách viết đang thấy. Không mở rộng gõ tắt hoặc trả phím thô chỉ vì người dùng chuyển con trỏ. Khi mất readback giữa từ, giữ chữ đã có và cho các phím còn lại đi qua đến hết token; không đoán vùng để sửa lại.

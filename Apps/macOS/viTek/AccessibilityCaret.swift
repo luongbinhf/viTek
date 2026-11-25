@@ -2,7 +2,7 @@ import AppKit
 import ApplicationServices
 
 /// The caret's position read through the Accessibility API, for clients whose own answer cannot be
-/// trusted. Chromium (Chrome, and Electron apps such as Claude, Slack, VS Code) gives an input method
+/// trusted. Chromium (Chrome, and Electron apps such as Slack, VS Code) gives an input method
 /// caret geometry only while there is marked text. While viTek types directly it answers `firstRect`
 /// with garbage, and the line box with where the caret was when the field got focus. Its
 /// accessibility tree knows where the caret is.

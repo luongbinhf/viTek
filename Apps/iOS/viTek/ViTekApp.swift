@@ -128,7 +128,7 @@ private struct KeyboardSettingsView: View {
                 } header: {
                     Text("Gõ tắt")
                 } footer: {
-                    Text("Hỗ trợ nhập từ viTek, UniKey, OpenKey, CSV và các biến {{date}}, {{time}}, {{datetime}}.")
+                    Text("Hỗ trợ nhập định dạng viTek (Tab), dấu hai chấm (chữ:thay bằng), CSV và các biến {{date}}, {{time}}, {{datetime}}.")
                 }
 
                 Section {
@@ -245,7 +245,7 @@ private struct IOSShortcutsView: View {
         .sheet(isPresented: $showingImport) {
             NavigationStack {
                 VStack(alignment: .leading, spacing: 12) {
-                    Text("Dán bảng gõ tắt theo định dạng viTek (Tab), UniKey/OpenKey (chữ:thay bằng) hoặc CSV:")
+                    Text("Dán bảng gõ tắt theo định dạng viTek (Tab), dấu hai chấm (chữ:thay bằng) hoặc CSV:")
                         .font(.callout).foregroundStyle(.secondary)
                     TextEditor(text: $importText)
                         .font(.system(.body, design: .monospaced))

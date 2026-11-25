@@ -34,7 +34,7 @@ Sau khi cài xong, mở **Cài viTek** trong `/Applications` một lần để k
 
 Chọn **viTek** trên thanh menu nguồn nhập (`🌐` hoặc `⌃ Space`), mở TextEdit và gõ `vieetj vie65t reset server ` → kết quả mong đợi là **`việt việt reset server `**. Trong **Cài đặt viTek → Thói quen gõ**, bạn có thể xem hoặc xóa điểm ưu tiên Telex/VNI đã học theo từng ứng dụng.
 
-## Thanh gợi ý trong Chrome, Claude, Slack và VS Code
+## Thanh gợi ý trong Chrome, Slack và VS Code
 
 Để hiện thanh gợi ý từ ngay cạnh con trỏ trong các ứng dụng Chromium/Electron, mở **Cài đặt viTek… → Kiểu gõ**, bật **Gợi ý từ** rồi bấm **Cấp quyền…** (chỉ là tuỳ chọn để đọc vị trí con trỏ qua Trợ năng; gõ tiếng Việt bình thường không cần quyền này).
 
