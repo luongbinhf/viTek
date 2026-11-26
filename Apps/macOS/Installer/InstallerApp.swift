@@ -37,22 +37,19 @@ private struct InstallerView: View {
     }
 
     private var typedVietnamese: Bool {
-        sample.lowercased().split(whereSeparator: \.isWhitespace).contains("việt")
+        sample.unicodeScalars.contains { $0.value > 127 && CharacterSet.letters.contains($0) }
     }
 
     var body: some View {
-        VStack(spacing: 0) {
+        VStack(spacing: 16) {
             heroHeader
-            Divider()
-            VStack(alignment: .leading, spacing: 18) {
-                stepProgressBar
-                stageContent
-            }
-            .padding(24)
-            Divider()
+            stepProgressBar
+            stageCard
             footerBar
         }
-        .frame(width: 484)
+        .padding(24)
+        .frame(width: 504)
+        .background(installerBackdrop)
         .task(id: attempt) {
             do {
                 if installed == nil {
@@ -70,26 +67,48 @@ private struct InstallerView: View {
         }
     }
 
+    private var installerBackdrop: some View {
+        ZStack(alignment: .topLeading) {
+            Color(nsColor: .windowBackgroundColor)
+            LinearGradient(
+                colors: [
+                    Color.blue.opacity(0.11),
+                    Color.cyan.opacity(0.06),
+                    Color.clear,
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        }
+    }
+
     private var heroHeader: some View {
         HStack(spacing: 16) {
             BrandMascotView(size: 76)
-                .shadow(color: Color.blue.opacity(0.14), radius: 8, y: 3)
+                .shadow(color: Color.blue.opacity(0.16), radius: 10, y: 4)
+
             VStack(alignment: .leading, spacing: 5) {
                 HStack(spacing: 8) {
                     Text("viTek")
                         .font(.system(size: 26, weight: .bold, design: .rounded))
-                    Text("MIT Open Source")
+                    Text("Liquid Glass")
                         .font(.caption.weight(.semibold))
                         .foregroundStyle(Color.accentColor)
-                        .padding(.horizontal, 8)
+                        .padding(.horizontal, 9)
                         .padding(.vertical, 3)
-                        .background(Color.accentColor.opacity(0.12), in: Capsule())
+                        .background(Color.accentColor.opacity(0.14), in: Capsule())
+                    Text("MIT")
+                        .font(.caption2.weight(.semibold))
+                        .foregroundStyle(.secondary)
+                        .padding(.horizontal, 7)
+                        .padding(.vertical, 3)
+                        .background(Color.primary.opacity(0.06), in: Capsule())
                 }
-                Text("Bộ gõ tiếng Việt 100% Swift Native cho macOS")
+                Text("Bộ gõ tiếng Việt 100% Swift 6 Native cho macOS")
                     .font(.callout)
                     .foregroundStyle(.secondary)
                 if !version.isEmpty {
-                    Text("Phiên bản \(version)")
+                    Text("Phiên bản \(version) · Không cần quyền Trợ năng để gõ")
                         .font(.caption)
                         .foregroundStyle(.tertiary)
                         .monospacedDigit()
@@ -97,34 +116,32 @@ private struct InstallerView: View {
             }
             Spacer()
         }
-        .padding(.horizontal, 24)
-        .padding(.vertical, 18)
-        .background(
-            LinearGradient(
-                colors: [Color.accentColor.opacity(0.08), Color.clear],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-        )
     }
 
+    @ViewBuilder
     private var stepProgressBar: some View {
-        HStack(spacing: 10) {
-            stepPill(index: 1, title: "Cài đặt")
+        let row = HStack(spacing: 10) {
+            stepPill(index: 1, title: "Cài bộ gõ")
             stepConnector(active: currentStep >= 2)
             stepPill(index: 2, title: "Kích hoạt")
             stepConnector(active: currentStep >= 3)
             stepPill(index: 3, title: "Gõ thử")
         }
+        if #available(macOS 26.0, *) {
+            GlassEffectContainer(spacing: 8) { row }
+        } else {
+            row
+        }
     }
 
+    @ViewBuilder
     private func stepPill(index: Int, title: String) -> some View {
         let isDone = currentStep > index || (index == 3 && typedVietnamese)
         let isCurrent = currentStep == index && !isDone
-        return HStack(spacing: 6) {
+        let label = HStack(spacing: 6) {
             ZStack {
                 Circle()
-                    .fill(isDone ? Color.green : (isCurrent ? Color.accentColor : Color.secondary.opacity(0.2)))
+                    .fill(isDone ? Color.green : (isCurrent ? Color.accentColor : Color.secondary.opacity(0.22)))
                     .frame(width: 20, height: 20)
                 if isDone {
                     Image(systemName: "checkmark")
@@ -137,36 +154,59 @@ private struct InstallerView: View {
                 }
             }
             Text(title)
-                .font(.caption.weight(isCurrent || isDone ? .semibold : .regular))
+                .font(.caption.weight(isCurrent || isDone ? .semibold : .medium))
                 .foregroundStyle(isCurrent || isDone ? .primary : .secondary)
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 6)
+
+        if #available(macOS 26.0, *) {
+            label.glassEffect(
+                isCurrent ? .regular.tint(.accentColor) : .regular,
+                in: .capsule
+            )
+        } else {
+            label.background(.quaternary.opacity(0.5), in: Capsule())
         }
     }
 
     private func stepConnector(active: Bool) -> some View {
-        Rectangle()
-            .fill(active ? Color.accentColor.opacity(0.5) : Color.secondary.opacity(0.2))
-            .frame(height: 1.5)
+        Capsule()
+            .fill(active ? Color.accentColor.opacity(0.45) : Color.secondary.opacity(0.18))
+            .frame(height: 2)
             .frame(maxWidth: .infinity)
     }
 
     @ViewBuilder
-    private var stageContent: some View {
+    private var stageCard: some View {
+        let content = stageBody
+            .padding(18)
+            .frame(maxWidth: .infinity, alignment: .leading)
+
+        if #available(macOS 26.0, *) {
+            content.glassEffect(.regular, in: .rect(cornerRadius: 18))
+        } else {
+            content
+                .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(Color.secondary.opacity(0.18)))
+        }
+    }
+
+    @ViewBuilder
+    private var stageBody: some View {
         switch stage {
         case .installing, .activating:
             HStack(spacing: 12) {
                 ProgressView().controlSize(.small)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(installed == nil ? "Đang cài viTek vào Input Methods…" : "Đang bật nguồn nhập viTek…")
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(installed == nil ? "Đang cài viTek vào ~/Library/Input Methods…" : "Đang kết nối nguồn nhập viTek…")
                         .font(.headline)
-                    Text("Hoàn toàn trên máy, không cần quyền Trợ năng để gõ.")
+                    Text("Quá trình diễn ra nguyên tử ngay trên máy, giữ nguyên cài đặt cá nhân của bạn.")
                         .font(.callout)
                         .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
             }
-            .padding(14)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Color(nsColor: .controlBackgroundColor), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Color.secondary.opacity(0.18)))
 
         case .ready:
             VStack(alignment: .leading, spacing: 12) {
@@ -174,20 +214,22 @@ private struct InstallerView: View {
                     Image(systemName: "checkmark.seal.fill")
                         .foregroundStyle(.green)
                         .font(.title3)
-                    Text("Đã cài và bật viTek thành công!")
+                    Text("Đã cài và kích hoạt viTek sẵn sàng!")
                         .font(.headline)
                 }
-                Text("Gõ thử **vieetj** (Telex) hoặc **vie65t** (VNI) rồi nhấn dấu cách để ra “việt”.")
+                Text("Thử gõ **vieetj**, **tuoongw** (Telex) hoặc **vie65t** (VNI) vào ô dưới đây:")
                     .font(.callout)
                     .foregroundStyle(.secondary)
-                TextField("Gõ thử ở đây…", text: $sample)
+
+                TextField("Gõ thử tiếng Việt ở đây…", text: $sample)
                     .textFieldStyle(.roundedBorder)
                     .focused($typing)
                     .onAppear { typing = true }
+
                 let words = sample.lowercased().split(whereSeparator: \.isWhitespace)
                 if typedVietnamese {
-                    Label("Tuyệt vời! Bạn đã gõ được tiếng Việt với viTek.", systemImage: "checkmark.circle.fill")
-                        .font(.callout.weight(.medium))
+                    Label("Tuyệt vời! Bộ gõ viTek đang phản hồi mượt mà.", systemImage: "checkmark.circle.fill")
+                        .font(.callout.weight(.semibold))
                         .foregroundStyle(.green)
                 } else if sample.last?.isWhitespace == true, words.contains("vieetj") || words.contains("vie65t") {
                     HStack {
@@ -195,25 +237,16 @@ private struct InstallerView: View {
                             .font(.caption)
                             .foregroundStyle(.secondary)
                         Spacer()
-                        Button("Kết nối lại") {
-                            Task {
-                                stage = .activating
-                                do {
-                                    if let installed { try await Installation.reconnect(at: installed) }
-                                    sample = ""
-                                    stage = .ready
-                                    typing = true
-                                } catch { stage = .failed(error.localizedDescription) }
-                            }
-                        }
-                        .controlSize(.small)
+                        reconnectButton
+                    }
+                } else {
+                    HStack(spacing: 8) {
+                        shortcutHint("⌥ ⌥", "VI ↔ EN")
+                        shortcutHint("⌃ ⌥ V", "Clipboard")
+                        shortcutHint("⌃ ⌥ A", "AI & Sửa chữ")
                     }
                 }
             }
-            .padding(14)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Color(nsColor: .controlBackgroundColor), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Color.secondary.opacity(0.18)))
 
         case .failed(let reason):
             VStack(alignment: .leading, spacing: 10) {
@@ -227,22 +260,60 @@ private struct InstallerView: View {
                     .fixedSize(horizontal: false, vertical: true)
                 HStack {
                     if installed != nil {
-                        Button("Mở cài đặt Bàn phím…") {
-                            if let url = URL(string: "x-apple.systempreferences:com.apple.Keyboard-Settings.extension") {
-                                NSWorkspace.shared.open(url)
-                            }
-                        }
+                        openKeyboardSettingsButton
                     }
                     Spacer()
-                    Button("Thử lại") { attempt += 1 }
-                        .keyboardShortcut(.defaultAction)
+                    retryButton
                 }
             }
-            .padding(14)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Color(nsColor: .controlBackgroundColor), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Color.orange.opacity(0.35)))
         }
+    }
+
+    private func shortcutHint(_ keys: String, _ label: String) -> some View {
+        HStack(spacing: 4) {
+            Text(keys)
+                .font(.system(.caption2, design: .monospaced).weight(.semibold))
+                .padding(.horizontal, 6)
+                .padding(.vertical, 2)
+                .background(Color.primary.opacity(0.08), in: RoundedRectangle(cornerRadius: 5, style: .continuous))
+            Text(label)
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+        }
+    }
+
+    @ViewBuilder
+    private var reconnectButton: some View {
+        let btn = Button("Kết nối lại") {
+            Task {
+                stage = .activating
+                do {
+                    if let installed { try await Installation.reconnect(at: installed) }
+                    sample = ""
+                    stage = .ready
+                    typing = true
+                } catch { stage = .failed(error.localizedDescription) }
+            }
+        }
+        .controlSize(.small)
+        if #available(macOS 26.0, *) { btn.buttonStyle(.glass) } else { btn }
+    }
+
+    @ViewBuilder
+    private var openKeyboardSettingsButton: some View {
+        let btn = Button("Mở Cài đặt Bàn phím…") {
+            if let url = URL(string: "x-apple.systempreferences:com.apple.Keyboard-Settings.extension") {
+                NSWorkspace.shared.open(url)
+            }
+        }
+        if #available(macOS 26.0, *) { btn.buttonStyle(.glass) } else { btn }
+    }
+
+    @ViewBuilder
+    private var retryButton: some View {
+        let btn = Button("Thử lại") { attempt += 1 }
+            .keyboardShortcut(.defaultAction)
+        if #available(macOS 26.0, *) { btn.buttonStyle(.glassProminent) } else { btn.buttonStyle(.borderedProminent) }
     }
 
     private var footerBar: some View {
@@ -256,13 +327,23 @@ private struct InstallerView: View {
             }
             Spacer()
             if case .ready = stage {
-                Button("Hoàn tất") { NSApp.terminate(nil) }
-                    .keyboardShortcut(.defaultAction)
+                finishButton
             } else {
-                Button("Đóng") { NSApp.terminate(nil) }
+                closeButton
             }
         }
-        .padding(.horizontal, 24)
-        .padding(.vertical, 12)
+    }
+
+    @ViewBuilder
+    private var finishButton: some View {
+        let btn = Button("Hoàn tất") { NSApp.terminate(nil) }
+            .keyboardShortcut(.defaultAction)
+        if #available(macOS 26.0, *) { btn.buttonStyle(.glassProminent) } else { btn.buttonStyle(.borderedProminent) }
+    }
+
+    @ViewBuilder
+    private var closeButton: some View {
+        let btn = Button("Đóng") { NSApp.terminate(nil) }
+        if #available(macOS 26.0, *) { btn.buttonStyle(.glass) } else { btn }
     }
 }

@@ -26,6 +26,15 @@ struct Composer: Sendable {
     private var quickWInsertion: Int?
     /// Base ASCII byte (`c`, `g`, `k`, `n`, `p`, `q`, `t`) expanded at syllable start, so a 3rd key undoes it.
     private var quickStartBase: UInt8?
+    /// True once the user explicitly cancelled a mark by repeating its key (`tesst`, `ass`, `ddd`),
+    /// preventing typo recovery from re-applying Vietnamese diacritics.
+    private var didExplicitUndo = false
+
+    private static let transpositionProtectedEnglish: Set<String> = [
+        "sign", "signs", "signed", "signer", "design", "designs", "align", "aligns",
+        "reign", "reigns", "resign", "resigns", "assign", "assigns", "benign", "malign",
+        "foreign", "campaign", "campaigns", "sovereign", "john", "johns", "cohn", "kahn", "bahn",
+    ]
 
     init(options: EngineOptions) {
         self.options = options
@@ -56,10 +65,12 @@ struct Composer: Sendable {
         case .restored:
             guard Self.isLetter(key) else { return false }
             keys.append(key)
+            _ = recoverTranspositionIfNeeded()
             return true
         case .literal:
             guard Self.isLetter(key) else { return false }
             appendLiteral(key)
+            _ = recoverTranspositionIfNeeded()
             return true
         case .vietnamese:
             return typeVietnamese(key)
@@ -337,6 +348,7 @@ struct Composer: Sendable {
     private mutating func undo(appending key: Character) {
         text = Array(render(letters, tone))
         mode = .literal
+        didExplicitUndo = true
         standaloneW = nil
         quickWInsertion = nil
         quickStartBase = nil
@@ -369,6 +381,95 @@ struct Composer: Sendable {
         standaloneW = nil
         quickWInsertion = nil
         quickStartBase = nil
+        _ = recoverTranspositionIfNeeded()
+    }
+
+    /// Deterministically recovers high-speed (>100 WPM) adjacent key transpositions in Vietnamese codas
+    /// (`gn`→`ng`, `hn`→`nh`, `hc`→`ch`) and `ươi` glides (`uio` / `uwio` → `uoiw`) ONLY when:
+    /// 1. The user did not explicitly cancel a mark via repeated modifier (`!didExplicitUndo`),
+    /// 2. The raw token is not a known English word (`signs`, `designs`, `john`, etc.), and
+    /// 3. Replaying with the single adjacent repair produces a complete Vietnamese syllable carrying
+    ///    at least one explicit Vietnamese vowel mark or tone.
+    private mutating func recoverTranspositionIfNeeded() -> Bool {
+        guard options.spellCheck, options.smartTypoRecovery, options.inputMethod == .telex,
+              !didExplicitUndo, (4...10).contains(keys.count),
+              let rawLower = ASCII.lowercasedString(keys, maxLength: 10),
+              !Self.transpositionProtectedEnglish.contains(rawLower),
+              !EnglishWords.words.contains(rawLower) else {
+            return false
+        }
+
+        var candidates: [[Character]] = []
+        let count = keys.count
+        for i in 1..<(count - 1) {
+            guard let b0 = keys[i].asciiValue, let b1 = keys[i + 1].asciiValue else { return false }
+            let a = ASCII.lowercased(b0)
+            let b = ASCII.lowercased(b1)
+
+            // Coda digraph transpositions: gn -> ng, hn -> nh, hc -> ch
+            let isCodaSwap = (a == UInt8(ascii: "g") && b == UInt8(ascii: "n"))
+                || (a == UInt8(ascii: "h") && b == UInt8(ascii: "n"))
+                || (a == UInt8(ascii: "h") && b == UInt8(ascii: "c"))
+            if isCodaSwap {
+                var swapped = keys
+                swapped.swapAt(i, i + 1)
+                candidates.append(swapped)
+            }
+
+            // Diphthong glide transpositions after u: `nguiowf` -> `nguoiwf` or `nguwiof` -> `nguoiwf`
+            if a == UInt8(ascii: "i"), b == UInt8(ascii: "o") {
+                if let prevByte = keys[i - 1].asciiValue {
+                    let prev = ASCII.lowercased(prevByte)
+                    if prev == UInt8(ascii: "u") {
+                        var swapped = keys
+                        swapped.swapAt(i, i + 1)
+                        candidates.append(swapped)
+                    } else if prev == UInt8(ascii: "w"), i >= 2,
+                              let prev2Byte = keys[i - 2].asciiValue,
+                              ASCII.lowercased(prev2Byte) == UInt8(ascii: "u") {
+                        var reordered = keys
+                        let wChar = keys[i - 1]
+                        reordered[i - 1] = keys[i + 1] // o
+                        reordered[i] = keys[i]         // i
+                        reordered[i + 1] = wChar       // w
+                        candidates.append(reordered)
+                    }
+                }
+            }
+        }
+
+        guard !candidates.isEmpty else { return false }
+        var probeOptions = options
+        probeOptions.smartTypoRecovery = false
+        let originalKeys = keys
+
+        for seq in candidates {
+            var probe = Composer(options: probeOptions)
+            var allAccepted = true
+            for ch in seq {
+                if !probe.type(ch) {
+                    allAccepted = false
+                    break
+                }
+            }
+            guard allAccepted, probe.mode == .vietnamese else { continue }
+            let hasDiacritic = probe.tone != .level || probe.letters.contains { $0.form.mark != .none }
+            guard hasDiacritic else { continue }
+            var checkLetters = probe.letters
+            Self.writeOpenUo(&checkLetters)
+            guard Orthography.isComplete(checkLetters.map(\.form), tone: probe.tone) else { continue }
+
+            mode = .vietnamese
+            letters = probe.letters
+            tone = probe.tone
+            standaloneW = probe.standaloneW
+            quickWInsertion = probe.quickWInsertion
+            quickStartBase = probe.quickStartBase
+            keys = originalKeys
+            text.removeAll(keepingCapacity: true)
+            return true
+        }
+        return false
     }
 
     // MARK: Resuming

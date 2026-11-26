@@ -24,6 +24,11 @@ private enum SharedWidgetDefaults {
         let entries = store.array(forKey: "shortcuts") as? [[String: String]] ?? []
         return entries.count
     }
+
+    static var clipboardCount: Int {
+        let entries = store.array(forKey: "clipboardItems") as? [[String: String]] ?? []
+        return entries.count
+    }
 }
 
 struct ToggleWidgetLanguageIntent: AppIntent {
@@ -33,9 +38,7 @@ struct ToggleWidgetLanguageIntent: AppIntent {
     func perform() async throws -> some IntentResult {
         SharedWidgetDefaults.isVietnameseEnabled.toggle()
         WidgetCenter.shared.reloadAllTimelines()
-        if #available(iOS 18.0, *) {
-            ControlCenter.shared.reloadAllControls()
-        }
+        ControlCenter.shared.reloadAllControls()
         return .result()
     }
 }
@@ -51,7 +54,6 @@ struct ToggleWidgetToneStyleIntent: AppIntent {
     }
 }
 
-@available(iOS 18.0, *)
 struct SetControlLanguageIntent: SetValueIntent {
     static let title: LocalizedStringResource = "Bật gõ tiếng Việt viTek"
 
@@ -71,6 +73,7 @@ private struct TypingEntry: TimelineEntry {
     let isVietnamese: Bool
     let isModernTone: Bool
     let shortcutCount: Int
+    let clipboardCount: Int
 }
 
 private struct TypingProvider: TimelineProvider {
@@ -79,12 +82,13 @@ private struct TypingProvider: TimelineProvider {
             date: .now,
             isVietnamese: SharedWidgetDefaults.isVietnameseEnabled,
             isModernTone: SharedWidgetDefaults.isModernTone,
-            shortcutCount: SharedWidgetDefaults.shortcutCount
+            shortcutCount: SharedWidgetDefaults.shortcutCount,
+            clipboardCount: SharedWidgetDefaults.clipboardCount
         )
     }
 
     func placeholder(in context: Context) -> TypingEntry {
-        TypingEntry(date: .now, isVietnamese: true, isModernTone: true, shortcutCount: 0)
+        TypingEntry(date: .now, isVietnamese: true, isModernTone: true, shortcutCount: 6, clipboardCount: 4)
     }
 
     func getSnapshot(in context: Context, completion: @escaping (TypingEntry) -> Void) {
@@ -104,72 +108,117 @@ private struct TypingWidgetView: View {
         switch family {
         case .accessoryRectangular:
             VStack(alignment: .leading, spacing: 2) {
-                Text("viTek · \(entry.isVietnamese ? "Tiếng Việt" : "English")")
-                    .font(.headline)
-                Text(entry.isModernTone ? "Dấu mới (hoà) · \(entry.shortcutCount) gõ tắt" : "Dấu cũ (hòa) · \(entry.shortcutCount) gõ tắt")
+                HStack(spacing: 5) {
+                    Image(systemName: "keyboard")
+                    Text("viTek · \(entry.isVietnamese ? "Tiếng Việt" : "English")")
+                        .font(.headline)
+                }
+                Text("\(entry.isModernTone ? "Dấu mới (hoà)" : "Dấu cũ (hòa)") · \(entry.shortcutCount) gõ tắt")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
             .widgetURL(WritingLink.url)
+
         case .systemMedium:
-            HStack(spacing: 12) {
+            HStack(spacing: 14) {
                 VStack(alignment: .leading, spacing: 6) {
-                    Label("viTek", systemImage: "keyboard")
-                        .font(.headline)
-                    Text(entry.isVietnamese ? "Đang gõ Tiếng Việt" : "Đang tạm gõ English")
+                    HStack(spacing: 6) {
+                        Image(systemName: "keyboard.fill")
+                            .font(.caption.weight(.bold))
+                            .foregroundStyle(.white)
+                            .frame(width: 24, height: 24)
+                            .background(Color.blue.gradient, in: RoundedRectangle(cornerRadius: 6, style: .continuous))
+                        Text("viTek 26")
+                            .font(.subheadline.weight(.bold))
+                    }
+
+                    Text(entry.isVietnamese ? "Đang bật Tiếng Việt" : "Đang tạm gõ English")
                         .font(.subheadline.weight(.semibold))
-                    Text("\(entry.shortcutCount) gõ tắt · viwtj → việt")
-                        .font(.caption)
+
+                    Text("\(entry.shortcutCount) gõ tắt · \(entry.clipboardCount) mục Clipboard")
+                        .font(.caption2)
                         .foregroundStyle(.secondary)
+
                     Spacer(minLength: 0)
-                    Link(destination: WritingLink.url) {
-                        Label("Gợi ý viết", systemImage: "square.and.pencil")
-                            .font(.caption.weight(.medium))
+
+                    HStack(spacing: 10) {
+                        Link(destination: WritingLink.url) {
+                            Label("AI Viết", systemImage: "sparkles")
+                                .font(.caption.weight(.semibold))
+                        }
+                        Text("·").foregroundStyle(.tertiary)
+                        Link(destination: WritingLink.clipboardURL) {
+                            Label("Clipboard", systemImage: "doc.on.clipboard")
+                                .font(.caption.weight(.semibold))
+                        }
                     }
                 }
+
                 Spacer(minLength: 0)
+
                 VStack(alignment: .trailing, spacing: 8) {
                     Button(intent: ToggleWidgetLanguageIntent()) {
-                        Label(entry.isVietnamese ? "VI" : "EN", systemImage: "globe")
-                            .font(.callout.bold())
+                        Label(entry.isVietnamese ? "Chế độ VI" : "Chế độ EN", systemImage: "globe")
+                            .font(.caption.weight(.bold))
                             .frame(maxWidth: .infinity)
                     }
                     .buttonStyle(.borderedProminent)
+                    .buttonBorderShape(.capsule)
                     .tint(entry.isVietnamese ? .blue : .secondary)
 
                     Button(intent: ToggleWidgetToneStyleIntent()) {
-                        Text(entry.isModernTone ? "Dấu mới: hoà" : "Dấu cũ: hòa")
+                        Text(entry.isModernTone ? "Dấu mới · hoà" : "Dấu cũ · hòa")
                             .font(.caption.weight(.medium))
                             .frame(maxWidth: .infinity)
                     }
                     .buttonStyle(.bordered)
+                    .buttonBorderShape(.capsule)
                 }
-                .frame(width: 120)
+                .frame(width: 124)
             }
+
         default:
-            VStack(alignment: .leading, spacing: 6) {
+            VStack(alignment: .leading, spacing: 8) {
                 HStack {
-                    Label("viTek", systemImage: "keyboard")
-                        .font(.subheadline.bold())
+                    Image(systemName: "keyboard.fill")
+                        .font(.caption2.weight(.bold))
+                        .foregroundStyle(.white)
+                        .frame(width: 22, height: 22)
+                        .background(Color.blue.gradient, in: RoundedRectangle(cornerRadius: 6, style: .continuous))
+                    Text("viTek")
+                        .font(.subheadline.weight(.bold))
                     Spacer()
                     Button(intent: ToggleWidgetLanguageIntent()) {
                         Text(entry.isVietnamese ? "VI" : "EN")
-                            .font(.caption.bold())
+                            .font(.caption.weight(.bold))
                     }
                     .buttonStyle(.borderedProminent)
+                    .buttonBorderShape(.capsule)
                     .tint(entry.isVietnamese ? .blue : .secondary)
                 }
+
                 Button(intent: ToggleWidgetToneStyleIntent()) {
                     Text(entry.isModernTone ? "Kiểu mới · hoà" : "Kiểu cũ · hòa")
-                        .font(.caption)
+                        .font(.caption2.weight(.semibold))
+                        .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.bordered)
+                .buttonBorderShape(.capsule)
+
                 Spacer(minLength: 0)
-                Link(destination: WritingLink.url) {
-                    Label("Gợi ý viết", systemImage: "square.and.pencil")
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
+
+                HStack(spacing: 8) {
+                    Link(destination: WritingLink.url) {
+                        Label("AI Viết", systemImage: "sparkles")
+                            .font(.caption2.weight(.semibold))
+                    }
+                    Spacer()
+                    Link(destination: WritingLink.clipboardURL) {
+                        Image(systemName: "doc.on.clipboard")
+                            .font(.caption2.weight(.semibold))
+                    }
                 }
+                .foregroundStyle(.secondary)
             }
         }
     }
@@ -180,15 +229,23 @@ struct TypingWidget: Widget {
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: kind, provider: TypingProvider()) { entry in
             TypingWidgetView(entry: entry)
-                .containerBackground(.fill.tertiary, for: .widget)
+                .containerBackground(for: .widget) {
+                    ZStack(alignment: .topLeading) {
+                        Color(uiColor: .secondarySystemGroupedBackground)
+                        LinearGradient(
+                            colors: [Color.blue.opacity(0.14), Color.cyan.opacity(0.05), Color.clear],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    }
+                }
         }
         .configurationDisplayName("Trạng thái & Gõ nhanh viTek")
-        .description("Chuyển nhanh Việt/Anh, đổi kiểu dấu hoà/hòa và mở Gợi ý viết ngay từ Màn hình chính.")
+        .description("Chuyển nhanh Việt/Anh, đổi kiểu dấu hoà/hòa và mở AI Viết hoặc Clipboard ngay từ Màn hình chính.")
         .supportedFamilies([.systemSmall, .systemMedium, .accessoryRectangular])
     }
 }
 
-@available(iOS 18.0, *)
 struct VitekControlProvider: ControlValueProvider {
     var previewValue: Bool { true }
     func currentValue() async throws -> Bool {
@@ -196,7 +253,6 @@ struct VitekControlProvider: ControlValueProvider {
     }
 }
 
-@available(iOS 18.0, *)
 struct VitekLanguageControl: ControlWidget {
     let kind = "viTek.LanguageControl"
     var body: some ControlWidgetConfiguration {
@@ -218,8 +274,6 @@ struct VitekLanguageControl: ControlWidget {
 struct VitekWidgetsBundle: WidgetBundle {
     var body: some Widget {
         TypingWidget()
-        if #available(iOS 18.0, *) {
-            VitekLanguageControl()
-        }
+        VitekLanguageControl()
     }
 }

@@ -4,6 +4,17 @@ Mọi bản phát hành của **viTek** sử dụng quy tắc phiên bản **`YY
 
 ---
 
+## `20261126.1.001` *(iOS `20261126.1.1`)*
+
+### Chống Đảo Phím >100 WPM, Gõ Lướt Tiếng Việt, iPad Pro Layout & Đồng bộ Liquid Glass
+- **Khôi phục đảo thứ tự phím khi gõ cực nhanh (`smartTypoRecovery` trong `VitekEngine`):** Tự động phục hồi tất định các cặp phụ âm cuối và vần trượt tay ở tốc độ >100 WPM (`tieegns` / `tiegnes` → `tiếng`, `dduowgnf` → `đường`, `mihnf` → `mình`, `thafhn` → `thành`, `bahcj` → `bạch`, `nguwiof` / `nguiowf` → `người`) chỉ khi từ mang dấu tiếng Việt hợp lệ, bảo toàn 100% từ tiếng Anh (`signs`, `designs`, `john`) và thao tác huỷ dấu lặp (`tesst` → `test`).
+- **Gõ lướt nối chữ tiếng Việt (`GlideDecoder` + Vệt sáng Liquid Glass 120Hz):** Bộ giải mã đường lướt thuần Swift không dùng Foundation, kết hợp ngữ cảnh câu và tần suất cá nhân để lướt nhanh một tay kèm khả năng chạm 1 lần trên thanh gợi ý để đổi từ đồng âm.
+- **Bố cục iPad Pro Chuyên biệt (iPadOS 26 Full Layout):** Bổ sung phím `⇥ Tab`, cặp dấu `; / :`, `, / !`, `. / ?` trực tiếp trên mặt chữ và phím ẩn bàn phím `⌨️▾`; tự động thu gọn thông minh khi chuyển sang **Floating Keyboard** (`< 660 pt`).
+- **Đồng bộ 100% Liquid Glass trên macOS & Widget iOS 26:** Nâng cấp trang **Gõ tắt (`ShortcutsPage`)**, cửa sổ bộ cài **`Cài viTek.app` (`InstallerApp`)** và **Widget Màn hình chính / Màn hình khoá (`TypingWidget`)** (thêm lối tắt mở thẳng **Clipboard** & **AI Viết**).
+- **Tự động hoá kiểm định chất lượng (`scripts/verify_appstore.sh` & `scripts/run_keyboard_lab.sh`):** Kiểm tra tiêu chuẩn xét duyệt App Store Connect (`RequestsOpenAccess=false`, `PrivacyInfo.xcprivacy`, icon 1024×1024 không alpha, dung lượng `viTekKeyboard.appex`) và tự động chạy bộ kiểm thử bàn phím phần mềm `KeyboardLab`.
+
+---
+
 ## `20261125.1.005` *(iOS `20261125.1.5`)*
 
 ### Kiến trúc lại Bộ Render Bàn phím iOS 26 Liquid Glass & Tối ưu Tốc độ 120Hz

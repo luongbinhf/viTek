@@ -25,9 +25,9 @@ final class IOSKeyboardSettings {
 
     private enum Key: String {
         case toneStyle, spellCheck, restoreInvalidWords, keepEnglishWords
-        case quickStartConsonants, quickEndConsonants
+        case quickStartConsonants, quickEndConsonants, smartTypoRecovery
         case vietnameseEnabled, shortcutsInEnglishMode
-        case oneHandedMode, splitLandscapeKeyboard, flickDownSymbols
+        case oneHandedMode, splitLandscapeKeyboard, flickDownSymbols, glideTypingEnabled
         case showSuggestions, hapticFeedback, keyClickSound
         case autoCapitalization, doubleSpacePeriod, showNumberRow
         case shortcutsEnabled, shortcuts, iCloudSyncEnabled, customEnglishWords
@@ -44,11 +44,13 @@ final class IOSKeyboardSettings {
     var quickStartConsonants: Bool { didSet { save(quickStartConsonants, .quickStartConsonants) } }
     var quickEndConsonants: Bool { didSet { save(quickEndConsonants, .quickEndConsonants) } }
     var keepEnglishWords: Bool { didSet { save(keepEnglishWords, .keepEnglishWords) } }
+    var smartTypoRecovery: Bool { didSet { save(smartTypoRecovery, .smartTypoRecovery) } }
     var vietnameseEnabled: Bool { didSet { save(vietnameseEnabled, .vietnameseEnabled, syncCloud: false) } }
     var shortcutsInEnglishMode: Bool { didSet { save(shortcutsInEnglishMode, .shortcutsInEnglishMode) } }
     var oneHandedMode: OneHandedMode { didSet { save(oneHandedMode.rawValue, .oneHandedMode, syncCloud: false) } }
     var splitLandscapeKeyboard: Bool { didSet { save(splitLandscapeKeyboard, .splitLandscapeKeyboard, syncCloud: false) } }
     var flickDownSymbols: Bool { didSet { save(flickDownSymbols, .flickDownSymbols, syncCloud: false) } }
+    var glideTypingEnabled: Bool { didSet { save(glideTypingEnabled, .glideTypingEnabled, syncCloud: false) } }
     var showSuggestions: Bool { didSet { save(showSuggestions, .showSuggestions) } }
     var hapticFeedback: Bool { didSet { save(hapticFeedback, .hapticFeedback) } }
     var keyClickSound: Bool { didSet { save(keyClickSound, .keyClickSound) } }
@@ -91,11 +93,13 @@ final class IOSKeyboardSettings {
         quickStartConsonants = bool(.quickStartConsonants, fallback.quickStartConsonants)
         quickEndConsonants = bool(.quickEndConsonants, fallback.quickEndConsonants)
         keepEnglishWords = bool(.keepEnglishWords, fallback.keepEnglishWords)
+        smartTypoRecovery = bool(.smartTypoRecovery, fallback.smartTypoRecovery)
         vietnameseEnabled = bool(.vietnameseEnabled, true)
         shortcutsInEnglishMode = bool(.shortcutsInEnglishMode, false)
         oneHandedMode = defaults.string(forKey: Key.oneHandedMode.rawValue).flatMap(OneHandedMode.init) ?? .full
         splitLandscapeKeyboard = bool(.splitLandscapeKeyboard, false)
         flickDownSymbols = bool(.flickDownSymbols, true)
+        glideTypingEnabled = bool(.glideTypingEnabled, true)
         showSuggestions = bool(.showSuggestions, true)
         hapticFeedback = bool(.hapticFeedback, true)
         keyClickSound = bool(.keyClickSound, true)
@@ -137,6 +141,7 @@ final class IOSKeyboardSettings {
             quickStartConsonants: quickStartConsonants,
             quickEndConsonants: quickEndConsonants,
             keepEnglishWords: keepEnglishWords,
+            smartTypoRecovery: smartTypoRecovery,
             customEnglishWords: Set(customEnglishWords.map { $0.lowercased() })
         )
     }
@@ -199,11 +204,13 @@ final class IOSKeyboardSettings {
         quickStartConsonants = bool(.quickStartConsonants, fallback.quickStartConsonants)
         quickEndConsonants = bool(.quickEndConsonants, fallback.quickEndConsonants)
         keepEnglishWords = bool(.keepEnglishWords, fallback.keepEnglishWords)
+        smartTypoRecovery = bool(.smartTypoRecovery, fallback.smartTypoRecovery)
         vietnameseEnabled = bool(.vietnameseEnabled, true)
         shortcutsInEnglishMode = bool(.shortcutsInEnglishMode, false)
         oneHandedMode = defaults.string(forKey: Key.oneHandedMode.rawValue).flatMap(OneHandedMode.init) ?? .full
         splitLandscapeKeyboard = bool(.splitLandscapeKeyboard, false)
         flickDownSymbols = bool(.flickDownSymbols, true)
+        glideTypingEnabled = bool(.glideTypingEnabled, true)
         showSuggestions = bool(.showSuggestions, true)
         hapticFeedback = bool(.hapticFeedback, true)
         keyClickSound = bool(.keyClickSound, true)

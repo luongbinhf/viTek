@@ -84,6 +84,10 @@ let orthographyCases: [TypingCase] = [
     TypingCase(name: "switch_uow_to_uo_tuong", keys: "tuowngo", expected: "tuông"),
     TypingCase(name: "switch_uow_to_uo_with_tone", keys: "muowifo duowcjo", expected: "muồi duộc"),
     TypingCase(name: "switch_aw_aa_bidirectional", keys: "trawnga traangw", expected: "trâng trăng"),
+    // High-speed 100+ WPM transposition recovery + English protection
+    TypingCase(name: "typo_recovery_coda_gn_hn_hc", keys: "tieegns dduowgnf mihnf chihns thihcs bahcj", expected: "tiếng đường mình chính thích bạch"),
+    TypingCase(name: "typo_recovery_glide_uoi", keys: "nguwiof nguiowf muwiof", expected: "người người mười"),
+    TypingCase(name: "typo_recovery_english_safe", keys: "signs designs reigns foreign john", expected: "signs designs reigns foreign john"),
     // Quick Telex W: iê, yê, uyê + double-w undo
     TypingCase(name: "quick_telex_ie", keys: "viwtj tiwngs kiwmr", expected: "việt tiếng kiểm", options: quickWOptions),
     TypingCase(name: "quick_telex_ye_uye", keys: "ywus ywn quywts chuywnj nguywnx tuywts", expected: "yếu yên quyết chuyện nguyễn tuyết", options: quickWOptions),

@@ -4,6 +4,11 @@ Mỗi bản phát hành chính thức được gắn tag theo chuẩn [phiên b�
 
 ## Đã hoàn thành
 
+### `20261126.1.001` — Chống đảo phím >100 WPM, Gõ lướt `GlideDecoder`, iPad Pro Layout & Kiểm định App Store
+- [x] Khôi phục hoán vị phím tốc độ cao (`smartTypoRecovery` trong `VitekEngine`: `tieegns` → `tiếng`, `mihnf` → `mình`, `nguiowf` → `người`) bảo toàn tuyệt đối từ tiếng Anh.
+- [x] Bộ giải mã gõ lướt nối chữ tiếng Việt thuần Swift (`GlideDecoder`) kèm vệt sáng Liquid Glass 120Hz, bố cục **iPad Pro đầy đủ** (`Tab`, `;/:`, `, / !`, `. / ?`, tự thu gọn trong Floating Keyboard) và nâng cấp `TypingWidget` iOS 26.
+- [x] Đồng bộ 100% Liquid Glass cho `ShortcutsPage` & `Cài viTek.app` trên macOS, bổ sung `scripts/verify_appstore.sh` và `scripts/run_keyboard_lab.sh`.
+
 ### `20261125.1.005` — Bộ Render Bàn phím iOS 26 Liquid Glass 120Hz & Thiết kế lại Ứng dụng iOS
 - [x] Kiến trúc lại `KeyboardViewController` sang render khung trực tiếp (`< 0,5 ms`, 0 Auto Layout), tái sử dụng bộ nhớ phím (`LiquidKeyCapButton` + `shadowPath`), phản hồi chạm `0 ms`, hỗ trợ trượt chọn phím và bóng phóng đại `UIGlassEffect`.
 - [x] Căn chỉnh công thái học chuẩn Apple iOS 26: đồng nhất bề rộng phím chữ cả 3 hàng, đưa viên nang `VI/EN` & công cụ nhanh lên thanh trên để mở rộng phím **Dấu cách chính giữa**, loại bỏ nghẽn IPC `UIPasteboard` và `CoreML` trên luồng chính.

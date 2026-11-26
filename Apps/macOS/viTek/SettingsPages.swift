@@ -184,8 +184,11 @@ struct TypingPage: View {
                 Toggle("Trả lại phím đã gõ khi từ không phải tiếng Việt (server, express)",
                        isOn: $settings.restoreInvalidWords)
                     .disabled(!settings.spellCheck)
+                Toggle("Tự sửa đảo phím khi gõ cực nhanh (tieegns → tiếng, mihnf → mình)",
+                       isOn: $settings.smartTypoRecovery)
+                    .disabled(!settings.spellCheck)
             } footer: {
-                Footnote("Khi tắt kiểm tra chính tả, phím dấu luôn thêm dấu vào chữ gần nhất có thể nhận.")
+                Footnote("Khi bật tự sửa đảo phím, viTek chỉ phục hồi các cặp phụ âm cuối/vần bị bấm chéo khi từ đã có dấu tiếng Việt và không trùng từ tiếng Anh.")
             }
             Section {
                 Toggle("Gõ nhanh iê / yê / uyê bằng w (viw → viê, chuywnj → chuyện)", isOn: $settings.quickTelexW)
@@ -327,123 +330,125 @@ struct ShortcutsPage: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack {
+        let suggestions = smartSuggestions
+        Form {
+            Section {
                 Toggle("Bật gõ tắt", isOn: $settings.shortcutsEnabled)
                 Toggle("Gõ tắt cả khi tắt tiếng Việt", isOn: $settings.shortcutsInEnglishMode)
                     .disabled(!settings.shortcutsEnabled)
-                Toggle("Đồng bộ iCloud", isOn: $settings.iCloudSyncEnabled)
-                Spacer()
-                Text("\(settings.shortcutTable.count) gõ tắt đang dùng").foregroundStyle(.secondary)
-            }
-            // Plain Text, not Footnote: a vertically fixed size here makes NavigationSplitView measure
-            // the page at zero width and grow it past the window.
-            Text("Gõ chữ tắt rồi bấm dấu cách hoặc dấu câu để thay bằng cụm đầy đủ (hỗ trợ biến {{date}}, {{time}}, {{datetime}}). "
-                 + "Chữ hoa theo cách bạn gõ: ko → không, Ko → Không, KO → KHÔNG.")
-                .font(.callout)
-                .foregroundStyle(.secondary)
-
-            let suggestions = smartSuggestions
-            if !suggestions.isEmpty {
-                VStack(alignment: .leading, spacing: 6) {
-                    Label("Gợi ý tự động từ cụm từ bạn hay gõ", systemImage: "sparkles")
-                        .font(.caption.weight(.semibold))
+                Toggle("Đồng bộ bảng gõ tắt qua iCloud", isOn: $settings.iCloudSyncEnabled)
+                LabeledContent("Đang hoạt động") {
+                    Text("\(settings.shortcutTable.count) gõ tắt")
+                        .monospacedDigit()
                         .foregroundStyle(.secondary)
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: 8) {
-                            ForEach(suggestions, id: \.abbreviation) { item in
-                                Button {
-                                    settings.importShortcuts([ShortcutEntry(abbreviation: item.abbreviation, expansion: item.phrase)])
-                                } label: {
-                                    HStack(spacing: 5) {
-                                        Image(systemName: "plus.circle.fill")
-                                            .foregroundStyle(Color.accentColor)
-                                        Text(item.abbreviation)
-                                            .font(.system(.caption, design: .monospaced).weight(.bold))
-                                        Image(systemName: "arrow.right")
-                                            .font(.caption2)
-                                            .foregroundStyle(.tertiary)
-                                        Text(item.phrase)
-                                            .font(.caption)
-                                        Text("(\(item.count)×)")
-                                            .font(.caption2)
-                                            .foregroundStyle(.secondary)
-                                    }
-                                    .padding(.horizontal, 10)
-                                    .padding(.vertical, 5)
-                                    .glassFilterChip(isSelected: false)
-                                }
-                                .buttonStyle(.plain)
-                                .help("Thêm gõ tắt \(item.abbreviation) → \(item.phrase)")
-                            }
-                        }
-                    }
+                }
+            } footer: {
+                Footnote("Gõ chữ tắt rồi bấm dấu cách hoặc dấu câu để mở rộng (hỗ trợ biến động {{date}}, {{time}}, {{datetime}}). Giữ kiểu chữ hoa theo cách gõ: ko → không, Ko → Không, KO → KHÔNG.")
+            }
+
+            if !suggestions.isEmpty {
+                Section("Gợi ý tự động từ cụm từ bạn hay gõ") {
+                    smartSuggestionStrip(suggestions)
                 }
             }
-            VStack(spacing: 0) {
-                HStack(spacing: 12) {
-                    Text("Chữ tắt").frame(width: 140, alignment: .leading)
-                    Text("Thay bằng")
+
+            Section("Danh sách Gõ tắt (\(settings.shortcuts.count))") {
+                if settings.shortcuts.isEmpty {
+                    Text("Chưa có gõ tắt nào. Chọn “Thêm gõ tắt” bên dưới hoặc nhập từ tệp văn bản.")
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
+                        .padding(.vertical, 6)
+                } else {
+                    ForEach($settings.shortcuts) { $shortcut in
+                        HStack(spacing: 12) {
+                            TextField("vd. ko", text: $shortcut.abbreviation)
+                                .font(.system(.body, design: .monospaced))
+                                .accessibilityLabel("Chữ tắt")
+                                .frame(width: 140)
+                            Image(systemName: "arrow.right")
+                                .font(.caption)
+                                .foregroundStyle(.tertiary)
+                            TextField("vd. không", text: $shortcut.expansion)
+                                .accessibilityLabel("Cụm thay thế")
+                            Button(role: .destructive) {
+                                let id = shortcut.id
+                                settings.shortcuts.removeAll { $0.id == id }
+                            } label: {
+                                Image(systemName: "trash")
+                            }
+                            .buttonStyle(.borderless)
+                            .accessibilityLabel("Xóa gõ tắt \(shortcut.abbreviation)")
+                            .help("Xóa dòng này")
+                        }
+                        .textFieldStyle(.roundedBorder)
+                        .padding(.vertical, 2)
+                    }
+                }
+
+                HStack(spacing: 10) {
+                    Button {
+                        addingShortcut = true
+                    } label: {
+                        Label("Thêm gõ tắt", systemImage: "plus")
+                    }
+                    .glassProminentButton()
+
                     Spacer()
+
+                    Button("Nhập từ tệp…", action: importFile)
+                        .glassButton()
+
+                    Button("Xuất ra tệp…", action: exportFile)
+                        .glassButton()
+                        .disabled(!settings.shortcutEntries.contains { !$0.abbreviation.isEmpty && !$0.expansion.isEmpty })
                 }
-                .font(.callout.weight(.medium))
-                .foregroundStyle(.secondary)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 6)
-                Divider()
-                ScrollView {
-                    LazyVStack(spacing: 0) {
-                        ForEach($settings.shortcuts) { $shortcut in
-                            HStack(spacing: 12) {
-                                TextField("vd. ko", text: $shortcut.abbreviation)
-                                    .accessibilityLabel("Chữ tắt")
-                                    .frame(width: 140)
-                                TextField("vd. không", text: $shortcut.expansion)
-                                    .accessibilityLabel("Cụm thay thế")
-                                Button(role: .destructive) {
-                                    let id = shortcut.id
-                                    settings.shortcuts.removeAll { $0.id == id }
-                                } label: {
-                                    Image(systemName: "trash")
-                                }
-                                .buttonStyle(.borderless)
-                                .accessibilityLabel("Xóa gõ tắt \(shortcut.abbreviation)")
-                                .help("Xóa dòng này")
-                            }
-                            .textFieldStyle(.roundedBorder)
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 4)
-                        }
-                    }
-                }
-                .frame(maxHeight: .infinity)
-                .overlay {
-                    if settings.shortcuts.isEmpty {
-                        Text("Chọn “Thêm gõ tắt” để tạo chữ tắt đầu tiên.").foregroundStyle(.secondary)
-                    }
-                }
-            }
-            .background(Color(nsColor: .controlBackgroundColor))
-            .clipShape(RoundedRectangle(cornerRadius: 8))
-            .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(Color.secondary.opacity(0.25)))
-            HStack {
-                Button {
-                    addingShortcut = true
-                } label: {
-                    Label("Thêm gõ tắt", systemImage: "plus")
-                }
-                Spacer()
-                Button("Nhập từ tệp…", action: importFile)
-                Button("Xuất ra tệp…", action: exportFile)
-                    .disabled(!settings.shortcutEntries.contains { !$0.abbreviation.isEmpty && !$0.expansion.isEmpty })
+                .padding(.top, 4)
             }
         }
-        .padding(.horizontal, 28)
-        .padding(.vertical, 20)
+        .settingsForm()
         .sheet(isPresented: $addingShortcut) {
             NewShortcutForm { entry in
                 settings.importShortcuts([entry])
             }
+        }
+    }
+
+    @ViewBuilder
+    private func smartSuggestionStrip(_ suggestions: [SuggestedShortcut]) -> some View {
+        let row = ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+                ForEach(suggestions, id: \.abbreviation) { item in
+                    Button {
+                        settings.importShortcuts([ShortcutEntry(abbreviation: item.abbreviation, expansion: item.phrase)])
+                    } label: {
+                        HStack(spacing: 5) {
+                            Image(systemName: "plus.circle.fill")
+                                .foregroundStyle(Color.accentColor)
+                            Text(item.abbreviation)
+                                .font(.system(.caption, design: .monospaced).weight(.bold))
+                            Image(systemName: "arrow.right")
+                                .font(.caption2)
+                                .foregroundStyle(.tertiary)
+                            Text(item.phrase)
+                                .font(.caption)
+                            Text("(\(item.count)×)")
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                        }
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 5)
+                        .glassFilterChip(isSelected: false)
+                    }
+                    .buttonStyle(.plain)
+                    .help("Thêm gõ tắt \(item.abbreviation) → \(item.phrase)")
+                }
+            }
+            .padding(.vertical, 2)
+        }
+        if #available(macOS 26.0, *) {
+            GlassEffectContainer(spacing: 6) { row }
+        } else {
+            row
         }
     }
 

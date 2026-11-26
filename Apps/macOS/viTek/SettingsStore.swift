@@ -26,7 +26,7 @@ final class SettingsStore {
 
     private enum Key: String {
         case toneStyle, spellCheck, restoreInvalidWords, standaloneW, quickTelexW, bracketVowels, keepEnglishWords
-        case quickStartConsonants, quickEndConsonants
+        case quickStartConsonants, quickEndConsonants, smartTypoRecovery
         case shortcutsEnabled, shortcuts, shortcutsInEnglishMode, editPreviousWord, underlineComposition, showSuggestions
         case vietnameseEnabled, quickToggleOptionDoubleTap, showModeSwitchHUD
         case typingScores, iCloudSyncEnabled, customEnglishWords, excludedBundleIDs
@@ -45,6 +45,7 @@ final class SettingsStore {
     var quickStartConsonants: Bool { didSet { save(quickStartConsonants, .quickStartConsonants) } }
     var quickEndConsonants: Bool { didSet { save(quickEndConsonants, .quickEndConsonants) } }
     var keepEnglishWords: Bool { didSet { save(keepEnglishWords, .keepEnglishWords) } }
+    var smartTypoRecovery: Bool { didSet { save(smartTypoRecovery, .smartTypoRecovery) } }
     /// A mark key typed right after a word edits that word (`viêt` + `j` → việt).
     var editPreviousWord: Bool { didSet { save(editPreviousWord, .editPreviousWord) } }
     /// Show the word being typed as underlined marked text instead of ordinary text.
@@ -92,6 +93,7 @@ final class SettingsStore {
         quickStartConsonants = bool(.quickStartConsonants, fallback.quickStartConsonants)
         quickEndConsonants = bool(.quickEndConsonants, fallback.quickEndConsonants)
         keepEnglishWords = bool(.keepEnglishWords, fallback.keepEnglishWords)
+        smartTypoRecovery = bool(.smartTypoRecovery, fallback.smartTypoRecovery)
         editPreviousWord = bool(.editPreviousWord, true)
         underlineComposition = bool(.underlineComposition, false)
         showSuggestions = bool(.showSuggestions, false)
@@ -135,6 +137,7 @@ final class SettingsStore {
             quickEndConsonants: quickEndConsonants,
             keepEnglishWords: keepEnglishWords,
             quickTelexW: quickTelexW,
+            smartTypoRecovery: smartTypoRecovery,
             customEnglishWords: Set(customEnglishWords.map { $0.lowercased() })
         )
     }

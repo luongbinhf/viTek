@@ -85,4 +85,18 @@ import Testing
     func switchesSmoothlyBetweenCompoundVowelMarks(_ keys: String, _ expected: String) {
         #expect(typed(keys) == expected, "\(keys)")
     }
+
+    @Test(arguments: [
+        // High-speed 100+ WPM Vietnamese coda & glide transpositions
+        ("tieegns", "tiếng"), ("tiegnes", "tiếng"), ("dduowgnf", "đường"), ("nhuwgn", "nhưng"),
+        ("mihnf", "mình"), ("chihns", "chính"), ("thafhn", "thành"),
+        ("thihcs", "thích"), ("sahcs", "sách"), ("bahcj", "bạch"),
+        ("nguiowf", "người"), ("nguwiof", "người"), ("muwiof", "mười"),
+        // English words and explicit undos must NEVER be altered
+        ("signs", "signs"), ("designs", "designs"), ("aligns", "aligns"), ("reigns", "reigns"),
+        ("john", "john"), ("mihn", "mihn"), ("tesst", "test"), ("server", "server"),
+    ] as [(String, String)])
+    func recoversHighSpeedTranspositionsSafely(_ keys: String, _ expected: String) {
+        #expect(typed(keys) == expected, "\(keys)")
+    }
 }

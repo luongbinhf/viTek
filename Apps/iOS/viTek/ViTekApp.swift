@@ -390,6 +390,14 @@ private struct KeyboardSettingsView: View {
                         }
                     }
 
+                    Toggle(isOn: $settings.smartTypoRecovery) {
+                        HStack(spacing: 12) {
+                            SettingsBadgeIcon(symbol: "wand.and.rays", tint: .orange)
+                            Text("Sửa đảo phím khi gõ nhanh (tieegns → tiếng)")
+                        }
+                    }
+                    .disabled(!settings.spellCheck)
+
                     NavigationLink {
                         IOSCustomWordsView()
                     } label: {
@@ -456,6 +464,13 @@ private struct KeyboardSettingsView: View {
                         HStack(spacing: 12) {
                             SettingsBadgeIcon(symbol: "arrow.down.square.fill", tint: .mint)
                             Text("Vuốt xuống phím chữ gõ số & ký hiệu")
+                        }
+                    }
+
+                    Toggle(isOn: $settings.glideTypingEnabled) {
+                        HStack(spacing: 12) {
+                            SettingsBadgeIcon(symbol: "scribble.variable", tint: .cyan)
+                            Text("Gõ lướt nối chữ tiếng Việt (Glide Typing)")
                         }
                     }
 

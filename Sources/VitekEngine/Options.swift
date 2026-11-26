@@ -37,6 +37,9 @@ public struct EngineOptions: Sendable, Equatable {
     /// Telex: keep an English word as typed when its keys also read as Vietnamese (`test`, not
     /// `tét`). Applies only when the last key is a plain letter, so `tets` still gives tét.
     public var keepEnglishWords: Bool
+    /// Recovers adjacent high-speed key transpositions (`gn`→`ng`, `hn`→`nh`, `hc`→`ch`, `uio`/`uwio`→`ươi`)
+    /// when an explicit Vietnamese mark or tone produces a complete syllable (`tieegns` → `tiếng`, `mihnf` → `mình`).
+    public var smartTypoRecovery: Bool
     /// User-defined words (lowercased) that viTek always keeps literal without Vietnamese marks.
     public var customEnglishWords: Set<String>
 
@@ -52,6 +55,7 @@ public struct EngineOptions: Sendable, Equatable {
         quickEndConsonants: Bool = false,
         keepEnglishWords: Bool = true,
         quickTelexW: Bool = true,
+        smartTypoRecovery: Bool = true,
         customEnglishWords: Set<String> = []
     ) {
         self.automaticallyDetectsMethod = automaticallyDetectsMethod
@@ -65,6 +69,7 @@ public struct EngineOptions: Sendable, Equatable {
         self.quickStartConsonants = quickStartConsonants
         self.quickEndConsonants = quickEndConsonants
         self.keepEnglishWords = keepEnglishWords
+        self.smartTypoRecovery = smartTypoRecovery
         self.customEnglishWords = customEnglishWords
     }
 }

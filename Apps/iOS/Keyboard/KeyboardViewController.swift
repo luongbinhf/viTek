@@ -5,15 +5,6 @@ import VitekSession
 
 private final class AudioFeedbackInputView: UIInputView, UIInputViewAudioFeedback {
     var enableInputClicksWhenVisible: Bool { true }
-
-    override init(frame: CGRect, inputViewStyle: UIInputView.Style) {
-        super.init(frame: frame, inputViewStyle: inputViewStyle)
-        clipsToBounds = false
-        allowsSelfSizing = true
-    }
-
-    @available(*, unavailable)
-    required init?(coder: NSCoder) { fatalError() }
 }
 
 // MARK: - Zero-Constraint iOS 26 Liquid Glass Keycap Button
@@ -243,6 +234,8 @@ final class KeyboardViewController: UIInputViewController {
         case character(primary: Character, lowercase: Character, flick: Character?)
         case shift
         case backspace
+        case tabKey
+        case dismissKeyboardKey
         case pageToggle        // 123 <-> ABC
         case symbolsToggle     // #+= <-> 123
         case emojiPage
@@ -294,7 +287,8 @@ final class KeyboardViewController: UIInputViewController {
     private let settings = IOSKeyboardSettings.shared
     private let haptic = UIImpactFeedbackGenerator(style: .light)
 
-    // Root surfaces (zero nested stack layout for key grid!)
+    // Root surfaces (zero nested stack layout for key grid; 1 sizing guide anchors UIInputView height!)
+    private let sizingGuideView = UIView()
     private var backdropGlassView: UIVisualEffectView!
     private let topToolbarView = UIView()
     private let keyPlaneView = UIView()
@@ -323,7 +317,7 @@ final class KeyboardViewController: UIInputViewController {
     private var keyPool: [LiquidKeyCapButton] = []
     private var activeKeyActions: [KeyActionKind] = []
     private var letterPoolIndices: [(index: Int, lowercase: Character)] = []
-    private var shiftPoolIndex: Int?
+    private var shiftPoolIndices: [Int] = []
     private var spacePoolIndices: [Int] = []
 
     // Interactive Center Bridge (for unfolded iPhone Duo / wide split mode)
@@ -357,10 +351,25 @@ final class KeyboardViewController: UIInputViewController {
     private var lastObservedReturnKeyType: UIReturnKeyType?
     private var lastLaidOutBounds: CGSize = .zero
 
-    // Multi-touch & slide/flick tracking
+    // Multi-touch, slide/flick & Vietnamese Glide Typing tracking
     private var touchStartPointInButton: CGPoint?
     private var activeFlickCharacter: Character?
     private weak var activeSlideButton: LiquidKeyCapButton?
+    private let glideTrailLayer: CAShapeLayer = {
+        let layer = CAShapeLayer()
+        layer.fillColor = nil
+        layer.strokeColor = UIColor.systemCyan.withAlphaComponent(0.70).cgColor
+        layer.lineWidth = 4.5
+        layer.lineCap = .round
+        layer.lineJoin = .round
+        layer.zPosition = 120
+        return layer
+    }()
+    private var isGliding = false
+    private var glidePoints: [CGPoint] = []
+    private var glideSampledKeys: [Character] = []
+    private var glideTotalDistance: CGFloat = 0
+    private var lastGlidedInsertionLength = 0
 
     // MARK: - Lifecycle
 
@@ -372,9 +381,13 @@ final class KeyboardViewController: UIInputViewController {
         super.viewDidLoad()
         view.clipsToBounds = false
 
-        let glassEffect = UIGlassEffect(style: .clear)
+        sizingGuideView.translatesAutoresizingMaskIntoConstraints = false
+        sizingGuideView.isUserInteractionEnabled = false
+        view.addSubview(sizingGuideView)
+
+        let glassEffect = UIGlassEffect(style: .regular)
         let glass = UIVisualEffectView(effect: glassEffect)
-        glass.cornerConfiguration = .corners(radius: .fixed(20))
+        glass.cornerConfiguration = .corners(radius: .fixed(18))
         glass.clipsToBounds = false
         backdropGlassView = glass
         view.addSubview(glass)
@@ -390,13 +403,21 @@ final class KeyboardViewController: UIInputViewController {
         view.addSubview(keyPlaneView)
         view.addSubview(overlayPanelView)
         view.addSubview(keyCallout)
+        keyPlaneView.layer.addSublayer(glideTrailLayer)
 
         setupTopToolbar()
         setupOneHandedDock()
 
-        let hc = view.heightAnchor.constraint(equalToConstant: preferredTotalHeight)
-        hc.priority = UILayoutPriority(999)
-        hc.isActive = true
+        let safe = view.safeAreaLayoutGuide
+        let hc = sizingGuideView.heightAnchor.constraint(equalToConstant: preferredTotalHeight)
+        hc.priority = .defaultHigh
+        NSLayoutConstraint.activate([
+            sizingGuideView.leadingAnchor.constraint(equalTo: safe.leadingAnchor),
+            sizingGuideView.trailingAnchor.constraint(equalTo: safe.trailingAnchor),
+            sizingGuideView.topAnchor.constraint(equalTo: safe.topAnchor),
+            sizingGuideView.bottomAnchor.constraint(equalTo: safe.bottomAnchor),
+            hc,
+        ])
         heightConstraint = hc
 
         NotificationCenter.default.addObserver(
@@ -1049,6 +1070,8 @@ final class KeyboardViewController: UIInputViewController {
             placed = computeEmojiSearchKeys(in: planeBounds)
         } else if isSplitLayoutActive {
             placed = computeSplitKeys(in: planeBounds)
+        } else if traitCollection.userInterfaceIdiom == .pad, page == .letters, planeBounds.width >= 660 {
+            placed = computeFullPadProKeys(in: planeBounds)
         } else {
             placed = computeUnifiedAppleKeys(in: planeBounds)
         }
@@ -1057,7 +1080,7 @@ final class KeyboardViewController: UIInputViewController {
         activeKeyActions = placed.map(\.action)
         letterPoolIndices.removeAll(keepingCapacity: true)
         spacePoolIndices.removeAll(keepingCapacity: true)
-        shiftPoolIndex = nil
+        shiftPoolIndices.removeAll(keepingCapacity: true)
 
         let cornerR: CGFloat = isPadLayout ? 10 : 8.5
 
@@ -1110,7 +1133,7 @@ final class KeyboardViewController: UIInputViewController {
                     letterPoolIndices.append((idx, lower))
                 }
             case .shift:
-                shiftPoolIndex = idx
+                shiftPoolIndices.append(idx)
             case .space:
                 spacePoolIndices.append(idx)
             default:
@@ -1395,6 +1418,189 @@ final class KeyboardViewController: UIInputViewController {
             action: .returnKey
         ))
 
+        return out
+    }
+
+    // MARK: - Full-Size iPad Pro Layout (Collapses Automatically in Floating Keyboard < 660pt!)
+
+    private func computeFullPadProKeys(in bounds: CGRect) -> [PlacedKey] {
+        let W = bounds.width
+        let H = bounds.height
+        let hGap: CGFloat = 8
+        let vGap: CGFloat = 10
+        let hasNumberRow = settings.showNumberRow
+        let totalRows = hasNumberRow ? 5 : 4
+        let keyH = max(36, (H - CGFloat(totalRows - 1) * vGap) / CGFloat(totalRows))
+        let fontSize: CGFloat = 22
+        var out: [PlacedKey] = []
+        out.reserveCapacity(42)
+        var rowIndex = 0
+        func rowY(_ r: Int) -> CGFloat { CGFloat(r) * (keyH + vGap) }
+
+        if hasNumberRow {
+            let y = rowY(rowIndex)
+            let numW = (W - 9 * hGap) / 10
+            for (col, ch) in "1234567890".enumerated() {
+                let s = String(ch)
+                out.append(PlacedKey(
+                    frame: CGRect(x: CGFloat(col) * (numW + hGap), y: y, width: numW, height: keyH),
+                    title: s, symbol: nil, flick: nil, accLabel: s, accID: nil,
+                    role: .character, fontSize: fontSize - 2, fontWeight: .regular,
+                    action: .character(primary: ch, lowercase: ch, flick: nil)
+                ))
+            }
+            rowIndex += 1
+        }
+
+        // Row 1: [Tab ⇥] + Q W E R T Y U I O P + [⌫ Backspace]
+        let y1 = rowY(rowIndex)
+        let tabW: CGFloat = 58
+        let delW: CGFloat = 68
+        let r1Avail = W - tabW - delW - 11 * hGap
+        let keyW = r1Avail / 10
+
+        out.append(PlacedKey(
+            frame: CGRect(x: 0, y: y1, width: tabW, height: keyH),
+            title: nil, symbol: ("arrow.right.to.line", 17, .medium), flick: nil,
+            accLabel: "Tab", accID: "keyboard.tab", role: .modifier,
+            fontSize: 15, fontWeight: .medium, action: .tabKey
+        ))
+        var x1 = tabW + hGap
+        for lower in "qwertyuiop" {
+            let primary: Character = isShifted ? Character(String(lower).uppercased()) : lower
+            let flick = settings.flickDownSymbols ? Self.flickCharacters[lower] : nil
+            let s = String(primary)
+            out.append(PlacedKey(
+                frame: CGRect(x: x1, y: y1, width: keyW, height: keyH),
+                title: s, symbol: nil, flick: flick, accLabel: s, accID: nil,
+                role: .character, fontSize: fontSize, fontWeight: .regular,
+                action: .character(primary: primary, lowercase: lower, flick: flick)
+            ))
+            x1 += keyW + hGap
+        }
+        out.append(PlacedKey(
+            frame: CGRect(x: W - delW, y: y1, width: delW, height: keyH),
+            title: nil, symbol: ("delete.left", 19, .medium), flick: nil,
+            accLabel: "Xoá", accID: "keyboard.backspace", role: .modifier,
+            fontSize: 16, fontWeight: .medium, action: .backspace
+        ))
+        rowIndex += 1
+
+        // Row 2: Half-indent + A S D F G H J K L + [; / :] + [Return]
+        let y2 = rowY(rowIndex)
+        let indent2: CGFloat = 28
+        let retW: CGFloat = max(84, W - indent2 - 10 * keyW - 10 * hGap)
+        var x2 = indent2
+        for lower in "asdfghjkl" {
+            let primary: Character = isShifted ? Character(String(lower).uppercased()) : lower
+            let flick = settings.flickDownSymbols ? Self.flickCharacters[lower] : nil
+            let s = String(primary)
+            out.append(PlacedKey(
+                frame: CGRect(x: x2, y: y2, width: keyW, height: keyH),
+                title: s, symbol: nil, flick: flick, accLabel: s, accID: nil,
+                role: .character, fontSize: fontSize, fontWeight: .regular,
+                action: .character(primary: primary, lowercase: lower, flick: flick)
+            ))
+            x2 += keyW + hGap
+        }
+        let semiChar: Character = isShifted ? ":" : ";"
+        out.append(PlacedKey(
+            frame: CGRect(x: x2, y: y2, width: keyW, height: keyH),
+            title: String(semiChar), symbol: nil, flick: ":", accLabel: String(semiChar), accID: nil,
+            role: .character, fontSize: fontSize, fontWeight: .regular,
+            action: .character(primary: semiChar, lowercase: ";", flick: ":")
+        ))
+        let (retTitle, retProminent) = returnKeySpec()
+        out.append(PlacedKey(
+            frame: CGRect(x: W - retW, y: y2, width: retW, height: keyH),
+            title: retTitle, symbol: nil, flick: nil, accLabel: retTitle, accID: "keyboard.return",
+            role: retProminent ? .prominent : .modifier, fontSize: 16,
+            fontWeight: retProminent ? .semibold : .medium, action: .returnKey
+        ))
+        rowIndex += 1
+
+        // Row 3: [Left Shift] + Z X C V B N M + [, / !] + [. / ?] + [Right Shift]
+        let y3 = rowY(rowIndex)
+        let centerSpan3 = 9 * keyW + 8 * hGap
+        let shiftW = max(58, (W - centerSpan3 - 2 * hGap) * 0.5)
+        out.append(makeLeadingRow3Spec(frame: CGRect(x: 0, y: y3, width: shiftW, height: keyH)))
+
+        var x3 = shiftW + hGap
+        for lower in "zxcvbnm" {
+            let primary: Character = isShifted ? Character(String(lower).uppercased()) : lower
+            let flick = settings.flickDownSymbols ? Self.flickCharacters[lower] : nil
+            let s = String(primary)
+            out.append(PlacedKey(
+                frame: CGRect(x: x3, y: y3, width: keyW, height: keyH),
+                title: s, symbol: nil, flick: flick, accLabel: s, accID: nil,
+                role: .character, fontSize: fontSize, fontWeight: .regular,
+                action: .character(primary: primary, lowercase: lower, flick: flick)
+            ))
+            x3 += keyW + hGap
+        }
+        let commaPrimary: Character = isShifted ? "!" : ","
+        out.append(PlacedKey(
+            frame: CGRect(x: x3, y: y3, width: keyW, height: keyH),
+            title: String(commaPrimary), symbol: nil, flick: "!", accLabel: String(commaPrimary), accID: nil,
+            role: .character, fontSize: fontSize, fontWeight: .regular,
+            action: .character(primary: commaPrimary, lowercase: ",", flick: "!")
+        ))
+        x3 += keyW + hGap
+        let dotPrimary: Character = isShifted ? "?" : "."
+        out.append(PlacedKey(
+            frame: CGRect(x: x3, y: y3, width: keyW, height: keyH),
+            title: String(dotPrimary), symbol: nil, flick: "?", accLabel: String(dotPrimary), accID: nil,
+            role: .character, fontSize: fontSize, fontWeight: .regular,
+            action: .character(primary: dotPrimary, lowercase: ".", flick: "?")
+        ))
+        out.append(makeLeadingRow3Spec(frame: CGRect(x: W - shiftW, y: y3, width: shiftW, height: keyH)))
+        rowIndex += 1
+
+        // Row 4: [123] + [🌐/😊] + [ Wide Spacebar ] + [123] + [⌨️▾ Dismiss]
+        let y4 = rowY(rowIndex)
+        let numBtnW: CGFloat = 66
+        let sideBtnW: CGFloat = 54
+        out.append(PlacedKey(
+            frame: CGRect(x: 0, y: y4, width: numBtnW, height: keyH),
+            title: "123", symbol: nil, flick: nil, accLabel: "123", accID: "keyboard.pageToggle",
+            role: .modifier, fontSize: 16, fontWeight: .medium, action: .pageToggle
+        ))
+        let secX = numBtnW + hGap
+        if needsInputModeSwitchKey {
+            out.append(PlacedKey(
+                frame: CGRect(x: secX, y: y4, width: sideBtnW, height: keyH),
+                title: nil, symbol: ("globe", 18, .medium), flick: nil,
+                accLabel: "Đổi bàn phím", accID: "keyboard.globe",
+                role: .modifier, fontSize: 16, fontWeight: .medium, action: .globe
+            ))
+        } else {
+            out.append(PlacedKey(
+                frame: CGRect(x: secX, y: y4, width: sideBtnW, height: keyH),
+                title: nil, symbol: ("face.smiling", 18, .medium), flick: nil,
+                accLabel: "Emoji", accID: "keyboard.emoji",
+                role: .modifier, fontSize: 16, fontWeight: .medium, action: .emojiPage
+            ))
+        }
+        let spaceX = secX + sideBtnW + hGap
+        let rightNumX = W - sideBtnW - hGap - numBtnW
+        let spaceW = max(140, rightNumX - hGap - spaceX)
+        out.append(PlacedKey(
+            frame: CGRect(x: spaceX, y: y4, width: spaceW, height: keyH),
+            title: session.isVietnamese ? "Tiếng Việt" : "English",
+            symbol: nil, flick: nil, accLabel: "Dấu cách", accID: "keyboard.space",
+            role: .character, fontSize: 16, fontWeight: .regular, action: .space(isPrimary: true)
+        ))
+        out.append(PlacedKey(
+            frame: CGRect(x: rightNumX, y: y4, width: numBtnW, height: keyH),
+            title: ".?123", symbol: nil, flick: nil, accLabel: ".?123", accID: nil,
+            role: .modifier, fontSize: 15, fontWeight: .medium, action: .pageToggle
+        ))
+        out.append(PlacedKey(
+            frame: CGRect(x: W - sideBtnW, y: y4, width: sideBtnW, height: keyH),
+            title: nil, symbol: ("keyboard.chevron.compact.down", 18, .medium), flick: nil,
+            accLabel: "Ẩn bàn phím", accID: "keyboard.dismiss",
+            role: .modifier, fontSize: 16, fontWeight: .medium, action: .dismissKeyboardKey
+        ))
         return out
     }
 
@@ -1751,13 +1957,20 @@ final class KeyboardViewController: UIInputViewController {
     @objc private func handlePoolKeyTouchDown(_ sender: LiquidKeyCapButton, forEvent event: UIEvent) {
         let idx = sender.tag
         guard activeKeyActions.indices.contains(idx) else { return }
-        touchStartPointInButton = event.allTouches?.first?.location(in: sender)
+        let touch = event.allTouches?.first
+        touchStartPointInButton = touch?.location(in: sender)
         activeFlickCharacter = nil
         activeSlideButton = sender
+        resetGlideTracking()
 
         switch activeKeyActions[idx] {
-        case .character(let primary, _, _):
+        case .character(let primary, let lower, _):
             showKeyPreview(for: sender, text: String(primary))
+            if settings.glideTypingEnabled, page == .letters, session.isVietnamese, !isShifted, lower.isLetter,
+               let pt = touch?.location(in: keyPlaneView) {
+                glidePoints = [pt]
+                glideSampledKeys = [lower]
+            }
         case .emojiSearchChar(let ch):
             showKeyPreview(for: sender, text: String(ch))
         default:
@@ -1771,8 +1984,8 @@ final class KeyboardViewController: UIInputViewController {
               let touch = event.allTouches?.first else { return }
         let locInSender = touch.location(in: sender)
 
-        if case .character(let primary, let lower, let flick) = activeKeyActions[idx] {
-            if let flick, let start = touchStartPointInButton,
+        if case .character(let primary, _, let flick) = activeKeyActions[idx] {
+            if !isGliding, let flick, let start = touchStartPointInButton,
                locInSender.y - start.y >= 17, abs(locInSender.x - start.x) <= 38 {
                 activeFlickCharacter = flick
                 activeSlideButton = sender
@@ -1781,8 +1994,37 @@ final class KeyboardViewController: UIInputViewController {
             }
             activeFlickCharacter = nil
 
-            // Slide-across-keys tracking (just like Apple's native iOS keyboard!)
             let locInPlane = touch.location(in: keyPlaneView)
+
+            // Track continuous Vietnamese Glide path when enabled
+            if !glidePoints.isEmpty, let lastPt = glidePoints.last {
+                let seg = hypot(locInPlane.x - lastPt.x, locInPlane.y - lastPt.y)
+                if seg >= 4 {
+                    glideTotalDistance += seg
+                    glidePoints.append(locInPlane)
+                    if glidePoints.count > 48 { glidePoints.removeFirst(glidePoints.count - 40) }
+                }
+                if let hovered = characterButton(at: locInPlane),
+                   activeKeyActions.indices.contains(hovered.tag),
+                   case .character(_, let hLower, _) = activeKeyActions[hovered.tag],
+                   hLower.isLetter, glideSampledKeys.last != hLower {
+                    glideSampledKeys.append(hLower)
+                }
+
+                if !isGliding, glideSampledKeys.count >= 3, glideTotalDistance >= 68 {
+                    isGliding = true
+                    activeSlideButton?.isHighlighted = false
+                    hideKeyPreview()
+                }
+
+                if isGliding {
+                    updateGlideTrailPath()
+                    previewGlideCandidates()
+                    return
+                }
+            }
+
+            // Slide-across-keys tracking (just like Apple's native iOS keyboard!)
             if let hovered = characterButton(at: locInPlane), hovered !== activeSlideButton {
                 activeSlideButton?.isHighlighted = false
                 hovered.isHighlighted = true
@@ -1797,17 +2039,21 @@ final class KeyboardViewController: UIInputViewController {
                     hideKeyPreview()
                 }
             }
-            _ = lower
         }
     }
 
     @objc private func handlePoolKeyTouchUpInside(_ sender: LiquidKeyCapButton, forEvent event: UIEvent) {
         hideKeyPreview()
+        if isGliding {
+            finishGlideCommit()
+            return
+        }
         defer {
             if let slid = activeSlideButton, slid !== sender { slid.isHighlighted = false }
             activeSlideButton = nil
             touchStartPointInButton = nil
             activeFlickCharacter = nil
+            resetGlideTracking()
         }
 
         if let flick = activeFlickCharacter {
@@ -1823,11 +2069,16 @@ final class KeyboardViewController: UIInputViewController {
 
     @objc private func handlePoolKeyTouchUpOutside(_ sender: LiquidKeyCapButton, forEvent event: UIEvent) {
         hideKeyPreview()
+        if isGliding {
+            finishGlideCommit()
+            return
+        }
         defer {
             activeSlideButton?.isHighlighted = false
             activeSlideButton = nil
             touchStartPointInButton = nil
             activeFlickCharacter = nil
+            resetGlideTracking()
         }
 
         if let flick = activeFlickCharacter {
@@ -1845,7 +2096,88 @@ final class KeyboardViewController: UIInputViewController {
         activeSlideButton = nil
         touchStartPointInButton = nil
         activeFlickCharacter = nil
+        resetGlideTracking()
         hideKeyPreview()
+    }
+
+    private func resetGlideTracking() {
+        isGliding = false
+        glidePoints.removeAll(keepingCapacity: true)
+        glideSampledKeys.removeAll(keepingCapacity: true)
+        glideTotalDistance = 0
+        if glideTrailLayer.path != nil {
+            CATransaction.begin()
+            CATransaction.setDisableActions(true)
+            glideTrailLayer.path = nil
+            CATransaction.commit()
+        }
+    }
+
+    private func updateGlideTrailPath() {
+        guard glidePoints.count >= 2 else { return }
+        let bezier = UIBezierPath()
+        bezier.move(to: glidePoints[0])
+        for i in 1..<glidePoints.count {
+            let prev = glidePoints[i - 1]
+            let curr = glidePoints[i]
+            let mid = CGPoint(x: (prev.x + curr.x) * 0.5, y: (prev.y + curr.y) * 0.5)
+            bezier.addQuadCurve(to: mid, controlPoint: prev)
+        }
+        if let last = glidePoints.last {
+            bezier.addLine(to: last)
+        }
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
+        glideTrailLayer.path = bezier.cgPath
+        CATransaction.commit()
+    }
+
+    private func currentDecodedGlideWords() -> [WordCandidate] {
+        let before = textDocumentProxy.documentContextBeforeInput ?? ""
+        let prevWords = before.split(whereSeparator: { !$0.isLetter }).suffix(2).map(String.init)
+        let trimmed = before.trimmingCharacters(in: CharacterSet(charactersIn: " "))
+        let capFirst = settings.autoCapitalization
+            && textDocumentProxy.autocapitalizationType != UITextAutocapitalizationType.none
+            && (before.isEmpty || before.hasSuffix("\n") || (before.hasSuffix(" ") && (trimmed.hasSuffix(".") || trimmed.hasSuffix("!") || trimmed.hasSuffix("?"))))
+        return GlideDecoder.decode(
+            sampledKeys: glideSampledKeys,
+            previousWords: prevWords,
+            domain: cachedANEDomain,
+            personal: settings.personalFrequency,
+            capitalizeFirst: capFirst,
+            limit: 3
+        )
+    }
+
+    private func previewGlideCandidates() {
+        let decoded = currentDecodedGlideWords()
+        guard !decoded.isEmpty else { return }
+        candidates = decoded
+        renderSuggestionsInPlace()
+    }
+
+    private func finishGlideCommit() {
+        let decoded = currentDecodedGlideWords()
+        activeSlideButton?.isHighlighted = false
+        activeSlideButton = nil
+        touchStartPointInButton = nil
+        activeFlickCharacter = nil
+        resetGlideTracking()
+
+        guard let top = decoded.first else {
+            updateSuggestions()
+            return
+        }
+        triggerFeedback()
+        let proxy = textDocumentProxy
+        discardComposition()
+        let insertion = top.insertion
+        let (prev2, prev1) = previousTwoWords(before: proxy.documentContextBeforeInput, excluding: "")
+        proxy.insertText(insertion)
+        settings.recordPersonalWord(top.text, after: prev1, beforeThat: prev2)
+        lastGlidedInsertionLength = insertion.count
+        candidates = decoded
+        renderSuggestionsInPlace()
     }
 
     private func characterButton(at pointInPlane: CGPoint) -> LiquidKeyCapButton? {
@@ -1879,7 +2211,19 @@ final class KeyboardViewController: UIInputViewController {
 
         case .backspace:
             triggerFeedback()
+            lastGlidedInsertionLength = 0
             handle(.backspace)
+
+        case .tabKey:
+            triggerFeedback()
+            lastGlidedInsertionLength = 0
+            discardComposition()
+            textDocumentProxy.insertText("\t")
+
+        case .dismissKeyboardKey:
+            triggerFeedback()
+            lastGlidedInsertionLength = 0
+            dismissKeyboard()
 
         case .pageToggle:
             triggerFeedback()
@@ -1990,7 +2334,7 @@ final class KeyboardViewController: UIInputViewController {
         guard page == .letters, !letterPoolIndices.isEmpty else { return }
         CATransaction.begin()
         CATransaction.setDisableActions(true)
-        if let sIdx = shiftPoolIndex, keyPool.indices.contains(sIdx) {
+        for sIdx in shiftPoolIndices where keyPool.indices.contains(sIdx) {
             let sym: String = switch shiftState {
             case .off: "shift"
             case .once: "shift.fill"
@@ -2862,6 +3206,7 @@ final class KeyboardViewController: UIInputViewController {
     }
 
     private func type(_ key: Character) {
+        lastGlidedInsertionLength = 0
         dismissAccentStrip()
         triggerFeedback()
         if key == " ", handleDoubleSpacePeriodIfNeeded() {
@@ -3032,14 +3377,22 @@ final class KeyboardViewController: UIInputViewController {
     private func acceptSuggestion(_ candidate: WordCandidate) {
         triggerFeedback()
         let proxy = textDocumentProxy
-        let (prev2, prev1) = previousTwoWords(before: proxy.documentContextBeforeInput, excluding: displayed)
         let replacement = candidate.appendsSpace ? candidate.text + " " : candidate.text
         if !displayed.isEmpty {
+            let (prev2, prev1) = previousTwoWords(before: proxy.documentContextBeforeInput, excluding: displayed)
             replaceDisplayed(with: replacement, in: proxy)
-        } else {
+            settings.recordPersonalWord(candidate.text, after: prev1, beforeThat: prev2)
+        } else if lastGlidedInsertionLength > 0 {
+            for _ in 0..<lastGlidedInsertionLength { proxy.deleteBackward() }
+            lastGlidedInsertionLength = 0
+            let (prev2, prev1) = previousTwoWords(before: proxy.documentContextBeforeInput, excluding: "")
             proxy.insertText(replacement)
+            settings.recordPersonalWord(candidate.text, after: prev1, beforeThat: prev2)
+        } else {
+            let (prev2, prev1) = previousTwoWords(before: proxy.documentContextBeforeInput, excluding: "")
+            proxy.insertText(replacement)
+            settings.recordPersonalWord(candidate.text, after: prev1, beforeThat: prev2)
         }
-        settings.recordPersonalWord(candidate.text, after: prev1, beforeThat: prev2)
         session.discard()
         displayed = ""
         updateSuggestions()

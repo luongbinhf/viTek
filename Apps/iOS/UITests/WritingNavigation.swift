@@ -8,8 +8,19 @@ import XCTest
         app.launch()
     }
 
+    private func tapTab(identifier: String, index: Int) {
+        let byId = app.buttons[identifier]
+        if byId.waitForExistence(timeout: 2) {
+            byId.tap()
+            return
+        }
+        let tabButton = app.tabBars.buttons.element(boundBy: index)
+        XCTAssertTrue(tabButton.waitForExistence(timeout: 5), "Tab \(index) (\(identifier)) should exist")
+        tabButton.tap()
+    }
+
     func testWritingTabShowsModelState() {
-        app.buttons["pencil"].tap()
+        tapTab(identifier: "pencil", index: 1)
         XCTAssertTrue(app.staticTexts["writing.readiness"].waitForExistence(timeout: 5))
         XCTAssertFalse(app.staticTexts["writing.readiness"].label.isEmpty)
         XCTAssertTrue(app.textViews["writing.draft"].exists)
@@ -20,7 +31,7 @@ import XCTest
         app.terminate()
         app.open(URL(string: "vitek://writing")!)
         XCTAssertTrue(app.staticTexts["writing.readiness"].waitForExistence(timeout: 5))
-        app.buttons["keyboard"].tap()
+        tapTab(identifier: "keyboard", index: 0)
         XCTAssertTrue(app.textFields["Thử gõ vieetj"].waitForExistence(timeout: 5))
         app.open(URL(string: "vitek://writing")!)
         XCTAssertTrue(app.staticTexts["writing.readiness"].waitForExistence(timeout: 5))
@@ -33,8 +44,12 @@ import XCTest
     }
 
     func testSettingsTabShowsShortcutsAndCustomWords() {
-        app.buttons["gearshape"].tap()
-        XCTAssertTrue(app.buttons["settings.shortcuts"].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.buttons["settings.customWords"].exists)
+        tapTab(identifier: "gearshape", index: 3)
+        XCTAssertTrue(app.buttons["settings.customWords"].waitForExistence(timeout: 5))
+        let shortcuts = app.buttons["settings.shortcuts"]
+        if !shortcuts.waitForExistence(timeout: 2) {
+            app.swipeUp()
+        }
+        XCTAssertTrue(shortcuts.waitForExistence(timeout: 5))
     }
 }
