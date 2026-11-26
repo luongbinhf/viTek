@@ -4,106 +4,7 @@ import UniformTypeIdentifiers
 import VitekEngine
 import VitekSession
 
-// MARK: Bắt đầu
-
-struct WelcomePage: View {
-    private var settings = SettingsStore.shared
-    private var navigation = SettingsNavigation.shared
-
-    var body: some View {
-        Form {
-            Section {
-                HStack(spacing: 18) {
-                    BrandMascotView(size: 84)
-                        .shadow(color: Color.blue.opacity(0.14), radius: 8, y: 3)
-                    VStack(alignment: .leading, spacing: 6) {
-                        HStack(spacing: 8) {
-                            Text("Xin chào từ viTek")
-                                .font(.title3.weight(.semibold))
-                            Text("MIT Open Source")
-                                .font(.caption.weight(.semibold))
-                                .foregroundStyle(Color.accentColor)
-                                .padding(.horizontal, 8)
-                                .padding(.vertical, 2)
-                                .background(Color.accentColor.opacity(0.12), in: Capsule())
-                        }
-                        Text("Bộ gõ tiếng Việt 100% Swift Native — tự nhận Telex & VNI, bảo vệ từ tiếng Anh và xử lý hoàn toàn trên máy.")
-                            .font(.callout)
-                            .foregroundStyle(.secondary)
-                            .fixedSize(horizontal: false, vertical: true)
-                        HStack(spacing: 8) {
-                            KeyCap("⌥ ⌥")
-                            Text("Đổi VI ↔ EN")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                            Text("·").foregroundStyle(.tertiary)
-                            KeyCap("⌃ ⌥ V")
-                            Text("Clipboard")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                            Text("·").foregroundStyle(.tertiary)
-                            KeyCap("⌃ ⌥ A")
-                            Text("Sửa chữ & AI")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
-                        .padding(.top, 2)
-                    }
-                }
-                .padding(.vertical, 4)
-            }
-            Section {
-                LabeledContent("1. Chọn nguồn nhập") { KeyCap("viTek") }
-                Text("Mở menu nguồn nhập trên thanh menu, hoặc nhấn 🌐 hay ⌃ Space để chuyển sang viTek.")
-                    .foregroundStyle(.secondary)
-            }
-            Section("2. Gõ tiếng Việt") {
-                LabeledContent("Telex") { Example(keys: "vieetj", result: "việt") }
-                LabeledContent("VNI") { Example(keys: "vie65t", result: "việt") }
-            }
-            Section("3. Viết xen tiếng Anh") {
-                Example(keys: "reset server", result: "reset server")
-                Text("Bạn có thể gõ cả hai ngôn ngữ trong cùng một câu.")
-                    .foregroundStyle(.secondary)
-            }
-            Section("Cài đặt hiện tại") {
-                setting(.typing, value: settings.toneStyle == .modern ? "Dấu kiểu mới · hoà" : "Dấu kiểu cũ · hòa")
-                setting(.shortcuts, value: settings.shortcutsEnabled ? "\(settings.shortcutTable.count) gõ tắt" : "Đã tắt")
-                setting(.dictionary, value: settings.keepEnglishWords ? "Giữ từ tiếng Anh" : "Đã tắt")
-            }
-        }
-        .settingsForm()
-    }
-
-    private func setting(_ page: SettingsPage, value: String) -> some View {
-        Button { navigation.page = page } label: {
-            HStack {
-                Label(page.title, systemImage: page.symbol)
-                Spacer()
-                Text(value).foregroundStyle(.secondary)
-                Image(systemName: "chevron.right").foregroundStyle(.tertiary)
-            }
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-    }
-}
-
-/// Keys and the text they give, side by side.
-struct Example: View {
-    let keys: String
-    let result: String
-
-    var body: some View {
-        HStack(spacing: 8) {
-            Text(keys).font(.system(.body, design: .monospaced)).foregroundStyle(.secondary).fixedSize()
-            Image(systemName: "arrow.right").foregroundStyle(.tertiary)
-            Text(result).font(.body.weight(.medium)).fixedSize()
-        }
-    }
-}
-
-// MARK: Kiểu gõ
+// MARK: Bộ gõ
 
 /// Chrome and Electron apps tell viTek where the caret is only through the Accessibility API; without
 /// that permission they get no suggestion bar.
@@ -111,7 +12,7 @@ struct CaretAccessRow: View {
     @State private var allowed = AccessibilityCaret.isAllowed
 
     var body: some View {
-        LabeledContent {
+        LabeledContent("Thanh gợi ý trong Chrome, Slack, VS Code") {
             if allowed {
                 Label("Đã cấp", systemImage: "checkmark.circle.fill")
                     .foregroundStyle(.green)
@@ -119,9 +20,6 @@ struct CaretAccessRow: View {
                 Button("Cấp quyền…") { AccessibilityCaret.requestAccess() }
                     .glassButton()
             }
-        } label: {
-            Text("Thanh gợi ý theo con trỏ trong Chrome, Slack, VS Code")
-            Text("Cần quyền Trợ năng: các ứng dụng này chỉ báo vị trí con trỏ qua Trợ năng. Chưa cấp thì không hiện thanh gợi ý trong chúng.")
         }
         .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
             allowed = AccessibilityCaret.isAllowed
@@ -134,77 +32,106 @@ struct TypingPage: View {
 
     var body: some View {
         Form {
-            Section {
-                DisclosureGroup("Bảng phím Telex") { KeyGuide(method: .telex) }
-                DisclosureGroup("Bảng phím VNI") { KeyGuide(method: .vni) }
-            }
-            Section {
+            Section("Cơ bản") {
                 Picker("Đặt dấu", selection: $settings.toneStyle) {
-                    Text("Kiểu mới: hoà, khoẻ, thuý").tag(ToneStyle.modern)
-                    Text("Kiểu cũ: hòa, khỏe, thúy").tag(ToneStyle.traditional)
+                    Text("Kiểu mới (hoà, khoẻ, thuý)").tag(ToneStyle.modern)
+                    Text("Kiểu cũ (hòa, khỏe, thúy)").tag(ToneStyle.traditional)
                 }
-                Toggle("Nhấn đúp phím ⌥ Option để chuyển nhanh Việt ↔ Anh",
+                Toggle("Nhấn đúp ⌥ Option để đổi nhanh Việt ↔ Anh",
                        isOn: $settings.quickToggleOptionDoubleTap)
-                Toggle("Hiện chỉ báo nhỏ khi chuyển nhanh Việt ↔ Anh",
+                Toggle("Hiện chỉ báo nhỏ khi đổi chế độ",
                        isOn: $settings.showModeSwitchHUD)
-            }
-            Section {
-                Toggle("Gợi ý từ", isOn: $settings.showSuggestions)
-                HStack(spacing: 10) {
-                    KeyCap("⌥ Space")
-                    Text("chọn gợi ý đầu")
-                    Text("·").foregroundStyle(.tertiary)
-                    KeyCap("⌥ 1…5")
-                    Text("chọn theo thứ tự")
-                }
-                .foregroundStyle(.secondary)
+                Toggle("Gợi ý từ (⌥ Space / ⌥ 1…5)", isOn: $settings.showSuggestions)
                 if settings.showSuggestions {
                     CaretAccessRow()
                 }
-            } footer: {
-                Footnote("Gợi ý lấy từ mô hình tiếng Việt có sẵn trong macOS, chạy ngay trên máy. "
-                         + "Nếu thấy chữ xám chồng lên chữ đang gõ, hãy tắt \"Show inline predictive text\" "
-                         + "trong System Settings → Keyboard → Input Sources → Edit.")
             }
-            Section {
-                Toggle("Gạch chân chữ đang gõ", isOn: $settings.underlineComposition)
-            } footer: {
-                Footnote("viTek ưu tiên chèn chữ đã chốt để tìm kiếm và gợi ý của ứng dụng phản hồi ngay. "
-                         + "Chrome và VS Code có thể vẫn vẽ một vạch dưới chữ đang soạn cho đến khi bạn chốt từ bằng phím cách.")
-            }
-            Section {
-                Toggle("Sửa từ vừa gõ", isOn: $settings.editPreviousWord)
-                Example(keys: "viêt| + j", result: "việt")
-            } footer: {
-                Footnote("Con trỏ đứng ngay sau một từ, gõ phím dấu là sửa được từ đó, kể cả sau khi đã bấm dấu cách rồi xoá đi. "
-                         + "Tắt nếu một ứng dụng nào đó hiển thị sai.")
-            }
-            Section {
-                Toggle("Kiểm tra chính tả", isOn: $settings.spellCheck)
-                Toggle("Trả lại phím đã gõ khi từ không phải tiếng Việt (server, express)",
+
+            Section("Chính tả & Phục hồi") {
+                Toggle("Kiểm tra chính tả tiếng Việt", isOn: $settings.spellCheck)
+                Toggle("Khôi phục phím khi từ không phải tiếng Việt",
                        isOn: $settings.restoreInvalidWords)
                     .disabled(!settings.spellCheck)
-                Toggle("Tự sửa đảo phím khi gõ cực nhanh (tieegns → tiếng, mihnf → mình)",
+                Toggle("Tự sửa đảo phím khi gõ nhanh (tieegns → tiếng)",
                        isOn: $settings.smartTypoRecovery)
                     .disabled(!settings.spellCheck)
-            } footer: {
-                Footnote("Khi bật tự sửa đảo phím, viTek chỉ phục hồi các cặp phụ âm cuối/vần bị bấm chéo khi từ đã có dấu tiếng Việt và không trùng từ tiếng Anh.")
+                Toggle("Sửa dấu từ vừa gõ (viêt| + j → việt)", isOn: $settings.editPreviousWord)
+                Toggle("Gạch chân chữ đang gõ", isOn: $settings.underlineComposition)
             }
+
             Section {
-                Toggle("Gõ nhanh iê / yê / uyê bằng w (viw → viê, chuywnj → chuyện)", isOn: $settings.quickTelexW)
-                Toggle("w đứng riêng gõ ra ư (tw → tư)", isOn: $settings.standaloneW)
-                Toggle("[ và ] gõ ra ơ và ư", isOn: $settings.bracketVowels)
-                Toggle("Gõ tắt phụ âm đầu (cc→ch, gg→gi, kk→kh, nn→ng, pp→ph, qq→qu, tt→th)",
-                       isOn: $settings.quickStartConsonants)
-                Toggle("Gõ tắt phụ âm cuối (g→ng, h→nh, k→ch)",
-                       isOn: $settings.quickEndConsonants)
-            } header: {
-                Text("Telex")
-            } footer: {
-                Footnote("Hỗ trợ đổi mượt uô ↔ ươ ngay trong âm tiết (tuoongw → tương, tuowngo → tuông). Gõ tắt phụ âm có thể trùng một số từ tiếng Anh ngắn.")
+                DisclosureGroup("Tuỳ chọn Telex nâng cao") {
+                    Toggle("Gõ nhanh iê / yê / uyê bằng w (viw → viê)", isOn: $settings.quickTelexW)
+                    Toggle("w đứng riêng gõ ra ư (tw → tư)", isOn: $settings.standaloneW)
+                    Toggle("[ và ] gõ ra ơ và ư", isOn: $settings.bracketVowels)
+                    Toggle("Gõ tắt phụ âm đầu (cc, gg, kk, nn, pp, qq, tt)",
+                           isOn: $settings.quickStartConsonants)
+                    Toggle("Gõ tắt phụ âm cuối (g→ng, h→nh, k→ch)",
+                           isOn: $settings.quickEndConsonants)
+                }
+                DisclosureGroup("Bảng phím Telex & VNI") {
+                    KeyGuide(method: .telex)
+                    Divider()
+                    KeyGuide(method: .vni)
+                }
+            }
+
+            Section("Ứng dụng luôn gõ tiếng Anh") {
+                if settings.excludedBundleIDs.isEmpty {
+                    Text("Chưa có ứng dụng nào.").foregroundStyle(.secondary)
+                } else {
+                    ForEach(settings.excludedBundleIDs, id: \.self) { bundleID in
+                        HStack {
+                            Text(appDisplayName(for: bundleID))
+                            Spacer()
+                            Button(role: .destructive) {
+                                settings.excludedBundleIDs.removeAll { $0 == bundleID }
+                            } label: {
+                                Image(systemName: "minus.circle")
+                            }
+                            .buttonStyle(.borderless)
+                        }
+                    }
+                }
+                Button("Thêm ứng dụng…", action: pickExcludedApp)
+            }
+
+            Section {
+                DisclosureGroup("Thói quen & Từ vựng đã học") {
+                    LabeledContent("Ứng dụng đã học", value: String(settings.typingScores.count))
+                    LabeledContent("Từ/cụm cá nhân đã học", value: String(settings.personalFrequency.totalCount))
+                    Toggle("Đồng bộ từ vựng cá nhân qua iCloud", isOn: $settings.syncPersonalVocabularyICloud)
+                    HStack {
+                        Button("Xoá thói quen ứng dụng", role: .destructive) { settings.forgetTypingHabits() }
+                            .disabled(settings.typingScores.isEmpty)
+                        Spacer()
+                        Button("Xoá từ đã học", role: .destructive) { settings.forgetPersonalFrequency() }
+                            .disabled(settings.personalFrequency.isEmpty)
+                    }
+                }
             }
         }
         .settingsForm()
+    }
+
+    private func appDisplayName(for bundleID: String) -> String {
+        guard let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleID),
+              let bundle = Bundle(url: url),
+              let name = bundle.object(forInfoDictionaryKey: "CFBundleDisplayName") as? String
+                ?? bundle.object(forInfoDictionaryKey: "CFBundleName") as? String else {
+            return bundleID.split(separator: ".").last.map(String.init) ?? bundleID
+        }
+        return name
+    }
+
+    private func pickExcludedApp() {
+        let panel = NSOpenPanel()
+        panel.allowedContentTypes = [.application]
+        panel.directoryURL = URL(fileURLWithPath: "/Applications")
+        guard panel.runModal() == .OK, let url = panel.url,
+              let bundleID = Bundle(url: url)?.bundleIdentifier,
+              !settings.excludedBundleIDs.contains(bundleID) else { return }
+        settings.excludedBundleIDs.append(bundleID)
     }
 }
 
@@ -240,75 +167,6 @@ struct KeyGuide: View {
                 }
             }
         }
-    }
-}
-
-// MARK: Thói quen gõ
-
-struct TypingHabitsPage: View {
-    @Bindable private var settings = SettingsStore.shared
-
-    var body: some View {
-        Form {
-            Section {
-                Text("viTek nhận dấu Telex và VNI theo từng từ. Với những từ như as hoặc too, viTek ưu tiên cách gõ gần đây của bạn trong từng ứng dụng.")
-                LabeledContent("Ứng dụng đã học", value: String(settings.typingScores.count))
-                Button("Xóa thói quen của mọi ứng dụng", role: .destructive) { settings.forgetTypingHabits() }
-                    .disabled(settings.typingScores.isEmpty)
-                LabeledContent("Từ/cụm cá nhân đã học", value: String(settings.personalFrequency.totalCount))
-                Toggle("Đồng bộ từ vựng cá nhân đã học qua iCloud", isOn: $settings.syncPersonalVocabularyICloud)
-                Button("Xóa từ đã học", role: .destructive) { settings.forgetPersonalFrequency() }
-                    .disabled(settings.personalFrequency.isEmpty)
-            } footer: {
-                Footnote("Điểm ưu tiên Telex và VNI và bộ nhớ 1–3 từ cá nhân giúp xếp hạng gợi ý chính xác hơn theo ngữ cảnh của bạn.")
-            }
-
-            Section {
-                if settings.excludedBundleIDs.isEmpty {
-                    Text("Chưa có ứng dụng nào được đặt mặc định tiếng Anh.").foregroundStyle(.secondary)
-                } else {
-                    ForEach(settings.excludedBundleIDs, id: \.self) { bundleID in
-                        HStack {
-                            Text(appDisplayName(for: bundleID))
-                            Spacer()
-                            Text(bundleID).font(.caption).foregroundStyle(.secondary)
-                            Button(role: .destructive) {
-                                settings.excludedBundleIDs.removeAll { $0 == bundleID }
-                            } label: {
-                                Image(systemName: "minus.circle")
-                            }
-                            .buttonStyle(.borderless)
-                        }
-                    }
-                }
-                Button("Thêm ứng dụng…", action: pickExcludedApp)
-            } header: {
-                Text("Ứng dụng luôn gõ tiếng Anh")
-            } footer: {
-                Footnote("Tự động tạm tắt dấu tiếng Việt trong các ứng dụng này (ví dụ Terminal) mà không cần quyền Trợ năng.")
-            }
-        }
-        .settingsForm()
-    }
-
-    private func appDisplayName(for bundleID: String) -> String {
-        guard let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleID),
-              let bundle = Bundle(url: url),
-              let name = bundle.object(forInfoDictionaryKey: "CFBundleDisplayName") as? String
-                ?? bundle.object(forInfoDictionaryKey: "CFBundleName") as? String else {
-            return bundleID.split(separator: ".").last.map(String.init) ?? bundleID
-        }
-        return name
-    }
-
-    private func pickExcludedApp() {
-        let panel = NSOpenPanel()
-        panel.allowedContentTypes = [.application]
-        panel.directoryURL = URL(fileURLWithPath: "/Applications")
-        guard panel.runModal() == .OK, let url = panel.url,
-              let bundleID = Bundle(url: url)?.bundleIdentifier,
-              !settings.excludedBundleIDs.contains(bundleID) else { return }
-        settings.excludedBundleIDs.append(bundleID)
     }
 }
 
@@ -737,30 +595,13 @@ struct ClipboardPage: View {
 
     @ViewBuilder
     private var clipboardFilterBar: some View {
-        let strip = ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 6) {
-                ForEach(ClipboardFilter.allCases, id: \.self) { chip in
-                    let isActive = chip == filter
-                    Button {
-                        filter = chip
-                    } label: {
-                        Label(chip.title, systemImage: chip.symbolName)
-                            .font(.callout.weight(isActive ? .semibold : .medium))
-                            .padding(.horizontal, 11)
-                            .padding(.vertical, 5)
-                            .foregroundStyle(isActive ? Color.accentColor : .primary)
-                            .glassFilterChip(isSelected: isActive)
-                    }
-                    .buttonStyle(.plain)
-                }
+        Picker("Bộ lọc", selection: $filter) {
+            ForEach(ClipboardFilter.allCases, id: \.self) { chip in
+                Text(chip.title).tag(chip)
             }
-            .padding(.vertical, 3)
         }
-        if #available(macOS 26.0, *) {
-            GlassEffectContainer(spacing: 6) { strip }
-        } else {
-            strip
-        }
+        .pickerStyle(.segmented)
+        .labelsHidden()
     }
 
     private func clipboardRow(item: ClipboardItem, pinned: [ClipboardItem], now: Int) -> some View {

@@ -763,7 +763,7 @@ final class VitekInputController: IMKInputController {
     }
 
     @objc private func showGuide(_ sender: Any?) {
-        SettingsWindow.show(page: .welcome)
+        SettingsWindow.show(page: .typing)
     }
 }
 

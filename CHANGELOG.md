@@ -4,6 +4,16 @@ Mọi bản phát hành của **viTek** sử dụng quy tắc phiên bản **`YY
 
 ---
 
+## `20261126.1.002` *(iOS `20261126.1.2`)*
+
+### Tinh gọn Giao diện Tối giản & Tối ưu Hiệu năng Runtime
+- **Thiết kế lại Popup Clipboard (`⌃⌥V`) tối giản 1 cột (`396 × 364 pt`):** Loại bỏ hoàn toàn lỗi vỡ dòng / méo nút lọc khi danh sách rỗng, bỏ khung preview 2 cột cồng kềnh và các nhãn thừa; chuyển sang kiến trúc `@Observable` cố định kích thước giúp nhấn `↑`/`↓`, di chuột và lọc trực tiếp đạt **0 lần resize panel, 0 lần dựng lại view**.
+- **Tự động bỏ qua khóa bí mật / API token (`ClipboardMonitor`):** Bộ lọc nhẹ không dùng regex bỏ qua các chuỗi dạng `*_SECRET`, `*_TOKEN`, `*_PASSWORD`, `SecretKey`, `sk-`, `ghp_`, `PRIVATE KEY` ngay cả khi ứng dụng nguồn không gắn cờ `ConcealedType`.
+- **Tinh gọn Cửa sổ Cài đặt macOS (7 → 5 mục) & iOS:** Gộp *Kiểu gõ* và *Thói quen gõ* thành **Bộ gõ**, đưa tuỳ chọn nâng cao vào `DisclosureGroup` đóng mặc định, bỏ banner tiêu đề lặp lại và thay dải lọc glass trong `ClipboardPage` bằng segmented control chuẩn macOS; lược bỏ các thẻ dư thừa trên màn hình chính iOS.
+- **Tối ưu luồng gõ phím (`SettingsStore`):** Chuyển tra cứu ứng dụng loại trừ sang `Set<String>` `O(1)` và gom (coalesce/debounce) các lần ghi `UserDefaults` cho thói quen gõ & tần suất từ cá nhân ra khỏi luồng gõ phím chính.
+
+---
+
 ## `20261126.1.001` *(iOS `20261126.1.1`)*
 
 ### Chống Đảo Phím >100 WPM, Gõ Lướt Tiếng Việt, iPad Pro Layout & Đồng bộ Liquid Glass

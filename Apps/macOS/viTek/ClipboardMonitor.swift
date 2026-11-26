@@ -41,7 +41,30 @@ final class ClipboardMonitor {
             }
         }
         guard let text = pasteboard.string(forType: .string), !text.isEmpty else { return }
+        guard !Self.looksLikeSecret(text) else { return }
         SettingsStore.shared.recordClipboard(text)
+    }
+
+    /// Lightweight zero-regex filter that skips obvious credentials, API tokens, and private keys
+    /// even when copied from apps that do not tag `ConcealedType`.
+    private static func looksLikeSecret(_ text: String) -> Bool {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty, trimmed.count <= 4096 else { return false }
+        if trimmed.hasPrefix("-----BEGIN ") && trimmed.contains("PRIVATE KEY") { return true }
+        let singleLine = !trimmed.contains(where: \.isNewline) && !trimmed.contains(" ")
+        guard singleLine else { return false }
+        let upper = trimmed.uppercased()
+        if upper.hasSuffix("_SECRET") || upper.hasSuffix("_TOKEN") || upper.hasSuffix("_PASSWORD") || upper.hasSuffix("_API_KEY") {
+            return true
+        }
+        if upper.contains("SECRETKEY") || upper.contains("API_SECRET") || upper.contains("ACCESS_TOKEN") {
+            return true
+        }
+        let secretPrefixes = ["sk-", "sk_live_", "sk_test_", "ghp_", "gho_", "ghu_", "ghs_", "github_pat_", "AIza", "AKIA", "xoxb-", "xoxp-"]
+        if secretPrefixes.contains(where: { trimmed.hasPrefix($0) }) && trimmed.count >= 20 {
+            return true
+        }
+        return false
     }
 
     static func copyToPasteboard(_ text: String) {

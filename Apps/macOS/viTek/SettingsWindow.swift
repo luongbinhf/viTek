@@ -32,15 +32,13 @@ enum SettingsWindow {
 
 /// The pages of the settings window, in sidebar order.
 enum SettingsPage: String, CaseIterable, Identifiable {
-    case welcome, typing, habits, shortcuts, clipboard, dictionary, about
+    case typing, shortcuts, clipboard, dictionary, about
 
     var id: Self { self }
 
     var title: String {
         switch self {
-        case .welcome: "Bắt đầu"
-        case .typing: "Kiểu gõ"
-        case .habits: "Thói quen gõ"
+        case .typing: "Bộ gõ"
         case .shortcuts: "Gõ tắt"
         case .clipboard: "Clipboard"
         case .dictionary: "Từ điển"
@@ -48,23 +46,9 @@ enum SettingsPage: String, CaseIterable, Identifiable {
         }
     }
 
-    var summary: String {
-        switch self {
-        case .welcome: "Ba bước làm quen và trạng thái nhanh của viTek."
-        case .typing: "Telex hoặc VNI, cách đặt dấu và kiểm tra chính tả."
-        case .habits: "Học cách gõ riêng trong mỗi ứng dụng."
-        case .shortcuts: "Gõ chữ tắt, viTek thay bằng cụm đầy đủ."
-        case .clipboard: "Lịch sử sao chép, mẫu ghim, chuyển mã và đồng bộ iCloud."
-        case .dictionary: "Giữ nguyên các từ tiếng Anh thông dụng khi gõ Telex."
-        case .about: "Phiên bản, mã nguồn mở MIT và chẩn đoán."
-        }
-    }
-
     var symbol: String {
         switch self {
-        case .welcome: "sparkles"
         case .typing: "keyboard"
-        case .habits: "globe"
         case .shortcuts: "text.badge.plus"
         case .clipboard: "doc.on.clipboard"
         case .dictionary: "character.book.closed"
@@ -74,9 +58,7 @@ enum SettingsPage: String, CaseIterable, Identifiable {
 
     var tint: Color {
         switch self {
-        case .welcome: .cyan
         case .typing: .blue
-        case .habits: .green
         case .shortcuts: .orange
         case .clipboard: .teal
         case .dictionary: .indigo
@@ -89,7 +71,7 @@ enum SettingsPage: String, CaseIterable, Identifiable {
 @MainActor @Observable
 final class SettingsNavigation {
     static let shared = SettingsNavigation()
-    var page: SettingsPage = .welcome
+    var page: SettingsPage = .typing
 }
 
 struct SettingsView: View {
@@ -106,26 +88,19 @@ struct SettingsView: View {
                 .padding(.vertical, 2)
             }
             .sidebarSurface()
-            .navigationSplitViewColumnWidth(200)
+            .navigationSplitViewColumnWidth(185)
         } detail: {
-            VStack(alignment: .leading, spacing: 0) {
-                PageHeader(page: navigation.page)
-                    .padding(.horizontal, 28)
-                    .padding(.top, 20)
-                    .padding(.bottom, 4)
-                page(navigation.page)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-            }
+            page(navigation.page)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                .navigationTitle(navigation.page.title)
         }
-        .frame(minWidth: 740, idealWidth: 780, minHeight: 480, idealHeight: 560)
+        .frame(minWidth: 680, idealWidth: 720, minHeight: 460, idealHeight: 540)
     }
 
     @ViewBuilder
     private func page(_ page: SettingsPage) -> some View {
         switch page {
-        case .welcome: WelcomePage()
         case .typing: TypingPage()
-        case .habits: TypingHabitsPage()
         case .shortcuts: ShortcutsPage()
         case .clipboard: ClipboardPage()
         case .dictionary: DictionaryPage()
@@ -145,24 +120,6 @@ struct PageIcon: View {
             .foregroundStyle(.white)
             .frame(width: size, height: size)
             .background(page.tint.gradient, in: RoundedRectangle(cornerRadius: size * 0.24, style: .continuous))
-    }
-}
-
-struct PageHeader: View {
-    let page: SettingsPage
-
-    var body: some View {
-        HStack(spacing: 14) {
-            if page == .welcome || page == .about {
-                MacAppIcon(size: 46)
-            } else {
-                PageIcon(page: page, size: 40)
-            }
-            VStack(alignment: .leading, spacing: 2) {
-                Text(page.title).font(.title2.weight(.semibold))
-                Text(page.summary).foregroundStyle(.secondary)
-            }
-        }
     }
 }
 

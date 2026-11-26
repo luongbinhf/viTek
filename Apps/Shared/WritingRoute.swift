@@ -21,7 +21,7 @@ import SwiftUI
         switch target {
         case .writing: WritingWindow.show(draft: "")
         case .clipboard: SettingsWindow.show(page: .clipboard)
-        case .keyboard: SettingsWindow.show(page: .welcome)
+        case .keyboard: SettingsWindow.show(page: .typing)
         case .settings: SettingsWindow.show()
         }
         #else

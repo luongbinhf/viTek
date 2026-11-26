@@ -62,7 +62,12 @@ final class SettingsStore {
     }
     var iCloudSyncEnabled: Bool { didSet { save(iCloudSyncEnabled, .iCloudSyncEnabled, syncCloud: false) } }
     var customEnglishWords: [String] { didSet { save(customEnglishWords, .customEnglishWords) } }
-    var excludedBundleIDs: [String] { didSet { save(excludedBundleIDs, .excludedBundleIDs, syncCloud: false) } }
+    var excludedBundleIDs: [String] {
+        didSet {
+            excludedBundleIDSet = Set(excludedBundleIDs)
+            save(excludedBundleIDs, .excludedBundleIDs, syncCloud: false)
+        }
+    }
     var focusPreferEnglish: Bool { didSet { save(focusPreferEnglish, .focusPreferEnglish, syncCloud: false) } }
     var focusHideSuggestions: Bool { didSet { save(focusHideSuggestions, .focusHideSuggestions, syncCloud: false) } }
     var clipboardHistoryEnabled: Bool { didSet { save(clipboardHistoryEnabled, .clipboardHistoryEnabled, syncCloud: false) } }
@@ -78,7 +83,9 @@ final class SettingsStore {
     /// Bumped on every change, so a controller can tell cheaply that it must reload.
     @ObservationIgnored private(set) var revision = 0
     @ObservationIgnored private let defaults: UserDefaults
+    @ObservationIgnored private var excludedBundleIDSet: Set<String> = []
     @ObservationIgnored private var personalFlushTask: Task<Void, Never>?
+    @ObservationIgnored private var typingScoresFlushTask: Task<Void, Never>?
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
@@ -110,7 +117,9 @@ final class SettingsStore {
         typingScores = defaults.dictionary(forKey: Key.typingScores.rawValue) as? [String: [String: Int]] ?? [:]
         iCloudSyncEnabled = bool(.iCloudSyncEnabled, true)
         customEnglishWords = defaults.stringArray(forKey: Key.customEnglishWords.rawValue) ?? []
-        excludedBundleIDs = defaults.stringArray(forKey: Key.excludedBundleIDs.rawValue) ?? Self.defaultExcludedBundleIDs
+        let initialExcluded = defaults.stringArray(forKey: Key.excludedBundleIDs.rawValue) ?? Self.defaultExcludedBundleIDs
+        excludedBundleIDs = initialExcluded
+        excludedBundleIDSet = Set(initialExcluded)
         focusPreferEnglish = bool(.focusPreferEnglish, false)
         focusHideSuggestions = bool(.focusHideSuggestions, false)
         clipboardHistoryEnabled = bool(.clipboardHistoryEnabled, true)
@@ -145,7 +154,7 @@ final class SettingsStore {
     func isExcluded(app bundleID: String?) -> Bool {
         if !vietnameseEnabled || focusPreferEnglish { return true }
         guard let bundleID else { return false }
-        return excludedBundleIDs.contains(bundleID)
+        return excludedBundleIDSet.contains(bundleID)
     }
 
     nonisolated static func currentMacroTimestamp() -> MacroTimestamp {
@@ -184,19 +193,27 @@ final class SettingsStore {
         habits.observe(evidence)
         guard habits != previous else { return }
         typingScores[app] = ["telex": habits.telexScore, "vni": habits.vniScore]
-        defaults.set(typingScores, forKey: Key.typingScores.rawValue)
+        guard typingScoresFlushTask == nil else { return }
+        typingScoresFlushTask = Task { @MainActor [weak self] in
+            try? await Task.sleep(for: .seconds(2), tolerance: .milliseconds(500))
+            guard !Task.isCancelled, let self else { return }
+            self.typingScoresFlushTask = nil
+            self.defaults.set(self.typingScores, forKey: Key.typingScores.rawValue)
+        }
     }
 
     func forgetTypingHabits() {
+        typingScoresFlushTask?.cancel()
+        typingScoresFlushTask = nil
         typingScores = [:]
         defaults.removeObject(forKey: Key.typingScores.rawValue)
     }
 
     func recordPersonalWord(_ word: String, after previous: String? = nil, beforeThat: String? = nil) {
         personalFrequency.record(word: word, after: previous, beforeThat: beforeThat)
-        personalFlushTask?.cancel()
+        guard personalFlushTask == nil else { return }
         personalFlushTask = Task { @MainActor [weak self] in
-            try? await Task.sleep(for: .milliseconds(1500))
+            try? await Task.sleep(for: .seconds(3), tolerance: .milliseconds(500))
             guard !Task.isCancelled else { return }
             self?.flushPersonalFrequency()
         }

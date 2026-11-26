@@ -52,7 +52,6 @@ private struct SettingsBadgeIcon: View {
 
 private struct KeyboardGuide: View {
     @Environment(\.openURL) private var openURL
-    @Bindable private var settings = IOSKeyboardSettings.shared
     @Bindable private var route = WritingRoute.shared
     @State private var sample = ""
 
@@ -63,11 +62,9 @@ private struct KeyboardGuide: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(alignment: .leading, spacing: 18) {
+                VStack(alignment: .leading, spacing: 16) {
                     heroGlassCard
-                    quickControlStrip
                     liveTypingSandboxCard
-                    ergonomicHighlightsGrid
                     setupStepsCard
                 }
                 .padding(.horizontal, 16)
@@ -143,61 +140,6 @@ private struct KeyboardGuide: View {
         .glassEffect(.regular, in: .rect(cornerRadius: 24))
     }
 
-    private var quickControlStrip: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            GlassEffectContainer(spacing: 8) {
-                HStack(spacing: 8) {
-                    Button {
-                        settings.vietnameseEnabled.toggle()
-                    } label: {
-                        Label(
-                            settings.vietnameseEnabled ? "Chế độ: Tiếng Việt" : "Chế độ: English",
-                            systemImage: "globe"
-                        )
-                        .font(.caption.weight(.semibold))
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 8)
-                        .foregroundStyle(settings.vietnameseEnabled ? Color.accentColor : .primary)
-                        .glassEffect(
-                            settings.vietnameseEnabled ? .regular.tint(.accentColor).interactive() : .regular.interactive(),
-                            in: .capsule
-                        )
-                    }
-                    .buttonStyle(.plain)
-
-                    Button {
-                        settings.toneStyle = (settings.toneStyle == .modern) ? .traditional : .modern
-                    } label: {
-                        Label(
-                            settings.toneStyle == .modern ? "Dấu mới: hoà" : "Dấu cũ: hòa",
-                            systemImage: "textformat"
-                        )
-                        .font(.caption.weight(.medium))
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 8)
-                        .glassEffect(.regular.interactive(), in: .capsule)
-                    }
-                    .buttonStyle(.plain)
-
-                    Button {
-                        route.destination = .clipboard
-                    } label: {
-                        Label(
-                            "Clipboard (\(settings.clipboardHistory.items.count))",
-                            systemImage: "doc.on.clipboard"
-                        )
-                        .font(.caption.weight(.medium))
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 8)
-                        .glassEffect(.regular.interactive(), in: .capsule)
-                    }
-                    .buttonStyle(.plain)
-                }
-                .padding(.vertical, 2)
-            }
-        }
-    }
-
     private var liveTypingSandboxCard: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
@@ -259,54 +201,6 @@ private struct KeyboardGuide: View {
         .padding(.horizontal, 10)
         .padding(.vertical, 5)
         .background(Color.primary.opacity(0.05), in: Capsule())
-    }
-
-    private var ergonomicHighlightsGrid: some View {
-        LazyVGrid(columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)], spacing: 12) {
-            highlightTile(
-                symbol: "arrow.down.square.fill",
-                tint: .blue,
-                title: "Vuốt xuống phím",
-                subtitle: "Gõ nhanh số 1–0 & ký hiệu @ # $ mà không chuyển trang"
-            )
-            highlightTile(
-                symbol: "arrow.left.and.right.square.fill",
-                tint: .indigo,
-                title: "Rê Dấu cách",
-                subtitle: "Trượt ngang trên phím Tiếng Việt để đặt con trỏ chính xác"
-            )
-            highlightTile(
-                symbol: "keyboard.onehanded.right",
-                tint: .teal,
-                title: "Một tay & Duo",
-                subtitle: "Nhấn giữ nút VI để thu gọn 1 tay hoặc mở cầu nối màn gập"
-            )
-            highlightTile(
-                symbol: "cpu.fill",
-                tint: .purple,
-                title: "ANE & AI Cục bộ",
-                subtitle: "Khử mơ hồ song ngữ trên máy, không cần Full Access"
-            )
-        }
-    }
-
-    private func highlightTile(symbol: String, tint: Color, title: String, subtitle: String) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            SettingsBadgeIcon(symbol: symbol, tint: tint)
-            Text(title)
-                .font(.subheadline.weight(.semibold))
-            Text(subtitle)
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                .lineLimit(3)
-                .fixedSize(horizontal: false, vertical: true)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(14)
-        .background(
-            Color(uiColor: .secondarySystemGroupedBackground),
-            in: RoundedRectangle(cornerRadius: 18, style: .continuous)
-        )
     }
 
     private var setupStepsCard: some View {
