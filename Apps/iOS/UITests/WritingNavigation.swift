@@ -19,19 +19,11 @@ import XCTest
         tabButton.tap()
     }
 
-    func testWritingTabShowsModelState() {
-        tapTab(identifier: "pencil", index: 1)
-        XCTAssertTrue(app.staticTexts["writing.readiness"].waitForExistence(timeout: 5))
-        XCTAssertFalse(app.staticTexts["writing.readiness"].label.isEmpty)
-        XCTAssertTrue(app.textViews["writing.draft"].exists)
-        XCTAssertFalse(app.buttons["writing.generate"].isEnabled, "Empty drafts must not start a model request")
-    }
-
     func testWidgetURLColdAndWarmLaunch() {
         app.terminate()
         app.open(URL(string: "vitek://writing")!)
         XCTAssertTrue(app.staticTexts["writing.readiness"].waitForExistence(timeout: 5))
-        tapTab(identifier: "keyboard", index: 0)
+        app.swipeDown(velocity: .fast)
         XCTAssertTrue(app.textFields["Thử gõ vieetj"].waitForExistence(timeout: 5))
         app.open(URL(string: "vitek://writing")!)
         XCTAssertTrue(app.staticTexts["writing.readiness"].waitForExistence(timeout: 5))
@@ -44,7 +36,7 @@ import XCTest
     }
 
     func testSettingsTabShowsShortcutsAndCustomWords() {
-        tapTab(identifier: "gearshape", index: 3)
+        tapTab(identifier: "gearshape", index: 1)
         XCTAssertTrue(app.buttons["settings.customWords"].waitForExistence(timeout: 5))
         let shortcuts = app.buttons["settings.shortcuts"]
         if !shortcuts.waitForExistence(timeout: 2) {

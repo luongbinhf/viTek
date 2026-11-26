@@ -31,33 +31,15 @@ let slides: [SlideSpec] = [
     SlideSpec(
         filename: "02_home.png",
         badge: "100% SWIFT 6 NATIVE",
-        title: "Thiết Kế Tối Giản & Riêng Tư",
-        subtitle: "Xử lý hoàn toàn trên thiết bị · Mở lên dùng ngay",
+        title: "Cài Đặt Nhanh & Riêng Tư",
+        subtitle: "Tập trung hoàn toàn vào trải nghiệm gõ tiếng Việt",
         topColor: NSColor(calibratedRed: 0.08, green: 0.22, blue: 0.42, alpha: 1),
         bottomColor: NSColor(calibratedRed: 0.14, green: 0.48, blue: 0.72, alpha: 1),
         accentColor: NSColor(calibratedRed: 0.56, green: 0.88, blue: 1.0, alpha: 1)
     ),
     SlideSpec(
-        filename: "03_writing.png",
-        badge: "APPLE INTELLIGENCE",
-        title: "Trợ Lý Viết Tiếng Việt Cục Bộ",
-        subtitle: "Khôi phục dấu · Sửa lỗi chính tả & diễn đạt tự nhiên",
-        topColor: NSColor(calibratedRed: 0.16, green: 0.11, blue: 0.38, alpha: 1),
-        bottomColor: NSColor(calibratedRed: 0.32, green: 0.22, blue: 0.66, alpha: 1),
-        accentColor: NSColor(calibratedRed: 0.78, green: 0.68, blue: 1.0, alpha: 1)
-    ),
-    SlideSpec(
-        filename: "04_clipboard.png",
-        badge: "ĐỒNG BỘ ICLOUD",
-        title: "Clipboard & Mẫu Ghim Thông Minh",
-        subtitle: "Tìm không dấu · Đồng bộ tức thì giữa iPhone, iPad & Mac",
-        topColor: NSColor(calibratedRed: 0.04, green: 0.24, blue: 0.30, alpha: 1),
-        bottomColor: NSColor(calibratedRed: 0.08, green: 0.48, blue: 0.56, alpha: 1),
-        accentColor: NSColor(calibratedRed: 0.50, green: 0.94, blue: 0.88, alpha: 1)
-    ),
-    SlideSpec(
-        filename: "05_settings.png",
-        badge: "TUỲ BIẾN LINH HOẠT",
+        filename: "03_settings.png",
+        badge: "TUỲ BIẾN GỌN NHẸ",
         title: "Chống Đảo Phím & Gõ Lướt",
         subtitle: "Kiểu dấu mới/cũ · Gõ tắt động · Bảo vệ từ tiếng Anh",
         topColor: NSColor(calibratedRed: 0.11, green: 0.15, blue: 0.24, alpha: 1),

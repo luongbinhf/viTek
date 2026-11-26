@@ -566,7 +566,7 @@ final class KeyboardViewController: UIInputViewController {
     }
 
     private var topBarHeight: CGFloat {
-        isCompactLandscape ? 36 : (isPadLayout ? 44 : 40)
+        isCompactLandscape ? 32 : (isPadLayout ? 38 : 36)
     }
 
     private var preferredKeysHeight: CGFloat {
@@ -846,39 +846,30 @@ final class KeyboardViewController: UIInputViewController {
         emojiSearchQueryLabel.isHidden = true
         emojiSearchCloseButton.isHidden = true
 
-        // Left: VI / EN capsule
+        // Left: compact VI / EN capsule (tap: VI↔EN, long-press: One-Handed / Split)
         languagePillButton.isHidden = false
-        let langW: CGFloat = 40
+        let langW: CGFloat = 36
         languagePillButton.frame = CGRect(x: 2, y: pillY, width: langW, height: pillH)
         languagePillButton.layer.cornerRadius = pillH * 0.5
 
-        // Right: action pills (Emoji when Globe takes bottom-left, Clipboard, Aa, optional Split)
-        let iconW: CGFloat = 32
-        let iconGap: CGFloat = 5
+        // Right: minimal utility icon(s) — only Clipboard (when enabled) + Emoji when Globe occupies bottom-left
+        let iconW: CGFloat = 30
+        let iconGap: CGFloat = 4
         var rightX = bounds.width - 2
 
-        let showSplitInTop = currentPosture.allowsSplit
-        splitToolbarButton.isHidden = !showSplitInTop
-        if showSplitInTop {
+        splitToolbarButton.isHidden = true
+        textToolsToolbarButton.isHidden = true
+
+        let showClipboardInTop = settings.clipboardHistoryEnabled
+        clipboardToolbarButton.isHidden = !showClipboardInTop
+        if showClipboardInTop {
             rightX -= iconW
-            splitToolbarButton.frame = CGRect(x: rightX, y: pillY, width: iconW, height: pillH)
-            splitToolbarButton.layer.cornerRadius = pillH * 0.5
+            clipboardToolbarButton.frame = CGRect(x: rightX, y: pillY, width: iconW, height: pillH)
+            clipboardToolbarButton.layer.cornerRadius = pillH * 0.5
             rightX -= iconGap
         }
 
-        textToolsToolbarButton.isHidden = false
-        rightX -= iconW
-        textToolsToolbarButton.frame = CGRect(x: rightX, y: pillY, width: iconW, height: pillH)
-        textToolsToolbarButton.layer.cornerRadius = pillH * 0.5
-        rightX -= iconGap
-
-        clipboardToolbarButton.isHidden = false
-        rightX -= iconW
-        clipboardToolbarButton.frame = CGRect(x: rightX, y: pillY, width: iconW, height: pillH)
-        clipboardToolbarButton.layer.cornerRadius = pillH * 0.5
-        rightX -= iconGap
-
-        // Keep Emoji button in top toolbar whenever Globe occupies the bottom-left slot!
+        // Keep Emoji button in top toolbar whenever Globe occupies the bottom-left slot
         let showEmojiInTop = needsInputModeSwitchKey
         emojiToolbarButton.isHidden = !showEmojiInTop
         if showEmojiInTop {

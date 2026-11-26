@@ -115,38 +115,25 @@ capture_device() {
 
   local raw_dir="$out_root/raw/$label"
   local framed_dir="$out_root/framed/$label"
+  rm -rf "$raw_dir" "$framed_dir"
   mkdir -p "$raw_dir" "$framed_dir"
 
-  # Warm up app & seed realistic Vietnamese clipboard items
-  xcrun simctl launch "$udid" "$bundle_id" -seedDemoClipboard >/dev/null
-  sleep 3.5
-
-  # 2. Clean home screen (without keyboard)
+  # Warm up app & capture clean minimal setup screen
+  xcrun simctl launch "$udid" "$bundle_id" >/dev/null
+  sleep 3.0
   xcrun simctl io "$udid" screenshot "$raw_dir/02_home.png" >/dev/null
 
   # 1. Keyboard open over live typing sandbox (auto-focused)
   xcrun simctl terminate "$udid" "$bundle_id" 2>/dev/null || true
-  xcrun simctl launch "$udid" "$bundle_id" -focusSandbox -seedDemoClipboard >/dev/null
+  xcrun simctl launch "$udid" "$bundle_id" -focusSandbox >/dev/null
   sleep 4.5
   xcrun simctl io "$udid" screenshot "$raw_dir/01_keyboard.png" >/dev/null
 
-  # 3. AI Writing tab
+  # 3. Settings tab
   xcrun simctl terminate "$udid" "$bundle_id" 2>/dev/null || true
-  xcrun simctl launch "$udid" "$bundle_id" -tab writing -seedDemoClipboard >/dev/null
+  xcrun simctl launch "$udid" "$bundle_id" -tab settings >/dev/null
   sleep 2.2
-  xcrun simctl io "$udid" screenshot "$raw_dir/03_writing.png" >/dev/null
-
-  # 4. Clipboard tab (with seeded realistic Vietnamese samples)
-  xcrun simctl terminate "$udid" "$bundle_id" 2>/dev/null || true
-  xcrun simctl launch "$udid" "$bundle_id" -tab clipboard -seedDemoClipboard >/dev/null
-  sleep 2.2
-  xcrun simctl io "$udid" screenshot "$raw_dir/04_clipboard.png" >/dev/null
-
-  # 5. Settings tab
-  xcrun simctl terminate "$udid" "$bundle_id" 2>/dev/null || true
-  xcrun simctl launch "$udid" "$bundle_id" -tab settings -seedDemoClipboard >/dev/null
-  sleep 2.2
-  xcrun simctl io "$udid" screenshot "$raw_dir/05_settings.png" >/dev/null
+  xcrun simctl io "$udid" screenshot "$raw_dir/03_settings.png" >/dev/null
 
   # Strip alpha from raw PNGs so App Store Connect accepts them directly
   for f in "$raw_dir"/*.png; do

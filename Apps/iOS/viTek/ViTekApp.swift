@@ -7,23 +7,34 @@ import VitekSession
 struct ViTekApp: App {
     @Bindable private var route = WritingRoute.shared
 
+    private var selectedTab: Binding<WritingRoute.Destination> {
+        Binding(
+            get: { route.destination == .settings ? .settings : .keyboard },
+            set: { route.destination = $0 }
+        )
+    }
+
+    private var showingWritingSheet: Binding<Bool> {
+        Binding(
+            get: { route.destination == .writing },
+            set: { if !$0 { route.destination = .keyboard } }
+        )
+    }
+
     var body: some Scene {
         WindowGroup {
-            TabView(selection: $route.destination) {
+            TabView(selection: selectedTab) {
                 Tab("Bàn phím", systemImage: "keyboard", value: WritingRoute.Destination.keyboard) {
                     KeyboardGuide()
-                }
-                Tab("Gợi ý viết", systemImage: "pencil", value: WritingRoute.Destination.writing) {
-                    WritingView()
-                }
-                Tab("Clipboard", systemImage: "doc.on.clipboard", value: WritingRoute.Destination.clipboard) {
-                    IOSClipboardView()
                 }
                 Tab("Cài đặt", systemImage: "gearshape", value: WritingRoute.Destination.settings) {
                     KeyboardSettingsView()
                 }
             }
             .tabBarMinimizeBehavior(.onScrollDown)
+            .sheet(isPresented: showingWritingSheet) {
+                WritingView()
+            }
             .onOpenURL { route.handle($0) }
             .task {
                 let args = ProcessInfo.processInfo.arguments
@@ -31,17 +42,8 @@ struct ViTekApp: App {
                     switch args[idx + 1] {
                     case "keyboard": route.destination = .keyboard
                     case "writing": route.destination = .writing
-                    case "clipboard": route.destination = .clipboard
                     case "settings": route.destination = .settings
                     default: break
-                    }
-                }
-                if args.contains("-seedDemoClipboard") {
-                    let store = IOSKeyboardSettings.shared
-                    if store.clipboardHistory.isEmpty {
-                        store.addPinnedClipboard("Nguyễn Minh Anh · 0912 345 678 · Quận 1, TP.HCM", alias: "Thông tin liên hệ")
-                        store.addPinnedClipboard("https://github.com/luongbinhf/viTek", alias: "Kho mã nguồn viTek")
-                        store.recordClipboard("Hẹn gặp anh lúc 14:30 chiều nay để chốt giao diện mới nhé!")
                     }
                 }
                 CloudSettingsSync.shared.start()
@@ -66,206 +68,51 @@ private struct SettingsBadgeIcon: View {
     }
 }
 
-// MARK: - Tab 1: Bàn phím (iOS 26 Liquid Glass Dashboard & Live Sandbox)
+// MARK: - Tab 1: Bàn phím (Minimal Setup & Live Typing Test)
 
 private struct KeyboardGuide: View {
     @Environment(\.openURL) private var openURL
-    @Bindable private var route = WritingRoute.shared
     @State private var sample = ProcessInfo.processInfo.arguments.contains("-focusSandbox")
-        ? "Tôi yêu tiếng Việt — tự nhận Telex & VNI mượt mà cùng viTek"
+        ? "Tôi yêu tiếng Việt — gõ Telex & VNI mượt mà cùng viTek"
         : ""
     @FocusState private var sandboxFocused: Bool
 
-    private var hasVietnameseDiacritics: Bool {
-        sample.unicodeScalars.contains { $0.value > 127 && CharacterSet.letters.contains($0) }
-    }
-
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 16) {
-                    heroGlassCard
-                    liveTypingSandboxCard
-                    setupStepsCard
+            Form {
+                Section {
+                    TextField("Thử gõ vieetj", text: $sample, axis: .vertical)
+                        .focused($sandboxFocused)
+                        .lineLimit(2...5)
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled()
+                } header: {
+                    Text("Gõ thử")
+                } footer: {
+                    Text("Tự nhận Telex (vieetj → việt) và VNI (vie65t → việt). Chạm 🌐 để chuyển sang viTek tại mọi ô nhập liệu.")
                 }
-                .padding(.horizontal, 16)
-                .padding(.top, 8)
-                .padding(.bottom, 28)
+
+                Section {
+                    Button {
+                        if let url = URL(string: UIApplication.openSettingsURLString) { openURL(url) }
+                    } label: {
+                        Label("Mở Cài đặt Bàn phím", systemImage: "keyboard.badge.ellipsis")
+                            .font(.body.weight(.semibold))
+                    }
+                    LabeledContent("1. Thêm bàn phím", value: "Bàn phím → viTek")
+                    LabeledContent("2. Quyền riêng tư", value: "Không cần Truy cập đầy đủ")
+                } header: {
+                    Text("Kích hoạt bàn phím")
+                } footer: {
+                    Text("viTek chạy hoàn toàn trên thiết bị để hỗ trợ gõ tiếng Việt trong mọi ứng dụng.")
+                }
             }
-            .background(ambientBackdrop.ignoresSafeArea())
             .navigationTitle("viTek")
-            .navigationBarTitleDisplayMode(.large)
             .task {
                 if ProcessInfo.processInfo.arguments.contains("-focusSandbox") {
                     try? await Task.sleep(for: .milliseconds(500))
                     sandboxFocused = true
                 }
-            }
-        }
-    }
-
-    private var ambientBackdrop: some View {
-        ZStack(alignment: .top) {
-            Color(uiColor: .systemGroupedBackground)
-            LinearGradient(
-                colors: [
-                    Color.blue.opacity(0.14),
-                    Color.cyan.opacity(0.08),
-                    Color.clear,
-                ],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-            .frame(height: 320)
-        }
-    }
-
-    private var heroGlassCard: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            HStack(spacing: 14) {
-                BrandMascotView(size: 70)
-                    .shadow(color: .blue.opacity(0.18), radius: 10, y: 4)
-
-                VStack(alignment: .leading, spacing: 5) {
-                    HStack(spacing: 6) {
-                        Text("viTek 26")
-                            .font(.title3.weight(.bold))
-                        Text("Liquid Glass")
-                            .font(.caption2.weight(.semibold))
-                            .foregroundStyle(.blue)
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 3)
-                            .background(Color.blue.opacity(0.14), in: Capsule())
-                    }
-                    Text("Bộ gõ tiếng Việt 100% Swift 6 Native · Tự nhận Telex & VNI · 0,7 µs trên Apple Silicon.")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-            }
-
-            HStack(spacing: 10) {
-                Button {
-                    if let url = URL(string: UIApplication.openSettingsURLString) { openURL(url) }
-                } label: {
-                    Label("Mở Cài đặt Bàn phím", systemImage: "keyboard.badge.ellipsis")
-                        .font(.subheadline.weight(.semibold))
-                        .frame(maxWidth: .infinity)
-                }
-                .buttonStyle(.glassProminent)
-
-                Button {
-                    route.destination = .writing
-                } label: {
-                    Label("AI Viết", systemImage: "sparkles")
-                        .font(.subheadline.weight(.medium))
-                }
-                .buttonStyle(.glass)
-            }
-        }
-        .padding(18)
-        .glassEffect(.regular, in: .rect(cornerRadius: 24))
-    }
-
-    private var liveTypingSandboxCard: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Label("Ô gõ thử trực tiếp", systemImage: "character.cursor.ibeam")
-                    .font(.headline)
-                Spacer()
-                if !sample.isEmpty {
-                    Button {
-                        sample = ""
-                    } label: {
-                        Label("Xoá", systemImage: "xmark.circle.fill")
-                            .labelStyle(.iconOnly)
-                            .foregroundStyle(.secondary)
-                    }
-                    .buttonStyle(.plain)
-                }
-            }
-
-            TextField("Thử gõ vieetj", text: $sample, axis: .vertical)
-                .focused($sandboxFocused)
-                .lineLimit(2...5)
-                .textInputAutocapitalization(.never)
-                .autocorrectionDisabled()
-                .padding(12)
-                .background(
-                    Color(uiColor: .secondarySystemGroupedBackground),
-                    in: RoundedRectangle(cornerRadius: 14, style: .continuous)
-                )
-
-            if hasVietnameseDiacritics {
-                Label("Đã gõ tiếng Việt mượt mà với viTek!", systemImage: "checkmark.circle.fill")
-                    .font(.footnote.weight(.semibold))
-                    .foregroundStyle(.green)
-            } else {
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 8) {
-                        examplePill(keys: "vieetj", output: "việt")
-                        examplePill(keys: "tuoongw", output: "tương")
-                        examplePill(keys: "chuywnj", output: "chuyện")
-                        examplePill(keys: "vie65t", output: "việt")
-                    }
-                }
-            }
-        }
-        .padding(16)
-        .glassEffect(.regular, in: .rect(cornerRadius: 22))
-    }
-
-    private func examplePill(keys: String, output: String) -> some View {
-        HStack(spacing: 4) {
-            Text(keys)
-                .font(.system(.caption, design: .monospaced).weight(.semibold))
-                .foregroundStyle(.secondary)
-            Image(systemName: "arrow.right")
-                .font(.system(size: 9, weight: .bold))
-                .foregroundStyle(.tertiary)
-            Text(output)
-                .font(.caption.weight(.semibold))
-        }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 5)
-        .background(Color.primary.opacity(0.05), in: Capsule())
-    }
-
-    private var setupStepsCard: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Hướng dẫn bật nhanh (3 bước)")
-                .font(.subheadline.weight(.semibold))
-                .foregroundStyle(.secondary)
-
-            stepRow(number: "1", title: "Mở Cài đặt → Cài đặt chung → Bàn phím", detail: "Chọn Bàn phím → Thêm bàn phím mới → chọn viTek.")
-            Divider()
-            stepRow(number: "2", title: "Riêng tư tuyệt đối", detail: "Không cần bật “Cho phép truy cập đầy đủ” để gõ tiếng Việt, dùng gõ tắt hay gợi ý từ.")
-            Divider()
-            stepRow(number: "3", title: "Chuyển sang viTek bằng phím 🌐", detail: "Chạm giữ biểu tượng quả địa cầu dưới góc trái bàn phím và chọn viTek.")
-        }
-        .padding(16)
-        .background(
-            Color(uiColor: .secondarySystemGroupedBackground),
-            in: RoundedRectangle(cornerRadius: 20, style: .continuous)
-        )
-    }
-
-    private func stepRow(number: String, title: String, detail: String) -> some View {
-        HStack(alignment: .top, spacing: 12) {
-            Text(number)
-                .font(.caption.weight(.bold))
-                .foregroundStyle(.white)
-                .frame(width: 22, height: 22)
-                .background(Color.accentColor.gradient, in: Circle())
-                .padding(.top, 1)
-
-            VStack(alignment: .leading, spacing: 2) {
-                Text(title)
-                    .font(.subheadline.weight(.semibold))
-                Text(detail)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
             }
         }
     }
@@ -451,6 +298,20 @@ private struct KeyboardSettingsView: View {
                     .disabled(settings.personalFrequency.isEmpty)
                 } header: {
                     Text("iCloud")
+                }
+
+                Section {
+                    NavigationLink {
+                        IOSClipboardView()
+                    } label: {
+                        HStack(spacing: 12) {
+                            SettingsBadgeIcon(symbol: "doc.on.clipboard.fill", tint: .teal)
+                            LabeledContent("Mẫu Clipboard đã ghim", value: "\(settings.clipboardHistory.items.count)")
+                        }
+                    }
+                    Toggle("Đồng bộ qua iCloud", isOn: $settings.iCloudSyncEnabled)
+                } header: {
+                    Text("Clipboard & iCloud")
                 }
 
                 Section {
