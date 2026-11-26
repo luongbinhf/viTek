@@ -17,7 +17,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-0B66E4.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/Platform-macOS%2014%2B%20%7C%20iOS%20%26%20iPadOS%2026%2B-053A8F.svg)](#cài-đặt-nhanh)
 [![Swift](https://img.shields.io/badge/Swift-6.0%20Strict-F05138.svg)](Package.swift)
-[![Release](https://img.shields.io/badge/Release-20261126.1.001-F7B529.svg)](https://github.com/luongbinhf/viTek/releases)
+[![Release](https://img.shields.io/badge/Release-20261126.1.003-F7B529.svg)](https://github.com/luongbinhf/viTek/releases)
 [![Live Demo](https://img.shields.io/badge/GitHub%20Pages-Gõ%20thử%20trực%20tuyến-16A34A.svg)](https://luongbinhf.github.io/viTek/)
 
 </div>
@@ -59,13 +59,13 @@ Gõ thử chuỗi `vieetj vie65t reset server userName github.com ` → kết qu
   brew tap luongbinhf/vitek https://github.com/luongbinhf/viTek
   brew install --cask luongbinhf/vitek/vitek
   ```
-- **macOS (.DMG trực quan):** Tải `viTek-20261126.1.001.dmg` tại [GitHub Releases](https://github.com/luongbinhf/viTek/releases), kéo **Cài viTek** vào `Applications` rồi mở một lần để bật nguồn nhập **viTek** (`🌐` hoặc `⌃ Space`). Xem thêm [hướng dẫn macOS](docs/INSTALL.md).
+- **macOS (.DMG trực quan):** Tải `viTek-20261126.1.003.dmg` tại [GitHub Releases](https://github.com/luongbinhf/viTek/releases), kéo **Cài viTek** vào `Applications` rồi mở một lần để bật nguồn nhập **viTek** (`🌐` hoặc `⌃ Space`). Xem thêm [hướng dẫn macOS](docs/INSTALL.md).
 - **Build từ mã nguồn (macOS):** `CONFIGURATION=Release scripts/install_dev.sh` (yêu cầu Apple Silicon, Xcode SDK macOS 26+ và XcodeGen).
 - **iPhone & iPad:** Tạo project Xcode bằng `xcodegen generate --spec Apps/iOS/project.yml`, build lên thiết bị hoặc xem [hướng dẫn App Store / TestFlight](docs/APPSTORE.md), sau đó bật **viTek** trong **Cài đặt → Cài đặt chung → Bàn phím → Bàn phím**.
 
 ## Quy tắc phiên bản (`YYYYMMDD.X.YYY`) & Hiệu năng
 
-- **Định dạng phát hành:** `YYYYMMDD` (ngày phát hành) · `X` (đợt phát hành trong ngày) · `YYY` (số build 3 chữ số trên macOS/GitHub Releases, vd. **`20261126.1.001`**; tự động bỏ số `0` đệm đầu trên iOS App Store Connect: **`20261126.1.1`**).
+- **Định dạng phát hành:** `YYYYMMDD` (ngày phát hành) · `X` (đợt phát hành trong ngày) · `YYY` (số build 3 chữ số trên macOS/GitHub Releases, vd. **`20261126.1.003`**; tự động bỏ số `0` đệm đầu trên iOS App Store Connect: **`20261126.1.3`**).
 
 ```sh
 scripts/version.sh check                  # Kiểm tra đồng bộ macOS, iOS và Casks/vitek.rb

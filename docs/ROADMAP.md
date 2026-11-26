@@ -4,6 +4,11 @@ Mỗi bản phát hành chính thức được gắn tag theo chuẩn [phiên b�
 
 ## Đã hoàn thành
 
+### `20261126.1.003` — Tinh gọn Toàn diện macOS/iOS, Hiệu năng Runtime & Bảo vệ Từ ngắn Lập trình
+- [x] Thiết kế lại popup Clipboard (`⌃⌥V`) & công cụ chữ/AI (`⌃⌥A`) sang kiến trúc `@Observable` 1 cột cố định (0 lần resize khi nhấn `↑`/`↓` hay di chuột), cố định kích thước `ModeIndicatorPanel` (`0 ms`), lược bỏ cập nhật thừa ở `SuggestionPanel` và lọc khoá bí mật/API token tự động trong `ClipboardMonitor`.
+- [x] Tinh gọn Cài đặt macOS (7 → 5 mục: *Bộ gõ, Gõ tắt, Clipboard, Từ điển, Giới thiệu*) và đồng bộ tối giản trên iOS (`ViTekApp`); tối ưu tra cứu ứng dụng loại trừ `O(1)` (`Set<String>`) và gom (debounce/coalesce) ghi `UserDefaults` trong `SettingsStore`.
+- [x] Bảo vệ thêm các từ ngắn hay xung đột Telex (`docs`, `cors`, `diff`, `buff`, `seen`/`boom`) và mở rộng `vitek-eval` lên 42 trường hợp đạt **100%** (`p50: 0,92 µs`, `p99: 1,96 µs`).
+
 ### `20261126.1.001` — Chống đảo phím >100 WPM, Gõ lướt `GlideDecoder`, iPad Pro Layout & Kiểm định App Store
 - [x] Khôi phục hoán vị phím tốc độ cao (`smartTypoRecovery` trong `VitekEngine`: `tieegns` → `tiếng`, `mihnf` → `mình`, `nguiowf` → `người`) bảo toàn tuyệt đối từ tiếng Anh.
 - [x] Bộ giải mã gõ lướt nối chữ tiếng Việt thuần Swift (`GlideDecoder`) kèm vệt sáng Liquid Glass 120Hz, bố cục **iPad Pro đầy đủ** (`Tab`, `;/:`, `, / !`, `. / ?`, tự thu gọn trong Floating Keyboard) và nâng cấp `TypingWidget` iOS 26.

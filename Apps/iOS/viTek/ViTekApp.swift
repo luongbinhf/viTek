@@ -698,33 +698,15 @@ private struct IOSClipboardView: View {
                 }
 
                 Section {
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        GlassEffectContainer(spacing: 8) {
-                            HStack(spacing: 8) {
-                                ForEach(ClipboardFilter.allCases, id: \.self) { chip in
-                                    let isActive = chip == filter
-                                    Button {
-                                        filter = chip
-                                    } label: {
-                                        Label(chip.title, systemImage: chip.symbolName)
-                                            .font(.caption.weight(isActive ? .semibold : .medium))
-                                            .padding(.horizontal, 12)
-                                            .padding(.vertical, 7)
-                                            .foregroundStyle(isActive ? Color.accentColor : .primary)
-                                            .glassEffect(
-                                                isActive ? .regular.tint(.accentColor).interactive() : .regular.interactive(),
-                                                in: .capsule
-                                            )
-                                    }
-                                    .buttonStyle(.plain)
-                                }
-                            }
-                            .padding(.vertical, 3)
-                            .padding(.horizontal, 2)
+                    Picker("Bộ lọc", selection: $filter) {
+                        ForEach(ClipboardFilter.allCases, id: \.self) { chip in
+                            Text(chip.title).tag(chip)
                         }
                     }
+                    .pickerStyle(.segmented)
+                    .labelsHidden()
                 }
-                .listRowInsets(EdgeInsets(top: 6, leading: 12, bottom: 6, trailing: 12))
+                .listRowInsets(EdgeInsets(top: 6, leading: 16, bottom: 6, trailing: 16))
                 .listRowBackground(Color.clear)
 
                 Section("Danh sách (\(items.count))") {
@@ -739,39 +721,37 @@ private struct IOSClipboardView: View {
                                 UIPasteboard.general.string = item.text
                                 statusBanner = "Đã chép vào Bộ nhớ tạm."
                             } label: {
-                                HStack(alignment: .top, spacing: 12) {
-                                    ClipboardKindBadge(item: item, size: 32)
-                                        .padding(.top, 2)
-                                    VStack(alignment: .leading, spacing: 3) {
-                                        HStack(spacing: 6) {
-                                            if !item.alias.isEmpty {
-                                                Text(item.alias)
-                                                    .font(.subheadline.weight(.semibold))
-                                                    .foregroundStyle(.primary)
-                                                    .lineLimit(1)
-                                            }
-                                            if item.isPinned {
-                                                Image(systemName: "pin.fill")
-                                                    .font(.caption2)
-                                                    .foregroundStyle(Color.accentColor)
-                                            }
-                                            let rel = item.relativeTimeText(now: now)
-                                            Text(rel.isEmpty ? item.statsSummary : "\(item.statsSummary) · \(rel)")
+                                VStack(alignment: .leading, spacing: 3) {
+                                    HStack(spacing: 6) {
+                                        if item.isPinned {
+                                            Image(systemName: "pin.fill")
                                                 .font(.caption2)
-                                                .foregroundStyle(.secondary)
+                                                .foregroundStyle(Color.accentColor)
+                                        }
+                                        if !item.alias.isEmpty {
+                                            Text(item.alias)
+                                                .font(.subheadline.weight(.semibold))
+                                                .foregroundStyle(.primary)
                                                 .lineLimit(1)
                                         }
-                                        Text(item.preview)
-                                            .font(item.kind.usesMonospacedFont
-                                                  ? .system(.callout, design: .monospaced)
-                                                  : .callout)
-                                            .foregroundStyle(item.alias.isEmpty ? .primary : .secondary)
-                                            .lineSpacing(2)
-                                            .lineLimit(3)
-                                            .fixedSize(horizontal: false, vertical: true)
+                                        let rel = item.relativeTimeText(now: now)
+                                        if !rel.isEmpty {
+                                            Text(rel)
+                                                .font(.caption2)
+                                                .foregroundStyle(.tertiary)
+                                                .lineLimit(1)
+                                        }
                                     }
+                                    Text(item.preview)
+                                        .font(item.kind.usesMonospacedFont
+                                              ? .system(.callout, design: .monospaced)
+                                              : .callout)
+                                        .foregroundStyle(item.alias.isEmpty ? .primary : .secondary)
+                                        .lineLimit(2)
+                                        .fixedSize(horizontal: false, vertical: true)
                                 }
-                                .padding(.vertical, 3)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .padding(.vertical, 2)
                             }
                             .swipeActions(edge: .leading) {
                                 Button {
