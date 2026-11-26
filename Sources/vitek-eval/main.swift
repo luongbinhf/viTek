@@ -69,6 +69,7 @@ var traditionalOptions = EngineOptions()
 traditionalOptions.toneStyle = .traditional
 
 var vniOptions = EngineOptions(inputMethod: .vni)
+var autoOptions = EngineOptions(automaticallyDetectsMethod: true)
 
 let orthographyCases: [TypingCase] = [
     // Core Telex & delayed marks
@@ -112,6 +113,11 @@ let bilingualCases: [TypingCase] = [
     TypingCase(name: "ane_vietnamese_hint_syllables", keys: "mas tas hoor ddi lafm sowms", expected: "má tá hổ đi làm sớm", contextHint: .vietnamese),
     // Explicit override `tets` still produces `tét` while `test` stays `test`
     TypingCase(name: "test_vs_tets_intent", keys: "chayj test xong rooif tets thuwr", expected: "chạy test xong rồi tét thử"),
+    // Everyday developer & office short words that previously collided with Telex (production auto-detect mode)
+    TypingCase(name: "dev_short_words_preserved", keys: "xem docs vaf check diff treen cors cho backend nhes", expected: "xem docs và check diff trên cors cho backend nhé", options: autoOptions),
+    TypingCase(name: "repeated_f_english_words", keys: "xem buff vaf diff cho staff vaf stuff nhes", expected: "xem buff và diff cho staff và stuff nhé"),
+    TypingCase(name: "dev_cli_and_keywords", keys: "fix bug for app vaof git add run dev env api log", expected: "fix bug for app vào git add run dev env api log"),
+    TypingCase(name: "ane_english_seen_boom", keys: "have seen the boom", expected: "have seen the boom", contextHint: .english),
 ]
 
 struct RankingCase {

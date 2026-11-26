@@ -1,18 +1,28 @@
 import AppKit
+import Observation
 import SwiftUI
 
+@MainActor
+@Observable
+final class ModeIndicatorState {
+    var vietnamese = true
+}
+
 /// Brief non-activating Liquid Glass pill shown for 650 ms when switching between Vietnamese and English.
+/// Uses fixed size + `@Observable` state to avoid SwiftUI re-measurement on every double-tap.
 @MainActor
 enum ModeIndicatorPanel {
+    private static let pillSize = NSSize(width: 116, height: 32)
+    private static let state = ModeIndicatorState()
     private static var glass: GlassPanel<ModeIndicatorBadge>?
     private static var hideTask: Task<Void, Never>?
 
     static func show(vietnamese: Bool, caret: NSRect) {
         hideTask?.cancel()
-        let badge = ModeIndicatorBadge(vietnamese: vietnamese)
-        let glass = glass ?? GlassPanel(badge, acceptsMouseEvents: false)
+        state.vietnamese = vietnamese
+        let glass = glass ?? GlassPanel(ModeIndicatorBadge(state: state), acceptsMouseEvents: false)
         self.glass = glass
-        let size = glass.update(badge)
+        let size = pillSize
 
         let screen = (caret != .zero
             ? NSScreen.screens.first { $0.frame.contains(caret.origin) }?.visibleFrame
@@ -42,25 +52,24 @@ enum ModeIndicatorPanel {
 }
 
 struct ModeIndicatorBadge: View {
-    let vietnamese: Bool
+    let state: ModeIndicatorState
 
     var body: some View {
-        HStack(spacing: 8) {
-            Text(vietnamese ? "VI" : "EN")
+        HStack(spacing: 7) {
+            Text(state.vietnamese ? "VI" : "EN")
                 .font(.system(size: 11, weight: .bold, design: .rounded))
-                .foregroundStyle(vietnamese ? .white : .primary)
-                .padding(.horizontal, 7)
+                .foregroundStyle(state.vietnamese ? .white : .primary)
+                .padding(.horizontal, 6.5)
                 .padding(.vertical, 2)
                 .background(
-                    Capsule().fill(vietnamese ? Color.accentColor : Color.secondary.opacity(0.24))
+                    Capsule().fill(state.vietnamese ? Color.accentColor : Color.secondary.opacity(0.24))
                 )
-            Text(vietnamese ? "Tiếng Việt" : "English")
-                .font(.system(size: 12.5, weight: .medium))
+            Text(state.vietnamese ? "Tiếng Việt" : "English")
+                .font(.system(size: 12, weight: .medium))
                 .foregroundStyle(.primary)
+                .lineLimit(1)
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 6)
+        .frame(width: 116, height: 32)
         .floatingSurface(in: Capsule())
-        .fixedSize()
     }
 }

@@ -33,11 +33,12 @@ public struct TypingHabits: Equatable, Sendable {
     // preceded by English or when the host's ANE context classifier signals English context.
     static let codeSwitchAmbiguous: Set<String> = [
         "bus", "gas", "tax", "max", "box", "mix", "six", "bar", "tar", "nor", "sir",
-        "bow", "tow", "sow", "vow", "thus", "ways", "rows",
+        "bow", "tow", "sow", "vow", "thus", "ways", "rows", "seen", "boom",
     ]
     static let englishCues: Set<String> = [
         "the", "with", "from", "and", "hello", "server", "express", "data",
         "www", "issue", "issues", "class", "address", "message", "lose",
+        "docs", "cors", "diff", "buff",
         "core", "sore", "bore", "tore", "chore",
         "nose", "rose", "pose", "dose", "hose", "horse",
         "door", "poor", "loser", "virus", "versus",

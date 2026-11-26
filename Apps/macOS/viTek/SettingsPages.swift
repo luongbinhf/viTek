@@ -605,37 +605,34 @@ struct ClipboardPage: View {
     }
 
     private func clipboardRow(item: ClipboardItem, pinned: [ClipboardItem], now: Int) -> some View {
-        HStack(alignment: .top, spacing: 12) {
-            ClipboardKindBadge(item: item, size: 30)
-                .padding(.top, 2)
-
-            VStack(alignment: .leading, spacing: 4) {
+        HStack(alignment: .center, spacing: 10) {
+            VStack(alignment: .leading, spacing: 2) {
                 HStack(spacing: 6) {
+                    if item.isPinned {
+                        Image(systemName: "pin.fill")
+                            .font(.caption2)
+                            .foregroundStyle(Color.accentColor)
+                    }
                     if !item.alias.isEmpty {
                         Text(item.alias)
                             .font(.body.weight(.semibold))
                             .lineLimit(1)
                     }
-                    Text(item.kind.badgeTitle)
-                        .font(.caption2.weight(.semibold))
-                        .foregroundStyle(.secondary)
-                        .padding(.horizontal, 6.5)
-                        .padding(.vertical, 2)
-                        .background(Color.primary.opacity(0.06), in: Capsule())
                     let rel = item.relativeTimeText(now: now)
-                    Text(rel.isEmpty ? item.statsSummary : "\(item.statsSummary) · \(rel)")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .lineLimit(1)
+                    if !rel.isEmpty {
+                        Text(rel)
+                            .font(.caption)
+                            .foregroundStyle(.tertiary)
+                            .lineLimit(1)
+                    }
                 }
                 Text(item.preview)
                     .font(item.kind.usesMonospacedFont
                           ? .system(.callout, design: .monospaced)
                           : .callout)
                     .foregroundStyle(item.alias.isEmpty ? .primary : .secondary)
-                    .lineSpacing(2)
-                    .lineLimit(3)
-                    .padding(.vertical, 1)
+                    .lineLimit(2)
+                    .padding(.vertical, 0.5)
                     .fixedSize(horizontal: false, vertical: true)
             }
             .frame(maxWidth: .infinity, alignment: .leading)

@@ -1,14 +1,26 @@
 import AppKit
+import Observation
 import SwiftUI
 import VitekSession
 
-/// Cursor-anchored Liquid Glass Quick Text & AI Action Palette (`⌃⌥A`).
-/// Transforms either the currently selected text in the active client (replacing it in-place)
-/// or the latest clipboard text using on-device Apple Intelligence (`@Generable`) and instant
-/// Vietnamese encoding/case utilities (`TextConverter`).
+@MainActor
+@Observable
+final class QuickActionPanelState {
+    var sourcePreview = ""
+    var hasSourceText = false
+    var replacesSelection = false
+    var actions: [QuickActionPanel.ActionItem] = []
+    var selectedIndex = 0
+    var runningActionID: String?
+    var errorMessage: String?
+}
+
+/// Minimal, Spotlight-style Liquid Glass Quick Text & AI Action Palette (`⌃⌥A`).
+/// Backed by `@Observable` state so arrow navigation (`↑`/`↓`) and hover incur
+/// zero panel resizes or view rebuilds.
 @MainActor
 enum QuickActionPanel {
-    fileprivate struct ActionItem: Identifiable {
+    struct ActionItem: Identifiable {
         enum Execution {
             case deterministic(TextConverter.LegacyEncoding)
             case aiRestoreDiacritics
@@ -18,22 +30,15 @@ enum QuickActionPanel {
 
         let id: String
         let title: String
-        let subtitle: String
-        let symbolName: String
-        let tint: Color
         let isAI: Bool
         let execution: Execution
     }
 
+    private static let state = QuickActionPanelState()
     private static var glass: GlassPanel<QuickActionPopupView>?
-    private static var actions: [ActionItem] = []
-    private static var selectedIndex = 0
     private static var sourceText = ""
-    private static var replacesSelection = false
     private static var lastCaret: NSRect = .zero
     private static var onApply: (@MainActor (String) -> Void)?
-    private static var runningActionID: String?
-    private static var errorMessage: String?
     private static var runningTask: Task<Void, Never>?
     private(set) static var isVisible = false
 
@@ -58,24 +63,29 @@ enum QuickActionPanel {
     ) {
         runningTask?.cancel()
         runningTask = nil
-        runningActionID = nil
-        errorMessage = nil
-        self.lastCaret = caret
-        self.sourceText = sourceText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? "" : sourceText
-        self.replacesSelection = replacesSelection
+        lastCaret = caret
+        let clean = sourceText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? "" : sourceText
+        self.sourceText = clean
         self.onApply = onApply
-        self.actions = buildActions()
-        self.selectedIndex = 0
-        render()
+
+        state.sourcePreview = previewText(for: clean)
+        state.hasSourceText = !clean.isEmpty
+        state.replacesSelection = replacesSelection
+        state.actions = buildActions()
+        state.selectedIndex = 0
+        state.runningActionID = nil
+        state.errorMessage = nil
+
+        presentAtCaret()
     }
 
     static func hide() {
         runningTask?.cancel()
         runningTask = nil
-        runningActionID = nil
-        errorMessage = nil
+        state.runningActionID = nil
+        state.errorMessage = nil
+        state.actions = []
         isVisible = false
-        actions = []
         onApply = nil
         glass?.hide()
     }
@@ -88,34 +98,31 @@ enum QuickActionPanel {
             if runningTask != nil {
                 runningTask?.cancel()
                 runningTask = nil
-                runningActionID = nil
-                render()
+                state.runningActionID = nil
             } else {
                 hide()
             }
             return true
         }
 
-        guard runningActionID == nil else { return true }
+        guard state.runningActionID == nil else { return true }
 
         if event.keyCode == 0x7E { // Up
-            if !actions.isEmpty {
-                selectedIndex = (selectedIndex - 1 + actions.count) % actions.count
-                render()
+            if !state.actions.isEmpty {
+                state.selectedIndex = (state.selectedIndex - 1 + state.actions.count) % state.actions.count
             }
             return true
         }
         if event.keyCode == 0x7D { // Down
-            if !actions.isEmpty {
-                selectedIndex = (selectedIndex + 1) % actions.count
-                render()
+            if !state.actions.isEmpty {
+                state.selectedIndex = (state.selectedIndex + 1) % state.actions.count
             }
             return true
         }
 
         if event.keyCode == 0x24 || event.keyCode == 0x4C { // Return / Enter
-            if actions.indices.contains(selectedIndex) {
-                trigger(at: selectedIndex)
+            if state.actions.indices.contains(state.selectedIndex) {
+                trigger(at: state.selectedIndex)
             } else {
                 hide()
             }
@@ -125,7 +132,7 @@ enum QuickActionPanel {
         let digitCodes: [UInt16] = [0x12, 0x13, 0x14, 0x15, 0x17, 0x16, 0x1A, 0x1C, 0x19]
         if (mods.isEmpty || mods == [.command]),
            let digitIdx = digitCodes.firstIndex(of: event.keyCode),
-           actions.indices.contains(digitIdx) {
+           state.actions.indices.contains(digitIdx) {
             trigger(at: digitIdx)
             return true
         }
@@ -136,82 +143,25 @@ enum QuickActionPanel {
     private static func buildActions() -> [ActionItem] {
         var list: [ActionItem] = []
         if #available(macOS 26.0, *), WritingSuggestion.readiness().canGenerate {
-            list.append(ActionItem(
-                id: "ai.restore",
-                title: "Khôi phục dấu tiếng Việt",
-                subtitle: "Thêm dấu chuẩn ngữ cảnh bằng Apple Intelligence trên thiết bị",
-                symbolName: "sparkles",
-                tint: .indigo,
-                isAI: true,
-                execution: .aiRestoreDiacritics
-            ))
-            list.append(ActionItem(
-                id: "ai.proofread",
-                title: "Sửa chính tả đồng âm",
-                subtitle: "Rà soát lỗi ch/tr, s/x, d/gi/r, hỏi/ngã trên thiết bị",
-                symbolName: "doc.text.fill",
-                tint: .blue,
-                isAI: true,
-                execution: .aiProofreadHomophones
-            ))
-            list.append(ActionItem(
-                id: "ai.polish",
-                title: "Chuẩn hoá lịch sự công sở",
-                subtitle: "Diễn đạt mạch lạc, giữ nguyên số liệu & thuật ngữ",
-                symbolName: "envelope.fill",
-                tint: .teal,
-                isAI: true,
-                execution: .aiPolishProfessional
-            ))
+            list.append(ActionItem(id: "ai.restore", title: "Khôi phục dấu tiếng Việt", isAI: true, execution: .aiRestoreDiacritics))
+            list.append(ActionItem(id: "ai.proofread", title: "Sửa chính tả đồng âm", isAI: true, execution: .aiProofreadHomophones))
+            list.append(ActionItem(id: "ai.polish", title: "Chuẩn hoá lịch sự công sở", isAI: true, execution: .aiPolishProfessional))
         }
-        list.append(ActionItem(
-            id: "conv.unicode",
-            title: "Sửa lỗi font cũ → Unicode NFC",
-            subtitle: "Tự động chuyển TCVN3, VNI Windows hoặc tổ hợp NFD sang dựng sẵn",
-            symbolName: "bolt.horizontal.fill",
-            tint: .orange,
-            isAI: false,
-            execution: .deterministic(.autoToUnicode)
-        ))
-        list.append(ActionItem(
-            id: "conv.strip",
-            title: "Bỏ dấu tiếng Việt",
-            subtitle: "Chuyển sang chữ Latinh không dấu (đ → d)",
-            symbolName: "textformat",
-            tint: .mint,
-            isAI: false,
-            execution: .deterministic(.stripAccents)
-        ))
-        list.append(ActionItem(
-            id: "conv.title",
-            title: "Viết Hoa Đầu Từ",
-            subtitle: "Chuẩn hoá chữ hoa đầu mỗi từ tiếng Việt",
-            symbolName: "text.alignleft",
-            tint: .purple,
-            isAI: false,
-            execution: .deterministic(.titleCase)
-        ))
-        list.append(ActionItem(
-            id: "conv.upper",
-            title: "CHỮ HOA TIẾNG VIỆT",
-            subtitle: "Chuyển toàn bộ đoạn văn sang chữ in hoa Unicode",
-            symbolName: "shift.fill",
-            tint: .pink,
-            isAI: false,
-            execution: .deterministic(.uppercase)
-        ))
+        list.append(ActionItem(id: "conv.unicode", title: "Sửa font cũ → Unicode NFC", isAI: false, execution: .deterministic(.autoToUnicode)))
+        list.append(ActionItem(id: "conv.strip", title: "Bỏ dấu tiếng Việt", isAI: false, execution: .deterministic(.stripAccents)))
+        list.append(ActionItem(id: "conv.title", title: "Viết Hoa Đầu Từ", isAI: false, execution: .deterministic(.titleCase)))
+        list.append(ActionItem(id: "conv.upper", title: "CHỮ HOA TIẾNG VIỆT", isAI: false, execution: .deterministic(.uppercase)))
         return list
     }
 
     private static func trigger(at index: Int) {
-        guard actions.indices.contains(index) else { return }
+        guard state.actions.indices.contains(index) else { return }
         guard !sourceText.isEmpty else {
-            errorMessage = "Hãy bôi đen văn bản hoặc sao chép nội dung vào Clipboard trước."
-            render()
+            state.errorMessage = "Hãy bôi đen văn bản hoặc sao chép trước."
             return
         }
-        selectedIndex = index
-        let action = actions[index]
+        state.selectedIndex = index
+        let action = state.actions[index]
         let input = sourceText
         let apply = onApply
 
@@ -229,9 +179,8 @@ enum QuickActionPanel {
             case .aiPolishProfessional: .polishProfessional
             case .deterministic: .proofreadHomophones
             }
-            runningActionID = action.id
-            errorMessage = nil
-            render()
+            state.runningActionID = action.id
+            state.errorMessage = nil
             runningTask = Task { @MainActor in
                 do {
                     let output = try await WritingSuggestion.runTask(mode: taskMode, input: input)
@@ -240,46 +189,36 @@ enum QuickActionPanel {
                     apply?(output.text)
                 } catch {
                     guard !Task.isCancelled, isVisible else { return }
-                    runningActionID = nil
+                    state.runningActionID = nil
                     runningTask = nil
-                    errorMessage = error.localizedDescription
-                    render()
+                    state.errorMessage = error.localizedDescription
                 }
             }
         }
     }
 
-    private static func render() {
-        let view = QuickActionPopupView(
-            sourcePreview: previewText(for: sourceText),
-            hasSourceText: !sourceText.isEmpty,
-            replacesSelection: replacesSelection,
-            actions: actions,
-            selectedIndex: selectedIndex,
-            runningActionID: runningActionID,
-            errorMessage: errorMessage,
-            onHoverIndex: { idx in
-                guard runningActionID == nil else { return }
-                selectedIndex = idx
-                render()
-            },
-            onTriggerIndex: { idx in
-                trigger(at: idx)
-            },
-            onOpenStudio: {
-                let draft = sourceText
-                hide()
-                if #available(macOS 26.0, *) {
-                    WritingWindow.show(draft: draft)
-                } else {
-                    SettingsWindow.show(page: .clipboard)
+    private static func presentAtCaret() {
+        if glass == nil {
+            let view = QuickActionPopupView(
+                state: state,
+                onTriggerIndex: { idx in trigger(at: idx) },
+                onOpenStudio: {
+                    let draft = sourceText
+                    hide()
+                    if #available(macOS 26.0, *) {
+                        WritingWindow.show(draft: draft)
+                    } else {
+                        SettingsWindow.show(page: .clipboard)
+                    }
                 }
-            }
-        )
+            )
+            glass = GlassPanel(view, cornerStyle: .rounded(16), acceptsMouseEvents: true)
+        }
 
-        let glass = glass ?? GlassPanel(view, cornerStyle: .rounded(16), acceptsMouseEvents: true)
-        self.glass = glass
-        let size = glass.update(view)
+        guard let glass else { return }
+        let rowHeight: CGFloat = 30
+        let panelHeight = CGFloat(state.actions.count) * rowHeight + 88
+        let size = NSSize(width: 348, height: panelHeight)
         let screen = (lastCaret != .zero
             ? NSScreen.screens.first { $0.frame.contains(lastCaret.origin) }?.visibleFrame
             : nil)
@@ -288,9 +227,9 @@ enum QuickActionPanel {
 
         var origin: NSPoint
         if lastCaret != .zero {
-            origin = NSPoint(x: lastCaret.minX, y: lastCaret.minY - size.height - 10)
+            origin = NSPoint(x: lastCaret.minX, y: lastCaret.minY - size.height - 8)
             if origin.y < screen.minY + 10 {
-                origin.y = min(screen.maxY - size.height - 10, lastCaret.maxY + 10)
+                origin.y = min(screen.maxY - size.height - 10, lastCaret.maxY + 8)
             }
         } else {
             origin = NSPoint(x: screen.midX - size.width / 2, y: screen.midY - size.height / 2)
@@ -307,157 +246,127 @@ enum QuickActionPanel {
             .replacingOccurrences(of: "\r\n", with: " ")
             .replacingOccurrences(of: "\n", with: " ")
             .trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !collapsed.isEmpty else {
-            return "Chưa có văn bản được chọn hoặc trong Bộ nhớ tạm"
-        }
-        if collapsed.count <= 84 { return collapsed }
-        return String(collapsed.prefix(84)) + "…"
+        guard !collapsed.isEmpty else { return "Chưa có văn bản" }
+        return collapsed.count <= 56 ? collapsed : String(collapsed.prefix(56)) + "…"
     }
 }
 
 private struct QuickActionPopupView: View {
-    let sourcePreview: String
-    let hasSourceText: Bool
-    let replacesSelection: Bool
-    let actions: [QuickActionPanel.ActionItem]
-    let selectedIndex: Int
-    let runningActionID: String?
-    let errorMessage: String?
-    let onHoverIndex: @MainActor (Int) -> Void
+    let state: QuickActionPanelState
     let onTriggerIndex: @MainActor (Int) -> Void
     let onOpenStudio: @MainActor () -> Void
+    @State private var hoveredIndex: Int?
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack(spacing: 9) {
-                Image(systemName: "sparkles")
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundStyle(.white)
-                    .frame(width: 24, height: 24)
-                    .background(.indigo.gradient, in: RoundedRectangle(cornerRadius: 7, style: .continuous))
-
-                VStack(alignment: .leading, spacing: 1) {
-                    HStack(spacing: 6) {
-                        Text("Công cụ chữ & AI nhanh")
-                            .font(.system(size: 13.5, weight: .semibold))
-                        Text(replacesSelection ? "Thay vùng đang chọn" : "Xử lý Clipboard")
-                            .font(.system(size: 10.5, weight: .semibold))
-                            .foregroundStyle(replacesSelection ? Color.accentColor : .secondary)
-                            .padding(.horizontal, 7)
-                            .padding(.vertical, 2)
-                            .glassFilterChip(isSelected: replacesSelection)
-                    }
-                    Text(sourcePreview)
-                        .font(.system(size: 11.5))
-                        .foregroundStyle(hasSourceText ? .secondary : .tertiary)
-                        .lineLimit(1)
-                        .padding(.vertical, 0.5)
-                }
-
-                Spacer(minLength: 6)
-
+        VStack(alignment: .leading, spacing: 8) {
+            // Compact source preview header
+            HStack(spacing: 6) {
+                Text(state.replacesSelection ? "Đang chọn:" : "Clipboard:")
+                    .font(.system(size: 11.5, weight: .semibold))
+                    .foregroundStyle(.secondary)
+                    .fixedSize()
+                Text(state.sourcePreview)
+                    .font(.system(size: 12))
+                    .foregroundStyle(state.hasSourceText ? .primary : .tertiary)
+                    .lineLimit(1)
+                    .truncationMode(.tail)
+                Spacer(minLength: 4)
                 if #available(macOS 26.0, *) {
                     Button {
                         onOpenStudio()
                     } label: {
-                        Label("Mở rộng", systemImage: "arrow.up.right.square")
-                            .font(.system(size: 11.5, weight: .medium))
-                    }
-                    .glassButton()
-                    .controlSize(.small)
-                }
-            }
-
-            VStack(spacing: 3) {
-                ForEach(Array(actions.enumerated()), id: \.element.id) { idx, item in
-                    let isSelected = idx == selectedIndex
-                    let isRunning = runningActionID == item.id
-                    Button {
-                        onTriggerIndex(idx)
-                    } label: {
-                        HStack(spacing: 10) {
-                            Text("\(idx + 1)")
-                                .font(.system(size: 10.5, weight: .bold, design: .rounded))
-                                .foregroundStyle(isSelected ? .white : .secondary)
-                                .frame(width: 20, height: 20)
-                                .background(
-                                    isSelected ? Color.accentColor : Color.primary.opacity(0.08),
-                                    in: RoundedRectangle(cornerRadius: 6, style: .continuous)
-                                )
-
-                            Image(systemName: item.symbolName)
-                                .font(.system(size: 12, weight: .semibold))
-                                .foregroundStyle(item.tint)
-                                .frame(width: 24, height: 24)
-                                .background(item.tint.opacity(0.14), in: RoundedRectangle(cornerRadius: 7, style: .continuous))
-
-                            VStack(alignment: .leading, spacing: 1.5) {
-                                HStack(spacing: 6) {
-                                    Text(item.title)
-                                        .font(.system(size: 12.5, weight: .semibold))
-                                        .foregroundStyle(.primary)
-                                    if item.isAI {
-                                        Text("AI trên máy")
-                                            .font(.system(size: 9.5, weight: .semibold))
-                                            .foregroundStyle(.indigo)
-                                            .padding(.horizontal, 5.5)
-                                            .padding(.vertical, 1)
-                                            .background(Color.indigo.opacity(0.12), in: Capsule())
-                                    }
-                                }
-                                Text(item.subtitle)
-                                    .font(.system(size: 11))
-                                    .foregroundStyle(.secondary)
-                                    .lineLimit(1)
-                            }
-                            .frame(maxWidth: .infinity, alignment: .leading)
-
-                            if isRunning {
-                                ProgressView()
-                                    .controlSize(.small)
-                            }
-                        }
-                        .padding(.horizontal, 9)
-                        .padding(.vertical, 6)
-                        .background {
-                            RoundedRectangle(cornerRadius: 9, style: .continuous)
-                                .fill(isSelected ? Color.accentColor.opacity(0.16) : Color.clear)
-                        }
-                        .contentShape(RoundedRectangle(cornerRadius: 9, style: .continuous))
+                        Image(systemName: "arrow.up.right.square")
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundStyle(.secondary)
                     }
                     .buttonStyle(.plain)
-                    .disabled(!hasSourceText || runningActionID != nil)
+                    .help("Mở khung AI Viết")
+                }
+            }
+            .padding(.horizontal, 8)
+            .padding(.vertical, 6)
+            .background(.primary.opacity(0.06), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+
+            // Compact single-line action rows
+            VStack(spacing: 2) {
+                ForEach(Array(state.actions.enumerated()), id: \.element.id) { idx, item in
+                    let isSelected = idx == state.selectedIndex
+                    let isHovered = hoveredIndex == idx
+                    let isRunning = state.runningActionID == item.id
+
+                    HStack(spacing: 8) {
+                        Text("\(idx + 1)")
+                            .font(.system(size: 10.5, weight: .semibold, design: .rounded))
+                            .foregroundStyle(isSelected ? .white : .secondary)
+                            .frame(width: 19, height: 19)
+                            .background(
+                                isSelected ? Color.accentColor : Color.primary.opacity(0.08),
+                                in: RoundedRectangle(cornerRadius: 5, style: .continuous)
+                            )
+
+                        Text(item.title)
+                            .font(.system(size: 12.5, weight: isSelected ? .semibold : .regular))
+                            .foregroundStyle(.primary)
+                            .lineLimit(1)
+                            .padding(.vertical, 1)
+
+                        Spacer(minLength: 4)
+
+                        if isRunning {
+                            ProgressView().controlSize(.small)
+                        } else if item.isAI {
+                            Text("AI")
+                                .font(.system(size: 9.5, weight: .semibold))
+                                .foregroundStyle(.indigo)
+                                .padding(.horizontal, 5)
+                                .padding(.vertical, 1.5)
+                                .background(Color.indigo.opacity(0.12), in: Capsule())
+                        }
+                    }
+                    .padding(.horizontal, 8)
+                    .frame(height: 28)
+                    .background {
+                        RoundedRectangle(cornerRadius: 7, style: .continuous)
+                            .fill(isSelected
+                                  ? Color.accentColor.opacity(0.16)
+                                  : (isHovered ? Color.primary.opacity(0.06) : Color.clear))
+                    }
+                    .contentShape(RoundedRectangle(cornerRadius: 7, style: .continuous))
+                    .opacity((!state.hasSourceText || state.runningActionID != nil) ? 0.5 : 1)
+                    .onTapGesture {
+                        guard state.hasSourceText, state.runningActionID == nil else { return }
+                        onTriggerIndex(idx)
+                    }
                     .onHover { inside in
-                        if inside { onHoverIndex(idx) }
+                        hoveredIndex = inside ? idx : (hoveredIndex == idx ? nil : hoveredIndex)
+                        if inside, state.runningActionID == nil { state.selectedIndex = idx }
                     }
                 }
             }
 
-            if let errorMessage {
-                Text(errorMessage)
-                    .font(.system(size: 11.5))
+            if let error = state.errorMessage {
+                Text(error)
+                    .font(.system(size: 11))
                     .foregroundStyle(.red)
-                    .lineLimit(2)
-                    .fixedSize(horizontal: false, vertical: true)
+                    .lineLimit(1)
+                    .padding(.horizontal, 4)
             }
 
+            // Minimal footer
             HStack(spacing: 6) {
-                Text("↑↓ chọn")
+                Text("↵ Áp dụng")
                 Text("·").foregroundStyle(.quaternary)
-                Text("1–\(actions.count) thực thi ngay")
-                Text("·").foregroundStyle(.quaternary)
-                Text("↵ áp dụng")
+                Text("1–\(state.actions.count) chọn nhanh")
                 Text("·").foregroundStyle(.quaternary)
                 Text("Esc đóng")
                 Spacer()
             }
             .font(.system(size: 11))
             .foregroundStyle(.secondary)
-            .padding(.horizontal, 2)
+            .padding(.horizontal, 4)
         }
-        .padding(14)
-        .frame(width: 468)
-        .fixedSize(horizontal: false, vertical: true)
+        .padding(12)
+        .frame(width: 348)
         .floatingSurface(in: RoundedRectangle(cornerRadius: 16, style: .continuous))
     }
 }

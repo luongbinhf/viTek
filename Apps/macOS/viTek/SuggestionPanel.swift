@@ -10,6 +10,9 @@ import SwiftUI
 @MainActor
 enum SuggestionPanel {
     private static var glass: GlassPanel<SuggestionBar>?
+    private static var lastWords: [String] = []
+    private static var lastCaret: NSRect = .zero
+    private static var isVisible = false
 
     /// `caret` is the caret's line as the client reports it. `fromAccessibility` marks a box read
     /// through the Accessibility API, which covers the whole line rather than hanging below it.
@@ -22,6 +25,10 @@ enum SuggestionPanel {
         onSelect: @escaping @MainActor (Int) -> Void = { _ in }
     ) {
         guard !words.isEmpty, caret != .zero else { return hide() }
+        if isVisible, words == lastWords, caret == lastCaret { return }
+        lastWords = words
+        lastCaret = caret
+        isVisible = true
         let bar = SuggestionBar(words: words, completing: completing, onSelect: onSelect)
         let glass = glass ?? GlassPanel(bar, acceptsMouseEvents: true)
         self.glass = glass
@@ -43,6 +50,9 @@ enum SuggestionPanel {
     }
 
     static func hide() {
+        isVisible = false
+        lastWords = []
+        lastCaret = .zero
         glass?.hide()
     }
 }

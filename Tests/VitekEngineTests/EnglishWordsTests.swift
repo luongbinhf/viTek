@@ -62,7 +62,7 @@ import Testing
             #expect(typed(word, plain) != word, "\\(word)")
             #expect(typed(word) == word, "\\(word)")
         }
-        #expect(EnglishWords.words.count == 304)
+        #expect(EnglishWords.words.count == 306)
     }
 
     @Test func automaticEnglishCuesStayLiteral() {

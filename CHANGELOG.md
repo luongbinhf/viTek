@@ -4,6 +4,15 @@ Mọi bản phát hành của **viTek** sử dụng quy tắc phiên bản **`YY
 
 ---
 
+## `20261126.1.003` *(iOS `20261126.1.3`)*
+
+### Đồng bộ Giao diện Tối giản Toàn macOS & Tăng Độ Chính Xác Gõ Song Ngữ
+- **Tối giản `QuickActionPanel` (`⌃⌥A`), `SuggestionPanel` & `ModeIndicatorPanel`:** Chuyển bảng công cụ chữ & AI nhanh (`⌃⌥A`) sang kiến trúc `@Observable` 1 cột gọn nhẹ (`348 pt`, 0 lần resize khi di chuyển `↑`/`↓` hay hover), rút gọn `ModeIndicatorPanel` sang kích thước cố định `0 ms` và bỏ qua cập nhật thừa ở `SuggestionPanel` khi từ gợi ý + con trỏ không đổi.
+- **Tinh gọn dòng danh sách trong `ClipboardPage`:** Lược bỏ huy hiệu màu & thẻ phân loại trùng lặp để đồng nhất với popup Clipboard mới.
+- **Bảo vệ từ ngắn lập trình hay xung đột Telex (`VitekEngine` & `vitek-eval`):** Bổ sung bảo vệ cho `docs`, `cors`, `diff`, `buff` (giữ nguyên hành vi undo chủ động của `off`), bổ sung `seen`/`boom` vào nhóm khử mơ hồ theo ngữ cảnh ANE, và mở rộng bộ đánh giá tự động `vitek-eval` lên 42 trường hợp đạt 100%.
+
+---
+
 ## `20261126.1.002` *(iOS `20261126.1.2`)*
 
 ### Tinh gọn Giao diện Tối giản & Tối ưu Hiệu năng Runtime
