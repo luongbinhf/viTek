@@ -14,6 +14,7 @@
 - [x] **Apple Privacy Manifest:** `Apps/Shared/PrivacyInfo.xcprivacy` khai báo `NSPrivacyTracking = false`, không thu thập dữ liệu, lý do truy cập `UserDefaults` (`CA92.1`, `1C8F.1`).
 - [x] **Quyền ứng dụng (Entitlements):** App Group `group.io.github.luongbinhf.viTek` (dùng chung App, Keyboard và Widgets) + iCloud Key-Value Store (`com.apple.developer.ubiquity-kvstore-identifier`) cho `viTekMobile`.
 - [x] **Quyền riêng tư bàn phím:** `RequestsOpenAccess = false` — hoạt động hoàn toàn trên thiết bị mà không yêu cầu người dùng bật *Cho phép truy cập đầy đủ*.
+- [x] **Bộ ảnh Screenshot App Store tự động:** Chạy `./scripts/capture_appstore_screenshots.sh` để xuất đồng thời cả bản sạch nguyên bản (`dist/appstore-screenshots/raw/`) và bản kèm tiêu đề marketing (`dist/appstore-screenshots/framed/`) ở đúng kích thước chuẩn **iPhone 6.9"** (`1320×2868`) và **iPad Pro 13"** (`2064×2752`, PNG không kênh alpha).
 
 ---
 

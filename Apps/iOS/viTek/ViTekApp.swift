@@ -26,6 +26,24 @@ struct ViTekApp: App {
             .tabBarMinimizeBehavior(.onScrollDown)
             .onOpenURL { route.handle($0) }
             .task {
+                let args = ProcessInfo.processInfo.arguments
+                if let idx = args.firstIndex(of: "-tab"), args.indices.contains(idx + 1) {
+                    switch args[idx + 1] {
+                    case "keyboard": route.destination = .keyboard
+                    case "writing": route.destination = .writing
+                    case "clipboard": route.destination = .clipboard
+                    case "settings": route.destination = .settings
+                    default: break
+                    }
+                }
+                if args.contains("-seedDemoClipboard") {
+                    let store = IOSKeyboardSettings.shared
+                    if store.clipboardHistory.isEmpty {
+                        store.addPinnedClipboard("Nguyễn Minh Anh · 0912 345 678 · Quận 1, TP.HCM", alias: "Thông tin liên hệ")
+                        store.addPinnedClipboard("https://github.com/luongbinhf/viTek", alias: "Kho mã nguồn viTek")
+                        store.recordClipboard("Hẹn gặp anh lúc 14:30 chiều nay để chốt giao diện mới nhé!")
+                    }
+                }
                 CloudSettingsSync.shared.start()
                 await VitekFocusFilter.refreshCurrent()
             }
@@ -53,7 +71,10 @@ private struct SettingsBadgeIcon: View {
 private struct KeyboardGuide: View {
     @Environment(\.openURL) private var openURL
     @Bindable private var route = WritingRoute.shared
-    @State private var sample = ""
+    @State private var sample = ProcessInfo.processInfo.arguments.contains("-focusSandbox")
+        ? "Tôi yêu tiếng Việt — tự nhận Telex & VNI mượt mà cùng viTek"
+        : ""
+    @FocusState private var sandboxFocused: Bool
 
     private var hasVietnameseDiacritics: Bool {
         sample.unicodeScalars.contains { $0.value > 127 && CharacterSet.letters.contains($0) }
@@ -74,6 +95,12 @@ private struct KeyboardGuide: View {
             .background(ambientBackdrop.ignoresSafeArea())
             .navigationTitle("viTek")
             .navigationBarTitleDisplayMode(.large)
+            .task {
+                if ProcessInfo.processInfo.arguments.contains("-focusSandbox") {
+                    try? await Task.sleep(for: .milliseconds(500))
+                    sandboxFocused = true
+                }
+            }
         }
     }
 
@@ -159,6 +186,7 @@ private struct KeyboardGuide: View {
             }
 
             TextField("Thử gõ vieetj", text: $sample, axis: .vertical)
+                .focused($sandboxFocused)
                 .lineLimit(2...5)
                 .textInputAutocapitalization(.never)
                 .autocorrectionDisabled()
