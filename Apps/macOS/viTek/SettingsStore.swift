@@ -9,6 +9,11 @@ import VitekSession
 final class SettingsStore {
     static let shared = SettingsStore()
 
+    enum OverlayPlacement: String, CaseIterable, Sendable {
+        case notchIsland
+        case caret
+    }
+
     struct Shortcut: Identifiable, Equatable {
         let id = UUID()
         var abbreviation: String
@@ -30,6 +35,7 @@ final class SettingsStore {
         case shortcutsEnabled, shortcuts, shortcutsInEnglishMode, editPreviousWord, underlineComposition, showSuggestions
         case vietnameseEnabled, quickToggleOptionDoubleTap, showModeSwitchHUD
         case typingScores, iCloudSyncEnabled, customEnglishWords, excludedBundleIDs
+        case overlayPlacement, rememberAppMode, perAppModes, clipboardCopyToast, notchHoverClipboard
         case focusPreferEnglish, focusHideSuggestions
         case personalUnigrams, personalBigrams, personalTrigrams
         case clipboardHistoryEnabled, syncClipboardPinnedICloud, syncClipboardRecentICloud
@@ -70,7 +76,22 @@ final class SettingsStore {
     }
     var focusPreferEnglish: Bool { didSet { save(focusPreferEnglish, .focusPreferEnglish, syncCloud: false) } }
     var focusHideSuggestions: Bool { didSet { save(focusHideSuggestions, .focusHideSuggestions, syncCloud: false) } }
-    var clipboardHistoryEnabled: Bool { didSet { save(clipboardHistoryEnabled, .clipboardHistoryEnabled, syncCloud: false) } }
+    var clipboardHistoryEnabled: Bool {
+        didSet {
+            save(clipboardHistoryEnabled, .clipboardHistoryEnabled, syncCloud: false)
+            DynamicIslandPanel.updateHoverMonitoring()
+        }
+    }
+    var overlayPlacement: OverlayPlacement { didSet { save(overlayPlacement.rawValue, .overlayPlacement, syncCloud: false) } }
+    var rememberAppMode: Bool { didSet { save(rememberAppMode, .rememberAppMode, syncCloud: false) } }
+    var clipboardCopyToast: Bool { didSet { save(clipboardCopyToast, .clipboardCopyToast, syncCloud: false) } }
+    var notchHoverClipboard: Bool {
+        didSet {
+            save(notchHoverClipboard, .notchHoverClipboard, syncCloud: false)
+            DynamicIslandPanel.updateHoverMonitoring()
+        }
+    }
+    private(set) var perAppModes: [String: Bool]
     var syncClipboardPinnedICloud: Bool { didSet { save(syncClipboardPinnedICloud, .syncClipboardPinnedICloud, syncCloud: false) } }
     var syncClipboardRecentICloud: Bool { didSet { save(syncClipboardRecentICloud, .syncClipboardRecentICloud, syncCloud: false) } }
     var syncPersonalVocabularyICloud: Bool { didSet { save(syncPersonalVocabularyICloud, .syncPersonalVocabularyICloud, syncCloud: false) } }
@@ -123,6 +144,12 @@ final class SettingsStore {
         focusPreferEnglish = bool(.focusPreferEnglish, false)
         focusHideSuggestions = bool(.focusHideSuggestions, false)
         clipboardHistoryEnabled = bool(.clipboardHistoryEnabled, true)
+        overlayPlacement = defaults.string(forKey: Key.overlayPlacement.rawValue)
+            .flatMap(OverlayPlacement.init) ?? .notchIsland
+        rememberAppMode = bool(.rememberAppMode, true)
+        clipboardCopyToast = bool(.clipboardCopyToast, true)
+        notchHoverClipboard = bool(.notchHoverClipboard, true)
+        perAppModes = defaults.dictionary(forKey: Key.perAppModes.rawValue) as? [String: Bool] ?? [:]
         syncClipboardPinnedICloud = bool(.syncClipboardPinnedICloud, true)
         syncClipboardRecentICloud = bool(.syncClipboardRecentICloud, false)
         syncPersonalVocabularyICloud = bool(.syncPersonalVocabularyICloud, true)
@@ -151,10 +178,32 @@ final class SettingsStore {
         )
     }
 
+    func effectiveVietnamese(for bundleID: String?) -> Bool {
+        if focusPreferEnglish { return false }
+        if let bundleID, excludedBundleIDSet.contains(bundleID) { return false }
+        if rememberAppMode, let bundleID, let saved = perAppModes[bundleID] {
+            return saved
+        }
+        return vietnameseEnabled
+    }
+
+    func setVietnamese(_ enabled: Bool, for bundleID: String?) {
+        vietnameseEnabled = enabled
+        if rememberAppMode, let bundleID, !excludedBundleIDSet.contains(bundleID) {
+            perAppModes[bundleID] = enabled
+            defaults.set(perAppModes, forKey: Key.perAppModes.rawValue)
+        }
+        revision += 1
+    }
+
+    func forgetPerAppModes() {
+        perAppModes = [:]
+        defaults.removeObject(forKey: Key.perAppModes.rawValue)
+        revision += 1
+    }
+
     func isExcluded(app bundleID: String?) -> Bool {
-        if !vietnameseEnabled || focusPreferEnglish { return true }
-        guard let bundleID else { return false }
-        return excludedBundleIDSet.contains(bundleID)
+        !effectiveVietnamese(for: bundleID)
     }
 
     nonisolated static func currentMacroTimestamp() -> MacroTimestamp {
@@ -250,9 +299,11 @@ final class SettingsStore {
 
     // MARK: Clipboard
 
-    func recordClipboard(_ text: String, timestamp: Int = Int(Date().timeIntervalSince1970)) {
-        guard clipboardHistoryEnabled, clipboardHistory.record(text, timestamp: timestamp) else { return }
+    @discardableResult
+    func recordClipboard(_ text: String, timestamp: Int = Int(Date().timeIntervalSince1970)) -> Bool {
+        guard clipboardHistoryEnabled, clipboardHistory.record(text, timestamp: timestamp) else { return false }
         persistClipboard(syncCloud: iCloudSyncEnabled && syncClipboardRecentICloud)
+        return true
     }
 
     func addPinnedClipboard(_ text: String, alias: String = "", timestamp: Int = Int(Date().timeIntervalSince1970)) {

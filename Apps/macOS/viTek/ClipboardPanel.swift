@@ -10,16 +10,23 @@ final class ClipboardPanelState {
     var selectedIndex = 0
     var searchQuery = ""
     var pinnedOnly = false
+    var islandStyle: ScreenCutoutGeometry.Style?
+    var topCutoutHeight: CGFloat = 0
 }
 
-/// Minimal, high-speed Spotlight-style Liquid Glass Quick-Paste Palette (`⌃⌥V`).
-/// Uses a single fixed-size card (`396 × 364 pt`) backed by `@Observable` state so
-/// arrow navigation (`↑`/`↓`), hover, and live search incur zero panel resizes or view rebuilds.
+/// Minimal, high-speed Spotlight-style Quick-Paste Palette (`⌃⌥V`).
+/// - In `.notchIsland` mode: drops smoothly out of the physical Notch / OLED Dynamic Island (or top-center
+///   floating pill on external displays) with pure-black `#000000` OLED surface.
+/// - In `.caret` mode: floats as a Liquid Glass card beside the active text caret.
+/// Uses fixed dimensions + `@Observable` state so `↑`/`↓`, hover, and live search incur zero panel resizes.
 @MainActor
 enum ClipboardPanel {
-    private static let panelSize = NSSize(width: 396, height: 364)
+    private static let caretSize = NSSize(width: 396, height: 364)
+    private static let islandBaseSize = NSSize(width: 416, height: 364)
     private static let state = ClipboardPanelState()
     private static var glass: GlassPanel<ClipboardPopupView>?
+    private static var islandDrawerPanel: NSPanel?
+    private static var outsideClickMonitor: Any?
     private static var lastCaret: NSRect = .zero
     private static var activePaste: (@MainActor (String) -> Void)?
     private(set) static var isVisible = false
@@ -40,7 +47,7 @@ enum ClipboardPanel {
         lastCaret = caret
         activePaste = onPaste
         refreshItems()
-        presentAtCaret()
+        present()
     }
 
     static func handleKeyEvent(_ event: NSEvent) -> Bool {
@@ -118,13 +125,17 @@ enum ClipboardPanel {
         if mods.intersection([.command, .control, .option]).isEmpty,
            let chars = event.characters, !chars.isEmpty,
            chars.allSatisfy({ !$0.isNewline && $0 != "\t" }) {
-            state.searchQuery.append(chars)
-            state.selectedIndex = 0
-            refreshItems()
+            searchQueryAppend(chars)
             return true
         }
 
         return false
+    }
+
+    private static func searchQueryAppend(_ chars: String) {
+        state.searchQuery.append(chars)
+        state.selectedIndex = 0
+        refreshItems()
     }
 
     static func pasteByNumber(_ number: Int) -> Bool {
@@ -142,7 +153,9 @@ enum ClipboardPanel {
         state.items = []
         state.searchQuery = ""
         activePaste = nil
+        removeOutsideClickMonitor()
         glass?.hide()
+        islandDrawerPanel?.orderOut(nil)
     }
 
     private static func refreshItems() {
@@ -152,39 +165,125 @@ enum ClipboardPanel {
         state.selectedIndex = items.isEmpty ? 0 : min(max(0, state.selectedIndex), items.count - 1)
     }
 
-    private static func presentAtCaret() {
-        if glass == nil {
-            let view = ClipboardPopupView(
-                state: state,
-                onPaste: { text in
-                    let paste = activePaste
+    private static func makePopupView() -> ClipboardPopupView {
+        ClipboardPopupView(
+            state: state,
+            onPaste: { text in
+                let paste = activePaste
+                hide()
+                paste?(text)
+            },
+            onTogglePinnedFilter: { pinned in
+                state.pinnedOnly = pinned
+                state.selectedIndex = 0
+                refreshItems()
+            },
+            onClearSearch: {
+                state.searchQuery = ""
+                state.selectedIndex = 0
+                refreshItems()
+            },
+            onTogglePinItem: { text in
+                SettingsStore.shared.togglePinClipboard(text)
+                if isVisible { refreshItems() }
+            },
+            onManage: {
+                hide()
+                SettingsWindow.show(page: .clipboard)
+            }
+        )
+    }
+
+    private static func ensureIslandDrawerPanel() -> NSPanel {
+        if let islandDrawerPanel { return islandDrawerPanel }
+        let panel = NSPanel(
+            contentRect: .zero,
+            styleMask: [.borderless, .nonactivatingPanel],
+            backing: .buffered,
+            defer: true
+        )
+        panel.level = NSWindow.Level(rawValue: Int(CGWindowLevelForKey(.statusWindow)) + 2)
+        panel.isOpaque = false
+        panel.backgroundColor = .clear
+        panel.hasShadow = true
+        panel.ignoresMouseEvents = false
+        panel.collectionBehavior = [.canJoinAllSpaces, .stationary, .ignoresCycle, .fullScreenAuxiliary]
+        panel.contentView = NSHostingView(rootView: makePopupView())
+        islandDrawerPanel = panel
+        return panel
+    }
+
+    private static func installOutsideClickMonitor() {
+        guard outsideClickMonitor == nil else { return }
+        outsideClickMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { _ in
+            MainActor.assumeIsolated {
+                guard isVisible else { return }
+                let mouse = NSEvent.mouseLocation
+                let activeFrame = (SettingsStore.shared.overlayPlacement == .notchIsland)
+                    ? islandDrawerPanel?.frame
+                    : glass?.panel.frame
+                if let activeFrame, !activeFrame.contains(mouse) {
                     hide()
-                    paste?(text)
-                },
-                onTogglePinnedFilter: { pinned in
-                    state.pinnedOnly = pinned
-                    state.selectedIndex = 0
-                    refreshItems()
-                },
-                onClearSearch: {
-                    state.searchQuery = ""
-                    state.selectedIndex = 0
-                    refreshItems()
-                },
-                onTogglePinItem: { text in
-                    SettingsStore.shared.togglePinClipboard(text)
-                    if isVisible { refreshItems() }
-                },
-                onManage: {
-                    hide()
-                    SettingsWindow.show(page: .clipboard)
                 }
-            )
-            glass = GlassPanel(view, cornerStyle: .rounded(16), acceptsMouseEvents: true)
+            }
+        }
+    }
+
+    private static func removeOutsideClickMonitor() {
+        if let monitor = outsideClickMonitor {
+            NSEvent.removeMonitor(monitor)
+            outsideClickMonitor = nil
+        }
+    }
+
+    private static func present() {
+        if SettingsStore.shared.overlayPlacement == .notchIsland {
+            DynamicIslandPanel.hideCompact()
+            glass?.hide()
+
+            let geo = ScreenCutoutGeometry.resolve(for: lastCaret)
+            let topPad: CGFloat = (geo.style == .floatingPill) ? 0 : geo.cutoutRect.height + 6
+            state.islandStyle = geo.style
+            state.topCutoutHeight = topPad
+
+            let size = NSSize(width: islandBaseSize.width, height: islandBaseSize.height + topPad)
+            let origin: NSPoint
+            switch geo.style {
+            case .notch:
+                origin = NSPoint(
+                    x: geo.cutoutRect.midX - size.width / 2,
+                    y: geo.screenFrame.maxY - size.height
+                )
+            case .dynamicIsland:
+                origin = NSPoint(
+                    x: geo.cutoutRect.midX - size.width / 2,
+                    y: geo.cutoutRect.maxY - size.height + 2
+                )
+            case .floatingPill:
+                origin = NSPoint(
+                    x: geo.screenFrame.midX - size.width / 2,
+                    y: geo.visibleFrame.maxY - size.height - 6
+                )
+            }
+
+            let panel = ensureIslandDrawerPanel()
+            panel.setFrame(NSRect(origin: origin, size: size), display: true)
+            isVisible = true
+            installOutsideClickMonitor()
+            panel.orderFrontRegardless()
+            return
         }
 
+        // Caret-anchored Liquid Glass placement
+        islandDrawerPanel?.orderOut(nil)
+        state.islandStyle = nil
+        state.topCutoutHeight = 0
+
+        if glass == nil {
+            glass = GlassPanel(makePopupView(), cornerStyle: .rounded(16), acceptsMouseEvents: true)
+        }
         guard let glass else { return }
-        let size = panelSize
+        let size = caretSize
         let screen = (lastCaret != .zero
             ? NSScreen.screens.first { $0.frame.contains(lastCaret.origin) }?.visibleFrame
             : nil)
@@ -204,6 +303,7 @@ enum ClipboardPanel {
         origin.y = min(max(origin.y, screen.minY + 10), screen.maxY - size.height - 10)
 
         isVisible = true
+        installOutsideClickMonitor()
         glass.show(at: NSRect(origin: origin, size: size))
     }
 }
@@ -218,6 +318,30 @@ struct ClipboardPopupView: View {
     @State private var hoveredIndex: Int?
 
     var body: some View {
+        let isIsland = state.islandStyle != nil
+        let horizontalPad: CGFloat = state.islandStyle == .notch ? 20 : 12
+
+        Group {
+            if let style = state.islandStyle {
+                contentBody
+                    .padding(.top, state.topCutoutHeight + 10)
+                    .padding(.horizontal, horizontalPad)
+                    .padding(.bottom, 12)
+                    .frame(width: 416, height: 364 + state.topCutoutHeight)
+                    .background(Color.black)
+                    .modifier(IslandClipModifier(style: style))
+                    .environment(\.colorScheme, .dark)
+            } else {
+                contentBody
+                    .padding(12)
+                    .frame(width: 396, height: 364)
+                    .floatingSurface(in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+            }
+        }
+        .id(isIsland)
+    }
+
+    private var contentBody: some View {
         VStack(alignment: .leading, spacing: 8) {
             // Single compact header: live search + 2-way filter toggle
             HStack(spacing: 8) {
@@ -251,9 +375,8 @@ struct ClipboardPopupView: View {
                 .padding(.horizontal, 9)
                 .padding(.vertical, 6)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .background(.primary.opacity(0.06), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+                .background(.primary.opacity(0.08), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
 
-                // Compact 2-state pill selector — fixed single line, never wraps
                 HStack(spacing: 2) {
                     filterSegment(title: "Tất cả", isSelected: !state.pinnedOnly) {
                         onTogglePinnedFilter(false)
@@ -263,7 +386,7 @@ struct ClipboardPopupView: View {
                     }
                 }
                 .padding(2)
-                .background(.primary.opacity(0.06), in: Capsule())
+                .background(.primary.opacity(0.08), in: Capsule())
                 .fixedSize()
             }
 
@@ -316,9 +439,6 @@ struct ClipboardPopupView: View {
             .foregroundStyle(.secondary)
             .padding(.horizontal, 4)
         }
-        .padding(12)
-        .frame(width: 396, height: 364)
-        .floatingSurface(in: RoundedRectangle(cornerRadius: 16, style: .continuous))
     }
 
     private func filterSegment(title: String, isSelected: Bool, action: @escaping () -> Void) -> some View {
@@ -331,7 +451,7 @@ struct ClipboardPopupView: View {
                 .padding(.horizontal, 9)
                 .padding(.vertical, 4)
                 .background(
-                    isSelected ? Color.primary.opacity(0.12) : Color.clear,
+                    isSelected ? Color.primary.opacity(0.14) : Color.clear,
                     in: Capsule()
                 )
         }
@@ -348,7 +468,7 @@ struct ClipboardPopupView: View {
                 .foregroundStyle(isSelected ? .white : .secondary)
                 .frame(width: 19, height: 19)
                 .background(
-                    isSelected ? Color.accentColor : Color.primary.opacity(0.08),
+                    isSelected ? Color.accentColor : Color.primary.opacity(0.10),
                     in: RoundedRectangle(cornerRadius: 5, style: .continuous)
                 )
 
@@ -394,8 +514,8 @@ struct ClipboardPopupView: View {
         .background {
             RoundedRectangle(cornerRadius: 7, style: .continuous)
                 .fill(isSelected
-                      ? Color.accentColor.opacity(0.16)
-                      : (isHovered ? Color.primary.opacity(0.06) : Color.clear))
+                      ? Color.accentColor.opacity(0.22)
+                      : (isHovered ? Color.primary.opacity(0.08) : Color.clear))
         }
         .contentShape(RoundedRectangle(cornerRadius: 7, style: .continuous))
         .onTapGesture {
@@ -404,6 +524,25 @@ struct ClipboardPopupView: View {
         .onHover { inside in
             hoveredIndex = inside ? idx : (hoveredIndex == idx ? nil : hoveredIndex)
             if inside { state.selectedIndex = idx }
+        }
+    }
+}
+
+private struct IslandClipModifier: ViewModifier {
+    let style: ScreenCutoutGeometry.Style
+
+    func body(content: Content) -> some View {
+        switch style {
+        case .notch:
+            content.clipShape(NotchEarShape(earRadius: 12, bottomRadius: 18))
+        case .dynamicIsland, .floatingPill:
+            let radius: CGFloat = (style == .dynamicIsland) ? 22 : 18
+            content
+                .clipShape(RoundedRectangle(cornerRadius: radius, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: radius, style: .continuous)
+                        .strokeBorder(Color.white.opacity(0.15), lineWidth: 0.5)
+                )
         }
     }
 }

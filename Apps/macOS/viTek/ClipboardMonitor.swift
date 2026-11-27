@@ -37,12 +37,28 @@ final class ClipboardMonitor {
 
         if let types = pasteboard.types {
             for type in types where Self.ignoredTypes.contains(type.rawValue) {
+                notifySkippedSecretIfNeeded()
                 return
             }
         }
         guard let text = pasteboard.string(forType: .string), !text.isEmpty else { return }
-        guard !Self.looksLikeSecret(text) else { return }
-        SettingsStore.shared.recordClipboard(text)
+        guard !Self.looksLikeSecret(text) else {
+            notifySkippedSecretIfNeeded()
+            return
+        }
+        if SettingsStore.shared.recordClipboard(text),
+           SettingsStore.shared.clipboardCopyToast,
+           SettingsStore.shared.overlayPlacement == .notchIsland {
+            DynamicIslandPanel.showCopied(preview: text)
+        }
+    }
+
+    private func notifySkippedSecretIfNeeded() {
+        let settings = SettingsStore.shared
+        guard settings.clipboardHistoryEnabled,
+              settings.clipboardCopyToast,
+              settings.overlayPlacement == .notchIsland else { return }
+        DynamicIslandPanel.showSkippedSecret()
     }
 
     /// Lightweight zero-regex filter that skips obvious credentials, API tokens, and private keys

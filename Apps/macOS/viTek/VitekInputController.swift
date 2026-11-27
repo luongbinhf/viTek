@@ -20,6 +20,7 @@ final class VitekInputController: IMKInputController {
     }
     private var loadedRevision = -1
     private weak var activeClient: AnyObject?
+    private weak static var lastActiveController: VitekInputController?
     private var isEditing = false
     private var pendingCommit = false
     private var pendingCommitIsHostRequest = false
@@ -60,6 +61,7 @@ final class VitekInputController: IMKInputController {
         loadSettings()
         guard let client = sender as? IMKTextInput else { return Diagnostics.log("activate: no client") }
         activeClient = client as AnyObject
+        Self.lastActiveController = self
         applyAppLanguage(for: client.bundleIdentifier())
         caretHidden = AppCompatibility.isChromium(client.bundleIdentifier())
         typedContext = ""
@@ -111,6 +113,8 @@ final class VitekInputController: IMKInputController {
         if activeClient !== (client as AnyObject) {
             document.resetForFocusChange()
             activeClient = client as AnyObject
+            Self.lastActiveController = self
+        Self.lastActiveController = self
             applyAppLanguage(for: client.bundleIdentifier())
             caretHidden = AppCompatibility.isChromium(client.bundleIdentifier())
             typedContext = ""
@@ -284,10 +288,17 @@ final class VitekInputController: IMKInputController {
                 _ = document.handle(.boundary, client: adapter(client))
                 hideSuggestions()
                 typedContext = ""
-                settings.vietnameseEnabled.toggle()
-                applyAppLanguage(for: client.bundleIdentifier())
+                let bundleID = client.bundleIdentifier()
+                let next = !settings.effectiveVietnamese(for: bundleID)
+                settings.setVietnamese(next, for: bundleID)
+                AppModeMonitor.shared.syncManualToggle(bundleID: bundleID, vietnamese: next)
+                applyAppLanguage(for: bundleID)
                 if settings.showModeSwitchHUD {
-                    ModeIndicatorPanel.show(vietnamese: settings.vietnameseEnabled, caret: clientCaretRect(client))
+                    ModeIndicatorPanel.show(
+                        vietnamese: next,
+                        appName: NSWorkspace.shared.frontmostApplication?.localizedName,
+                        caret: clientCaretRect(client)
+                    )
                 }
             } else {
                 lastSoloOptionRelease = now
@@ -544,6 +555,16 @@ final class VitekInputController: IMKInputController {
         return true
     }
 
+    static func openIslandClipboardFromHover() {
+        ClipboardPanel.show(caret: .zero) { text in
+            if let controller = lastActiveController, controller.activeClient != nil {
+                controller.insertClipboardText(text)
+            } else {
+                ClipboardMonitor.copyToPasteboard(text)
+            }
+        }
+    }
+
     private func insertClipboardText(_ text: String) {
         guard let targetClient = activeClient as? IMKTextInput else {
             ClipboardMonitor.copyToPasteboard(text)
@@ -729,10 +750,14 @@ final class VitekInputController: IMKInputController {
     }
 
     @objc private func toggleVietnameseEnabled(_ sender: Any?) {
-        settings.vietnameseEnabled.toggle()
-        if !settings.vietnameseEnabled { hideSuggestions() }
+        let frontApp = NSWorkspace.shared.frontmostApplication
+        let bundleID = frontApp?.bundleIdentifier
+        let next = !settings.effectiveVietnamese(for: bundleID)
+        settings.setVietnamese(next, for: bundleID)
+        AppModeMonitor.shared.syncManualToggle(bundleID: bundleID, vietnamese: next)
+        if !next { hideSuggestions() }
         if settings.showModeSwitchHUD {
-            ModeIndicatorPanel.show(vietnamese: settings.vietnameseEnabled, caret: .zero)
+            ModeIndicatorPanel.show(vietnamese: next, appName: frontApp?.localizedName, caret: .zero)
         }
     }
     @objc private func toggleToneStyle(_ sender: Any?) {

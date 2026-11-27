@@ -24,6 +24,8 @@ let healthConnection = MainActor.assumeIsolated { InputMethodConnection.responde
 MainActor.assumeIsolated {
     CloudSettingsSync.shared.start()
     ClipboardMonitor.shared.start()
+    AppModeMonitor.shared.start()
+    DynamicIslandPanel.updateHoverMonitoring()
     Task { @MainActor in await VitekFocusFilter.refreshCurrent() }
 }
 withExtendedLifetime((server, healthConnection, writingDelegate)) {

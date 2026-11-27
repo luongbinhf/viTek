@@ -4,6 +4,11 @@ Mỗi bản phát hành chính thức được gắn tag theo chuẩn [phiên b�
 
 ## Đã hoàn thành
 
+### `20261127.1.001` — Notch & OLED Dynamic Island macOS + Nhớ Chế độ Theo Ứng dụng
+- [x] Tích hợp phần cứng `NSScreen` (`ScreenCutoutGeometry` + `DynamicIslandPanel`) cho cả MacBook Notch, MacBook Pro OLED Dynamic Island (`#000000`) và màn hình rời.
+- [x] Nhớ trạng thái `VI / EN` riêng cho từng ứng dụng (`AppModeMonitor`), thông báo “Đã chép” / “Bỏ qua mật khẩu” trên Island và ngăn kéo Clipboard trượt từ Notch (`⌃⌥V` hoặc chạm giữ 320 ms).
+- [x] Tinh gọn ứng dụng iOS xuống 2 tab (`Bàn phím`, `Cài đặt`), tối ưu thanh công cụ bàn phím và hoàn thiện pipeline xuất ảnh App Store tự động (`scripts/capture_appstore_screenshots.sh`).
+
 ### `20261126.1.003` — Tinh gọn Toàn diện macOS/iOS, Hiệu năng Runtime & Bảo vệ Từ ngắn Lập trình
 - [x] Thiết kế lại popup Clipboard (`⌃⌥V`) & công cụ chữ/AI (`⌃⌥A`) sang kiến trúc `@Observable` 1 cột cố định (0 lần resize khi nhấn `↑`/`↓` hay di chuột), cố định kích thước `ModeIndicatorPanel` (`0 ms`), lược bỏ cập nhật thừa ở `SuggestionPanel` và lọc khoá bí mật/API token tự động trong `ClipboardMonitor`.
 - [x] Tinh gọn Cài đặt macOS (7 → 5 mục: *Bộ gõ, Gõ tắt, Clipboard, Từ điển, Giới thiệu*) và đồng bộ tối giản trên iOS (`ViTekApp`); tối ưu tra cứu ứng dụng loại trừ `O(1)` (`Set<String>`) và gom (debounce/coalesce) ghi `UserDefaults` trong `SettingsStore`.

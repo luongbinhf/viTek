@@ -39,8 +39,14 @@ struct TypingPage: View {
                 }
                 Toggle("Nhấn đúp ⌥ Option để đổi nhanh Việt ↔ Anh",
                        isOn: $settings.quickToggleOptionDoubleTap)
-                Toggle("Hiện chỉ báo nhỏ khi đổi chế độ",
+                Toggle("Nhớ chế độ Việt / Anh riêng cho từng ứng dụng",
+                       isOn: $settings.rememberAppMode)
+                Toggle("Hiện chỉ báo khi đổi chế độ",
                        isOn: $settings.showModeSwitchHUD)
+                Picker("Vị trí chỉ báo & Clipboard", selection: $settings.overlayPlacement) {
+                    Text("Notch & Dynamic Island").tag(SettingsStore.OverlayPlacement.notchIsland)
+                    Text("Cạnh con trỏ").tag(SettingsStore.OverlayPlacement.caret)
+                }
                 Toggle("Gợi ý từ (⌥ Space / ⌥ 1…5)", isOn: $settings.showSuggestions)
                 if settings.showSuggestions {
                     CaretAccessRow()
@@ -99,11 +105,15 @@ struct TypingPage: View {
             Section {
                 DisclosureGroup("Thói quen & Từ vựng đã học") {
                     LabeledContent("Ứng dụng đã học", value: String(settings.typingScores.count))
+                    LabeledContent("Chế độ VI/EN theo ứng dụng", value: "\(settings.perAppModes.count) ứng dụng")
                     LabeledContent("Từ/cụm cá nhân đã học", value: String(settings.personalFrequency.totalCount))
                     Toggle("Đồng bộ từ vựng cá nhân qua iCloud", isOn: $settings.syncPersonalVocabularyICloud)
                     HStack {
                         Button("Xoá thói quen ứng dụng", role: .destructive) { settings.forgetTypingHabits() }
                             .disabled(settings.typingScores.isEmpty)
+                        if !settings.perAppModes.isEmpty {
+                            Button("Đặt lại VI/EN ứng dụng", role: .destructive) { settings.forgetPerAppModes() }
+                        }
                         Spacer()
                         Button("Xoá từ đã học", role: .destructive) { settings.forgetPersonalFrequency() }
                             .disabled(settings.personalFrequency.isEmpty)
@@ -491,6 +501,12 @@ struct ClipboardPage: View {
         Form {
             Section {
                 Toggle("Lưu lịch sử Clipboard", isOn: $settings.clipboardHistoryEnabled)
+                Toggle("Hiện thông báo “Đã chép” trên Notch / Dynamic Island",
+                       isOn: $settings.clipboardCopyToast)
+                    .disabled(!settings.clipboardHistoryEnabled)
+                Toggle("Giữ chuột sát Notch / Dynamic Island để mở nhanh Clipboard",
+                       isOn: $settings.notchHoverClipboard)
+                    .disabled(!settings.clipboardHistoryEnabled)
                 Toggle("Đồng bộ mẫu ghim qua iCloud", isOn: $settings.syncClipboardPinnedICloud)
                     .disabled(!settings.iCloudSyncEnabled)
                 Toggle("Đồng bộ mục gần đây qua iCloud", isOn: $settings.syncClipboardRecentICloud)

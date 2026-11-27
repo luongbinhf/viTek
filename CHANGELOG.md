@@ -4,6 +4,16 @@ Mọi bản phát hành của **viTek** sử dụng quy tắc phiên bản **`YY
 
 ---
 
+## `20261127.1.001` *(iOS `20261127.1.1`)*
+
+### Notch & OLED Dynamic Island trên macOS + Nhớ Chế độ Theo Từng Ứng dụng
+- **Notch & OLED Dynamic Island (`ScreenCutoutGeometry` & `DynamicIslandPanel`):** Tự động nhận diện phần khuyết vật lý của MacBook (Notch tai thỏ, viên thuốc Dynamic Island trên màn Tandem OLED, hoặc viên thuốc nổi trên màn hình rời) với nền đen tuyệt đối `#000000`.
+- **Nhớ chế độ `VI / EN` riêng từng ứng dụng (`AppModeMonitor`):** Tự lưu trạng thái Việt/Anh bạn chọn cho từng ứng dụng (`⌘Tab` sang Terminal tự về `EN`, quay lại Safari/Zalo tự về `VI`) và hiển thị cánh mở rộng ngắn trên Notch/Dynamic Island khi chuyển.
+- **Thông báo “Đã chép” (`⌘C`) & Ngăn kéo Clipboard từ Notch (`⌃⌥V` / Hover):** Hiển thị nháy nhanh nội dung vừa sao chép (hoặc cảnh báo bỏ qua mật khẩu bảo mật) ngay trên Island; trượt mở ngăn kéo Clipboard trực tiếp từ đáy Notch/Dynamic Island (hỗ trợ cả tuỳ chọn giữ chuột 320 ms hoặc quay về cạnh con trỏ trong Cài đặt).
+- **Tinh gọn ứng dụng iOS về đúng 2 tab cốt lõi (`Bàn phím` & `Cài đặt`)** và thu gọn thanh công cụ trên bàn phím.
+
+---
+
 ## `20261126.1.003` *(iOS `20261126.1.3`)*
 
 ### Đồng bộ Giao diện Tối giản Toàn macOS & Tăng Độ Chính Xác Gõ Song Ngữ

@@ -17,7 +17,11 @@ enum ModeIndicatorPanel {
     private static var glass: GlassPanel<ModeIndicatorBadge>?
     private static var hideTask: Task<Void, Never>?
 
-    static func show(vietnamese: Bool, caret: NSRect) {
+    static func show(vietnamese: Bool, appName: String? = nil, caret: NSRect = .zero) {
+        if SettingsStore.shared.overlayPlacement == .notchIsland || caret == .zero {
+            DynamicIslandPanel.showMode(vietnamese: vietnamese, appName: appName, caret: caret)
+            return
+        }
         hideTask?.cancel()
         state.vietnamese = vietnamese
         let glass = glass ?? GlassPanel(ModeIndicatorBadge(state: state), acceptsMouseEvents: false)
